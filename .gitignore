@@ -1,0 +1,38 @@
+# Project specific
+.idea
+docs
+
+# Environment files
+**/.env
+**/.env.*
+!**/.env.example
+**/*.xcconfig
+*.xcconfig
+**/*.secret.*
+!**/.secret.example
+*.local
+*.production
+
+# Cursor
+.cursor
+.cursorrules
+.cursorignore
+.cursorconfig
+
+# MacOS
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# Node modules
+node_modules
+
+# Dist
+dist
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+*.code-workspace
