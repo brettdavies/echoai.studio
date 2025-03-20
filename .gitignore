@@ -1,6 +1,6 @@
 # Project specific
-.idea
-docs
+# .idea
+# docs
 
 # Environment files
 **/.env

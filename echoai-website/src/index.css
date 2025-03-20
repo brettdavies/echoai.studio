@@ -1,9 +1,11 @@
-@import "tailwindcss";
-
 /* Import Inter font from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-@theme {
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
   --background: 0 0% 0%;
   --foreground: 0 0% 100%;
 
@@ -33,42 +35,46 @@
   --ring: 240 4.9% 83.9%;
 }
 
-body {
-  font-family: 'Inter', sans-serif;
-  color: white;
-  background-color: black;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    color: white;
+    background-color: black;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
 }
 
-/* Mermaid responsive styles */
-.mermaid-diagram {
-  overflow: visible;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
+@layer components {
+  /* Mermaid responsive styles */
+  .mermaid-diagram {
+    overflow: visible;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
 
-.mermaid-diagram svg {
-  margin: 0 auto;
-}
-
-@media (max-width: 768px) {
   .mermaid-diagram svg {
-    max-width: 100%;
-    height: auto;
+    margin: 0 auto;
   }
-  
-  /* Add spacing for vertical diagrams */
-  .mermaid-diagram [id^="flowchart-"] {
-    margin: 2rem 0;
-  }
-}
 
-/* Fix overflow issues on mobile */
-@media (max-width: 480px) {
-  .overflow-x-auto {
-    max-width: 100vw;
+  @media (max-width: 768px) {
+    .mermaid-diagram svg {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Add spacing for vertical diagrams */
+    .mermaid-diagram [id^="flowchart-"] {
+      margin: 2rem 0;
+    }
+  }
+
+  /* Fix overflow issues on mobile */
+  @media (max-width: 480px) {
+    .overflow-x-auto {
+      max-width: 100vw;
+    }
   }
 }

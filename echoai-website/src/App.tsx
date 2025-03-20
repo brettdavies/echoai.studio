@@ -4,8 +4,6 @@ import FeaturesSection from './components/FeaturesSection'
 import CodeExampleSection from './components/CodeExampleSection'
 import MetricsSection from './components/MetricsSection'
 import WorkflowCanvasSection from './components/WorkflowCanvasSection'
-import MetricsToolsSection from './components/MetricsToolsSection'
-import EnterpriseSecuritySection from './components/EnterpriseSecuritySection'
 import DeploymentSection from './components/DeploymentSection'
 import BestResultsSection from './components/BestResultsSection'
 import AutomateWorkSection from './components/AutomateWorkSection'
@@ -21,8 +19,6 @@ function App() {
         <CodeExampleSection />
         <MetricsSection />
         <WorkflowCanvasSection />
-        <MetricsToolsSection />
-        <EnterpriseSecuritySection />
         <DeploymentSection />
         <BestResultsSection />
         <AutomateWorkSection />
