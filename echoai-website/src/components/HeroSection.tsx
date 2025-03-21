@@ -1,4 +1,5 @@
 import { Button } from "../components/ui/button";
+import CountdownTimer from "./CountdownTimer";
 
 const HeroSection = () => {
   return (
@@ -13,6 +14,9 @@ const HeroSection = () => {
         <Button size="lg" className="rounded-full">
           Get Started
         </Button>
+        
+        {/* Countdown Timer with Waveform Visualization */}
+        <CountdownTimer />
       </div>
     </section>
   );
