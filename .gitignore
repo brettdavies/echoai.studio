@@ -1,6 +1,6 @@
 # Project specific
-# .idea
-# docs
+.idea
+docs
 
 # Environment files
 **/.env
@@ -25,12 +25,6 @@
 # Logs
 logs
 *.log
-
-# Node modules
-node_modules
-
-# Dist
-dist
 
 # Editor directories and files
 .vscode/*
