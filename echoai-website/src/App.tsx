@@ -7,11 +7,14 @@ import WorkflowCanvasSection from './components/WorkflowCanvasSection'
 import DeploymentSection from './components/DeploymentSection'
 import BestResultsSection from './components/BestResultsSection'
 import AutomateWorkSection from './components/AutomateWorkSection'
+import FormattingExampleSection from './components/FormattingExampleSection'
 import Footer from './components/Footer'
+import DocumentTitle from './components/DocumentTitle'
 
 function App() {
   return (
     <div className="min-h-screen bg-black">
+      <DocumentTitle />
       <NavBar />
       <main>
         <HeroSection />
@@ -22,6 +25,7 @@ function App() {
         <DeploymentSection />
         <BestResultsSection />
         <AutomateWorkSection />
+        <FormattingExampleSection />
       </main>
       <Footer />
     </div>

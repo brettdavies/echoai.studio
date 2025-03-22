@@ -1,0 +1,123 @@
+{
+  "common": {
+    "getStarted": "Get Started",
+    "siteTitle": "echoAI - Trusted AI Support Platform"
+  },
+  "navigation": {
+    "home": "Home"
+  },
+  "heroSection": {
+    "title": "The complete platform for trusted AI support",
+    "description": "Real-time, low-latency, accurate transcription of live audio that unlocks unlimited applications to engage consumers with multi-modal interactions."
+  },
+  "features": {
+    "feature1": {
+      "title": "Real-time Transcription",
+      "description": "Industry-leading sub-750ms latency from speech to text"
+    },
+    "feature2": {
+      "title": "Multi-modal Integration",
+      "description": "Seamlessly connect audio to interactive experiences"
+    },
+    "feature3": {
+      "title": "Plugin Ecosystem",
+      "description": "Extend functionality with our growing library of plugins"
+    }
+  },
+  "codeExample": {
+    "title": "Exceptionally rapid support on all channels",
+    "description": "Experience lightning-fast transcription with our state-of-the-art platform that processes audio in real-time.",
+    "code": "// Initialize echoAI transcription\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'en-US',\n    latency: 'ultra-low',\n  }\n});\n\n// Start listening to audio stream\necho.listen(audioStream);\n\n// Real-time transcription events\necho.on('transcription', (result) => {\n  console.log('Live transcription:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "Next-gen quality and efficiency",
+    "description": "Our platform delivers unmatched accuracy, reliability, and performance with ultra-low latency that enhances real-time applications.",
+    "metric1": {
+      "value": "89%",
+      "label": "Transcription Accuracy"
+    },
+    "metric2": {
+      "value": "24/7",
+      "label": "Availability"
+    },
+    "metric3": {
+      "value": ">4.4 CSAT",
+      "label": "Customer Satisfaction"
+    },
+    "metric4": {
+      "value": "50%+",
+      "label": "Time Saved"
+    }
+  },
+  "workflow": {
+    "title": "Rethink work with the best AI workflow canvas",
+    "description": "Our flexible system enables seamless integration with your existing workflows, making it easy to build custom applications."
+  },
+  "deployment": {
+    "title": "Lightning fast deployment and results",
+    "description": "Get up and running in minutes, not weeks. Our platform is designed for seamless integration and immediate value.",
+    "steps": {
+      "step1": {
+        "title": "Setup",
+        "features": [
+          "Quick installation via NPM or CDN",
+          "Simple API key authentication",
+          "Comprehensive documentation"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "RESTful and WebSocket APIs",
+          "Streaming and batch processing",
+          "Cross-platform SDKs available"
+        ]
+      },
+      "step3": {
+        "title": "Integration",
+        "features": [
+          "Pre-built integrations with popular platforms",
+          "Custom webhook support",
+          "Open-source plugins and extensions"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "The best results happen when AI + human judgment come together",
+    "description": "Our platform enhances human capabilities rather than replacing them, creating a powerful synergy that delivers superior outcomes."
+  },
+  "automateWork": {
+    "title": "Automate Work"
+  },
+  "countdown": {
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "untilLaunch": "Until Launch - March 25th, 2025 at 12PM CT"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "All rights reserved."
+  },
+  "format": {
+    "date": "Today is {date, date, full}",
+    "currency": "Price: {amount, number, currency}",
+    "number": "Value: {value, number}"
+  },
+  "processingSteps": {
+    "title": "Echo Core Processing Pipeline",
+    "inputStream": "Input Stream",
+    "audioStream": "Audio Stream",
+    "videoStream": "Video Stream",
+    "providerA": "Provider A",
+    "providerB": "Provider B",
+    "providerC": "Provider C",
+    "transcriptEnrichment": "Transcript Enrichment",
+    "translation": "Translation",
+    "captionProcessing": "Caption Processing",
+    "frameAnalysis": "Frame Analysis",
+    "productionOutput": "Production Output"
+  }
+}
