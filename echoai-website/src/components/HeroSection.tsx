@@ -10,6 +10,7 @@ const DashAudioPlayer = lazy(() => import('./DashAudioPlayer'));
 const HeroSection = () => {
   const { t } = useTranslation();
   const [isBrowser, setIsBrowser] = useState(false);
+  const [playbackStarted, setPlaybackStarted] = useState(false);
   
   // BBC World Service stream URL
   const bbcStreamUrl = 'https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/cfsgc/bbc_world_service_news_internet.mpd';
@@ -18,6 +19,11 @@ const HeroSection = () => {
   useEffect(() => {
     setIsBrowser(true);
   }, []);
+
+  // Handle playback started event from DashAudioPlayer
+  const handlePlaybackStarted = () => {
+    setPlaybackStarted(true);
+  };
   
   return (
     <section className="pt-32 pb-16 md:pb-24 bg-black text-white">
@@ -42,16 +48,30 @@ const HeroSection = () => {
               <h3 className="text-xl font-semibold">{t('audioPlayer.streaming')}</h3>
               <Volume2 size={18} className="text-gray-400" aria-label="Volume 80%" />
             </div>
-            <p className="text-white/60 text-sm mb-4">Audio stream starts automatically with volume muted. Use the volume slider to adjust.</p>
             
-            <p className="text-white/60 text-sm mb-4">Click play to start the audio stream. Volume is set to 80% by default.</p>
-            <Suspense fallback={
-              <div className="w-full h-32 bg-black/40 rounded-lg p-4 flex items-center justify-center">
-                <p className="text-white/70">Loading audio player...</p>
+            <div className="relative">
+              {/* Position instruction text over the player but not over the controls */}
+              <div 
+                className={`absolute top-0 left-0 right-0 bottom-24 z-10 flex items-center justify-center transition-opacity duration-700 ease-in-out bg-black/70 rounded-t-md ${
+                  playbackStarted ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                }`}
+              >
+                <p className="text-white/90 text-sm px-1">
+                  Click play to start the audio stream. Volume is set to 80% by default.
+                </p>
               </div>
-            }>
-              <DashAudioPlayer url={bbcStreamUrl} />
-            </Suspense>
+              
+              <Suspense fallback={
+                <div className="w-full h-32 bg-black/40 rounded-lg p-4 flex items-center justify-center">
+                  <p className="text-white/70">Loading audio player...</p>
+                </div>
+              }>
+                <DashAudioPlayer 
+                  url={bbcStreamUrl} 
+                  onPlaybackStarted={handlePlaybackStarted}
+                />
+              </Suspense>
+            </div>
           </div>
         )}
       </div>

@@ -10,11 +10,13 @@ import { Volume2, VolumeX } from 'lucide-react';
 interface DashAudioPlayerProps {
   url: string;
   className?: string;
+  onPlaybackStarted?: () => void;
 }
 
 const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({ 
   url = 'https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/cfsgc/bbc_world_service_news_internet.mpd',
   className = '',
+  onPlaybackStarted,
 }) => {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -31,11 +33,23 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [showCanvas, setShowCanvas] = useState(false);
-  const [isMuted, setIsMuted] = useState(true); // Track muted state
+  const [isMuted, setIsMuted] = useState(false); // Track muted state - default to not muted
+  const intervalCleanupRef = useRef<(() => void) | null>(null); // Ref to store interval cleanup function
 
   // Load dash.js from CDN
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    
+    // Flag to track initialization within this effect
+    let isInitializing = false;
+    
+    // Skip if already initialized or currently initializing
+    if (initialized || playerRef.current || isInitializing) {
+      console.log('Player already initialized or initializing, skipping setup');
+      return;
+    }
+    
+    isInitializing = true;
     
     const loadDashScript = () => {
       return new Promise<void>((resolve, reject) => {
@@ -98,11 +112,15 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       });
     };
 
+    let isMounted = true;
+    
     loadDashScript()
       .then(() => {
+        if (!isMounted) return;
         console.log('dash.js loaded successfully');
         // Wait longer to ensure dash.js is properly initialized
         setTimeout(() => {
+          if (!isMounted) return;
           // Double-check dashjs is available
           if (window.dashjs) {
             console.log('Initializing player with dash.js version:', window.dashjs.Version || 'unknown');
@@ -111,18 +129,32 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
             console.error('dash.js not found in window object');
             setError('Could not load the dash.js library properly');
           }
+          isInitializing = false;
         }, 300); // Increased delay for initialization
       })
       .catch(err => {
+        if (!isMounted) return;
         console.error('Error loading dash.js:', err);
         setError('Could not load the dash.js library. Please check your internet connection.');
+        isInitializing = false;
       });
 
     // Cleanup when component unmounts
     return () => {
+      isMounted = false;
       cleanupDashPlayer();
     };
   }, []);
+
+  // Effect to update visualization when playback state changes
+  useEffect(() => {
+    if (isPlaying && analyserRef.current && audioContextRef.current) {
+      // Make sure audio context is running when playing
+      if (audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(console.warn);
+      }
+    }
+  }, [isPlaying]);
 
   // Initialize dash.js player
   const initializeDashPlayer = () => {
@@ -130,6 +162,9 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
 
     try {
       console.log('Initializing dash.js player...');
+      
+      // Set initialized flag early to prevent multiple initialization attempts
+      setInitialized(true);
       
       // Clear previous player if it exists
       if (playerRef.current) {
@@ -178,8 +213,8 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       try {
         // Set volume and mute
         player.setVolume(volume); // Set volume to 80%
-        player.setMute(true); // Mute by default
-        console.log('Volume and mute settings applied, player muted');
+        player.setMute(false); // Don't mute by default
+        console.log('Volume and mute settings applied, player not muted');
       } catch (volumeError) {
         console.warn('Error setting volume/mute:', volumeError);
       }
@@ -197,6 +232,9 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
           console.log('Playback started');
           setIsPlaying(true);
           setShowCanvas(true);
+          if (onPlaybackStarted) {
+            onPlaybackStarted();
+          }
         });
         
         player.on('playbackPaused', () => {
@@ -241,51 +279,103 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       // Setup visualization
       setupAudioVisualization();
       
-      setInitialized(true);
       console.log('dash.js player initialized successfully');
     } catch (err) {
       console.error('Error initializing DASH player:', err);
       setError(`Failed to initialize DASH player: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      // Reset initialized flag in case of error
+      setInitialized(false);
     }
   };
 
   // Set up audio visualization
   const setupAudioVisualization = () => {
-    // Initialize with a static/dummy visualization for now
+    // Initialize visualization for the audio
     setShowCanvas(true);
     
-    // Use a fake visualization with random data instead of trying to connect to the audio element
-    const setupFakeVisualization = () => {
+    try {
+      // Check if audio context is supported
+      if (typeof window === 'undefined' || !window.AudioContext && !(window as any).webkitAudioContext) {
+        console.warn('AudioContext not supported in this browser');
+        setupFakeVisualization();
+        return;
+      }
+      
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas || !videoRef.current) {
+        setupFakeVisualization();
+        return;
+      }
       
-      const canvasCtx = canvas.getContext('2d');
-      if (!canvasCtx) return;
+      // Check if we already have a source node connected to this video element
+      if (sourceNodeRef.current) {
+        console.log('Audio visualization already set up, reusing existing connections');
+        // Just make sure the visualization is running
+        renderVisualization();
+        return;
+      }
       
-      // Create a simple animation with random bars
-      const dummyDataArray = new Array(64).fill(0);
-      dataArrayRef.current = new Uint8Array(dummyDataArray.length);
+      // Create audio context
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      audioContextRef.current = new AudioContextClass();
       
-      const updateDummyData = () => {
-        if (!dataArrayRef.current || !isPlaying) return;
-        
-        // Generate random values when playing
-        for (let i = 0; i < dataArrayRef.current.length; i++) {
-          dataArrayRef.current[i] = Math.random() * 200;
-        }
-      };
+      // Create analyzer
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
       
-      // Update data at regular intervals when playing
-      const interval = setInterval(updateDummyData, 50);
+      // Create buffer for frequency data
+      const bufferLength = analyserRef.current.frequencyBinCount;
+      dataArrayRef.current = new Uint8Array(bufferLength);
+      
+      // Connect video element to analyzer
+      sourceNodeRef.current = audioContextRef.current.createMediaElementSource(videoRef.current);
+      sourceNodeRef.current.connect(analyserRef.current);
+      analyserRef.current.connect(audioContextRef.current.destination);
       
       // Start visualization
       renderVisualization();
       
-      // Clean up interval on component unmount
-      return () => clearInterval(interval);
+      console.log('Audio visualization set up with Web Audio API');
+    } catch (err) {
+      console.warn('Error setting up Web Audio API visualization:', err);
+      // Fall back to fake visualization
+      setupFakeVisualization();
+    }
+  };
+  
+  // Set up fake visualization with random data as fallback
+  const setupFakeVisualization = () => {
+    console.log('Setting up fake visualization');
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const canvasCtx = canvas.getContext('2d');
+    if (!canvasCtx) return;
+    
+    // Create a simple animation with random bars
+    const dummyDataArray = new Array(64).fill(0);
+    dataArrayRef.current = new Uint8Array(dummyDataArray.length);
+    
+    const updateDummyData = () => {
+      if (!dataArrayRef.current) return;
+      
+      // Generate random values
+      for (let i = 0; i < dataArrayRef.current.length; i++) {
+        dataArrayRef.current[i] = (isPlaying ? Math.random() * 200 : Math.random() * 30);
+      }
     };
     
-    setupFakeVisualization();
+    // Start the interval and store the ID
+    const interval = window.setInterval(updateDummyData, 50);
+    
+    // Start visualization
+    renderVisualization();
+    
+    // Store cleanup function for later
+    intervalCleanupRef.current = () => {
+      console.log('Cleaning up fake visualization interval');
+      window.clearInterval(interval);
+    };
   };
 
   // Render the audio visualization
@@ -296,29 +386,66 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     const canvasCtx = canvas.getContext('2d');
     if (!canvasCtx) return;
     
-    const dataArray = dataArrayRef.current;
-    
     const draw = () => {
       animationRef.current = requestAnimationFrame(draw);
       
+      // Get frequency data if analyzer is available
+      if (analyserRef.current && dataArrayRef.current) {
+        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      }
+      
+      const dataArray = dataArrayRef.current;
+      if (!dataArray) return; // Add null check for dataArray
+      
+      // Clear the canvas
       canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
       
-      // Create gradient for waveform
+      // Create a more modern gradient
       const gradient = canvasCtx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, 'rgba(147, 51, 234, 0.7)'); // Purple
-      gradient.addColorStop(1, 'rgba(59, 130, 246, 0.5)'); // Blue
+      gradient.addColorStop(0, 'rgba(147, 51, 234, 0.8)'); // Brighter purple
+      gradient.addColorStop(0.6, 'rgba(79, 70, 229, 0.6)'); // Indigo
+      gradient.addColorStop(1, 'rgba(59, 130, 246, 0.4)'); // Blue
       
       const barWidth = (canvas.width / dataArray.length) * 2.5;
       let x = 0;
       
+      // Draw bars with smooth animation
       for (let i = 0; i < dataArray.length; i++) {
         const barHeight = dataArray[i] / 2;
         
+        // Draw a rounded rect for each bar
         canvasCtx.fillStyle = gradient;
-        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        canvasCtx.beginPath();
+        canvasCtx.roundRect(
+          x, 
+          canvas.height - barHeight, 
+          barWidth, 
+          barHeight,
+          [3, 3, 0, 0] // Round top corners
+        );
+        canvasCtx.fill();
         
         x += barWidth + 1;
       }
+      
+      // Add glow effect
+      canvasCtx.globalCompositeOperation = 'screen';
+      canvasCtx.filter = 'blur(4px)';
+      canvasCtx.globalAlpha = 0.3;
+      
+      // Draw glow
+      x = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        const barHeight = dataArray[i] / 2;
+        canvasCtx.fillStyle = 'rgba(147, 51, 234, 0.5)';
+        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+      }
+      
+      // Reset drawing context
+      canvasCtx.globalCompositeOperation = 'source-over';
+      canvasCtx.filter = 'none';
+      canvasCtx.globalAlpha = 1.0;
     };
     
     draw();
@@ -332,6 +459,34 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       animationRef.current = null;
     }
     
+    // Clean up audio context and connections
+    if (sourceNodeRef.current) {
+      try {
+        sourceNodeRef.current.disconnect();
+      } catch (e) {
+        console.warn('Error disconnecting source node:', e);
+      }
+      sourceNodeRef.current = null;
+    }
+    
+    if (analyserRef.current) {
+      try {
+        analyserRef.current.disconnect();
+      } catch (e) {
+        console.warn('Error disconnecting analyser node:', e);
+      }
+      analyserRef.current = null;
+    }
+    
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+      } catch (e) {
+        console.warn('Error closing audio context:', e);
+      }
+      audioContextRef.current = null;
+    }
+    
     // Reset dash.js player
     if (playerRef.current) {
       try {
@@ -340,6 +495,12 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
         console.warn('Error resetting dash player:', e);
       }
       playerRef.current = null;
+    }
+    
+    // Call the cleanup function for the fake visualization
+    if (intervalCleanupRef.current) {
+      intervalCleanupRef.current();
+      intervalCleanupRef.current = null;
     }
     
     setInitialized(false);
@@ -355,6 +516,13 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     } else {
       // Try to play the audio
       try {
+        // Resume audio context if suspended
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().catch(err => {
+            console.warn('Error resuming audio context:', err);
+          });
+        }
+        
         const playPromise = playerRef.current.play();
         
         // Handle play promise (modern browsers return a promise from play())
@@ -362,6 +530,9 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
           playPromise
             .then(() => {
               console.log('Playback started successfully');
+              if (onPlaybackStarted) {
+                onPlaybackStarted();
+              }
             })
             .catch((error: Error) => {
               console.error('Error starting playback:', error);
@@ -370,6 +541,13 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
               if (error.name === 'NotAllowedError') {
                 console.log('Autoplay prevented, trying with muted audio');
                 playerRef.current?.setMute(true);
+                setIsMuted(true);
+                
+                // Resume audio context again when trying muted
+                if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+                  audioContextRef.current.resume().catch(console.warn);
+                }
+                
                 const mutePlayPromise = playerRef.current?.play();
                 if (mutePlayPromise) {
                   mutePlayPromise.catch((e: Error) => {
@@ -475,7 +653,6 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
         ref={videoRef}
         className="hidden"
         playsInline
-        muted  // Set muted attribute for better autoplay support
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onEnded={() => setIsPlaying(false)}
