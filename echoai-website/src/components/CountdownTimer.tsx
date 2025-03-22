@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface TimeLeft {
   days: number;
@@ -8,6 +9,7 @@ interface TimeLeft {
 }
 
 const CountdownTimer: React.FC = () => {
+  const { t } = useTranslation();
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({
     days: 0,
     hours: 0,
@@ -191,27 +193,27 @@ const CountdownTimer: React.FC = () => {
       <div className="flex justify-center items-center gap-4 md:gap-8">
         <div className="text-center bg-gray-900/50 px-4 py-3 rounded-lg">
           <div className="text-3xl md:text-5xl font-bold">{formatTimeValue(timeLeft.days)}</div>
-          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">Days</div>
+          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">{t('countdown.days')}</div>
         </div>
         <div className="text-xl md:text-3xl font-bold">:</div>
         <div className="text-center bg-gray-900/50 px-4 py-3 rounded-lg">
           <div className="text-3xl md:text-5xl font-bold">{formatTimeValue(timeLeft.hours)}</div>
-          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">Hours</div>
+          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">{t('countdown.hours')}</div>
         </div>
         <div className="text-xl md:text-3xl font-bold">:</div>
         <div className="text-center bg-gray-900/50 px-4 py-3 rounded-lg">
           <div className="text-3xl md:text-5xl font-bold">{formatTimeValue(timeLeft.minutes)}</div>
-          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">Minutes</div>
+          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">{t('countdown.minutes')}</div>
         </div>
         <div className="text-xl md:text-3xl font-bold">:</div>
         <div className="text-center bg-gray-900/50 px-4 py-3 rounded-lg">
           <div className="text-3xl md:text-5xl font-bold">{formatTimeValue(timeLeft.seconds)}</div>
-          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">Seconds</div>
+          <div className="text-xs md:text-sm text-gray-400 uppercase mt-1">{t('countdown.seconds')}</div>
         </div>
       </div>
       
       <div className="mt-6 text-gray-400">
-        Until Launch - March 25th, 2025 at 12PM CT
+        {t('countdown.untilLaunch')}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Mermaid from './Mermaid';
 
 interface ProcessingStepsProps {
@@ -6,26 +7,43 @@ interface ProcessingStepsProps {
 }
 
 const ProcessingSteps: React.FC<ProcessingStepsProps> = ({ orientation = 'LR' }) => {
-  const mermaidDiagram = `
+  const { t, i18n } = useTranslation();
+  const [mermaidChart, setMermaidChart] = useState('');
+  const [isI18nReady, setIsI18nReady] = useState(false);
+  
+  // Check if i18n is initialized
+  useEffect(() => {
+    // Only set the chart when i18n is ready and language is loaded
+    if (i18n.isInitialized && i18n.language) {
+      setIsI18nReady(true);
+    }
+  }, [i18n.isInitialized, i18n.language]);
+  
+  // Generate the Mermaid diagram with translated labels
+  useEffect(() => {
+    // Only set the chart when i18n is ready
+    if (!isI18nReady) return;
+    
+    const diagram = `
 graph ${orientation}
-    IS[Input Stream] --> AS[Audio Stream]
-    IS --> VS2[Video Stream]
+    IS[${t('processingSteps.inputStream')}] --> AS[${t('processingSteps.audioStream')}]
+    IS --> VS2[${t('processingSteps.videoStream')}]
     
-    AS --> T1[Provider A]
-    AS --> T2[Provider B]
-    AS --> T3[Provider C]
+    AS --> T1[${t('processingSteps.providerA')}]
+    AS --> T2[${t('processingSteps.providerB')}]
+    AS --> T3[${t('processingSteps.providerC')}]
     
-    T1 --> TE[Transcript Enrichment]
+    T1 --> TE[${t('processingSteps.transcriptEnrichment')}]
     T2 --> TE
     T3 --> TE
     
-    TE --> TL[Translation]
-    TE --> C[Caption Processing]
+    TE --> TL[${t('processingSteps.translation')}]
+    TE --> C[${t('processingSteps.captionProcessing')}]
     TL --> C
     
-    VS2 --> FA[Frame Analysis]
+    VS2 --> FA[${t('processingSteps.frameAnalysis')}]
     
-    C --> PO[Production Output]
+    C --> PO[${t('processingSteps.productionOutput')}]
     FA --> PO
     
     linkStyle default stroke-width:2px
@@ -43,14 +61,17 @@ graph ${orientation}
     style FA fill:#2b9348,stroke:#333,color:white,stroke-width:2px
     style PO fill:#d00000,stroke:#333,color:white,stroke-width:2px
   `;
+    
+    setMermaidChart(diagram);
+  }, [orientation, isI18nReady, i18n.language, t]);
 
   return (
     <div className="flex flex-col items-center w-full">
       <h3 className="text-center text-slate-300 text-sm font-medium mb-2 w-full">
-        Echo Core Processing Pipeline
+        {t('processingSteps.title')}
       </h3>
       <div className="w-full">
-        <Mermaid chart={mermaidDiagram} />
+        {isI18nReady && <Mermaid chart={mermaidChart} />}
       </div>
     </div>
   );

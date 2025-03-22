@@ -1,6 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const AutomateWorkSection = () => {
+  const { t } = useTranslation();
+  
   return (
     <section className="py-24 relative bg-black overflow-hidden">
       {/* Light trails background effect */}
@@ -26,7 +29,7 @@ const AutomateWorkSection = () => {
       
       <div className="container mx-auto px-4 text-center relative z-10">
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 tracking-tight">
-          Automate Work
+          {t('automateWork.title')}
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-blue-500 mx-auto mb-6"></div>
       </div>

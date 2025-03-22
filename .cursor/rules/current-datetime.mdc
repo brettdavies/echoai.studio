@@ -1,0 +1,19 @@
+---
+description: Current datetime
+globs: *
+alwaysApply: true
+---
+
+# Current Datetime
+
+Whenever you need the current datetime in UTC, use the following command:
+
+```bash
+date -u +%Y%m%d%H%M%S
+```
+
+This will return the current datetime in UTC in the format YYYYMMDDHHMMSS.
+
+## Usage Guidelines
+
+This is especially important when generating filename for supabase migrations.

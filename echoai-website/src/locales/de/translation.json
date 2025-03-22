@@ -1,0 +1,123 @@
+{
+  "common": {
+    "getStarted": "Loslegen",
+    "siteTitle": "echoAI - Vertrauenswürdige KI-Unterstützungsplattform"
+  },
+  "navigation": {
+    "home": "Startseite"
+  },
+  "heroSection": {
+    "title": "Die komplette Plattform für vertrauenswürdige KI-Unterstützung",
+    "description": "Präzise Echtzeit-Transkription von Live-Audio mit niedriger Latenz, die unbegrenzte Anwendungen zur Einbindung von Verbrauchern mit multimodalen Interaktionen freischaltet."
+  },
+  "features": {
+    "feature1": {
+      "title": "Echtzeit-Transkription",
+      "description": "Branchenführende Latenzzeit von unter 750 ms von Sprache zu Text"
+    },
+    "feature2": {
+      "title": "Multimodale Integration",
+      "description": "Nahtlose Verbindung von Audio mit interaktiven Erlebnissen"
+    },
+    "feature3": {
+      "title": "Plugin-Ökosystem",
+      "description": "Erweitern Sie die Funktionalität mit unserer wachsenden Plugin-Bibliothek"
+    }
+  },
+  "codeExample": {
+    "title": "Außergewöhnlich schneller Support auf allen Kanälen",
+    "description": "Erleben Sie blitzschnelle Transkription mit unserer hochmodernen Plattform, die Audio in Echtzeit verarbeitet.",
+    "code": "// echoAI-Transkription initialisieren\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'de-DE',\n    latency: 'ultra-low',\n  }\n});\n\n// Audio-Stream abhören\necho.listen(audioStream);\n\n// Echtzeit-Transkriptionsereignisse\necho.on('transcription', (result) => {\n  console.log('Live-Transkription:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "Next-Gen-Qualität und Effizienz",
+    "description": "Unsere Plattform bietet unerreichte Genauigkeit, Zuverlässigkeit und Leistung mit extrem niedriger Latenz, die Echtzeit-Anwendungen verbessert.",
+    "metric1": {
+      "value": "89%",
+      "label": "Transkriptionsgenauigkeit"
+    },
+    "metric2": {
+      "value": "24/7",
+      "label": "Verfügbarkeit"
+    },
+    "metric3": {
+      "value": ">4.4 CSAT",
+      "label": "Kundenzufriedenheit"
+    },
+    "metric4": {
+      "value": "50%+",
+      "label": "Zeitersparnis"
+    }
+  },
+  "workflow": {
+    "title": "Arbeitsabläufe neu denken mit der besten KI-Workflow-Leinwand",
+    "description": "Unser flexibles System ermöglicht die nahtlose Integration in Ihre bestehenden Arbeitsabläufe und erleichtert die Erstellung benutzerdefinierter Anwendungen."
+  },
+  "deployment": {
+    "title": "Blitzschnelle Bereitstellung und Ergebnisse",
+    "description": "Starten Sie in Minuten, nicht in Wochen. Unsere Plattform ist für nahtlose Integration und sofortigen Mehrwert konzipiert.",
+    "steps": {
+      "step1": {
+        "title": "Einrichtung",
+        "features": [
+          "Schnelle Installation über NPM oder CDN",
+          "Einfache API-Schlüssel-Authentifizierung",
+          "Umfassende Dokumentation"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "RESTful- und WebSocket-APIs",
+          "Streaming- und Batch-Verarbeitung",
+          "Plattformübergreifende SDKs verfügbar"
+        ]
+      },
+      "step3": {
+        "title": "Integration",
+        "features": [
+          "Vorgefertigte Integrationen mit beliebten Plattformen",
+          "Benutzerdefinierte Webhook-Unterstützung",
+          "Open-Source-Plugins und -Erweiterungen"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "Die besten Ergebnisse entstehen, wenn KI und menschliches Urteilsvermögen zusammenkommen",
+    "description": "Unsere Plattform erweitert die menschlichen Fähigkeiten, anstatt sie zu ersetzen, und schafft eine starke Synergie, die überlegene Ergebnisse liefert."
+  },
+  "automateWork": {
+    "title": "Arbeit automatisieren"
+  },
+  "countdown": {
+    "days": "Tage",
+    "hours": "Stunden",
+    "minutes": "Minuten",
+    "seconds": "Sekunden",
+    "untilLaunch": "Bis zum Start - 25. März 2025 um 12 Uhr CT"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "Alle Rechte vorbehalten."
+  },
+  "format": {
+    "date": "Heute ist {date, date, full}",
+    "currency": "Preis: {amount, number, currency}",
+    "number": "Wert: {value, number}"
+  },
+  "processingSteps": {
+    "title": "Echo Core Verarbeitungspipeline",
+    "inputStream": "Eingabestrom",
+    "audioStream": "Audiostrom",
+    "videoStream": "Videostrom",
+    "providerA": "Anbieter A",
+    "providerB": "Anbieter B",
+    "providerC": "Anbieter C",
+    "transcriptEnrichment": "Transkriptanreicherung",
+    "translation": "Übersetzung",
+    "captionProcessing": "Untertitelverarbeitung",
+    "frameAnalysis": "Frameanalyse",
+    "productionOutput": "Produktionsausgabe"
+  }
+}

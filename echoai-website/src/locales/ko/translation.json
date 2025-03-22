@@ -1,0 +1,123 @@
+{
+  "common": {
+    "getStarted": "시작하기",
+    "siteTitle": "echoAI - 신뢰할 수 있는 AI 지원 플랫폼"
+  },
+  "navigation": {
+    "home": "홈"
+  },
+  "heroSection": {
+    "title": "신뢰할 수 있는 AI 지원을 위한 완전한 플랫폼",
+    "description": "다중 모달 상호작용으로 소비자를 참여시키는 무한한 애플리케이션을 가능하게 하는 실시간, 저지연, 정확한 라이브 오디오 전사."
+  },
+  "features": {
+    "feature1": {
+      "title": "실시간 전사",
+      "description": "음성에서 텍스트까지 업계 최고의 750ms 미만 지연 시간"
+    },
+    "feature2": {
+      "title": "다중 모달 통합",
+      "description": "오디오를 인터랙티브 경험에 원활하게 연결"
+    },
+    "feature3": {
+      "title": "플러그인 생태계",
+      "description": "성장하는 플러그인 라이브러리로 기능 확장"
+    }
+  },
+  "codeExample": {
+    "title": "모든 채널에서 특별히 빠른 지원",
+    "description": "실시간으로 오디오를 처리하는 최첨단 플랫폼으로 번개처럼 빠른 전사를 경험하세요.",
+    "code": "// echoAI 전사 초기화\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'ko-KR',\n    latency: 'ultra-low',\n  }\n});\n\n// 오디오 스트림 청취 시작\necho.listen(audioStream);\n\n// 실시간 전사 이벤트\necho.on('transcription', (result) => {\n  console.log('실시간 전사:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "차세대 품질과 효율성",
+    "description": "당사의 플랫폼은 실시간 애플리케이션을 향상시키는 초저지연으로 타의 추종을 불허하는 정확성, 신뢰성 및 성능을 제공합니다.",
+    "metric1": {
+      "value": "89%",
+      "label": "전사 정확도"
+    },
+    "metric2": {
+      "value": "24/7",
+      "label": "가용성"
+    },
+    "metric3": {
+      "value": ">4.4 CSAT",
+      "label": "고객 만족도"
+    },
+    "metric4": {
+      "value": "50%+",
+      "label": "시간 절약"
+    }
+  },
+  "workflow": {
+    "title": "최고의 AI 워크플로우 캔버스로 작업 재고",
+    "description": "유연한 시스템으로 기존 워크플로우와 원활하게 통합되어 맞춤형 애플리케이션을 쉽게 구축할 수 있습니다."
+  },
+  "deployment": {
+    "title": "번개처럼 빠른 배포 및 결과",
+    "description": "몇 주가 아닌 몇 분 안에 시작할 수 있습니다. 당사의 플랫폼은 원활한 통합과 즉각적인 가치를 위해 설계되었습니다.",
+    "steps": {
+      "step1": {
+        "title": "설정",
+        "features": [
+          "NPM 또는 CDN을 통한 빠른 설치",
+          "간단한 API 키 인증",
+          "포괄적인 문서"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "RESTful 및 WebSocket API",
+          "스트리밍 및 배치 처리",
+          "크로스 플랫폼 SDK 제공"
+        ]
+      },
+      "step3": {
+        "title": "통합",
+        "features": [
+          "인기 플랫폼과의 사전 구축된 통합",
+          "맞춤형 웹훅 지원",
+          "오픈 소스 플러그인 및 확장 기능"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "AI와 인간의 판단이 함께할 때 최상의 결과가 나옵니다",
+    "description": "당사의 플랫폼은 인간의 능력을 대체하는 대신 향상시켜 우수한 결과를 제공하는 강력한 시너지를 만듭니다."
+  },
+  "automateWork": {
+    "title": "작업 자동화"
+  },
+  "countdown": {
+    "days": "일",
+    "hours": "시간",
+    "minutes": "분",
+    "seconds": "초",
+    "untilLaunch": "출시까지 - 2025년 3월 25일 오후 12시 CT"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "모든 권리 보유."
+  },
+  "format": {
+    "date": "오늘은 {date, date, full}입니다",
+    "currency": "가격: {amount, number, currency}",
+    "number": "값: {value, number}"
+  },
+  "processingSteps": {
+    "title": "Echo Core 처리 파이프라인",
+    "inputStream": "입력 스트림",
+    "audioStream": "오디오 스트림",
+    "videoStream": "비디오 스트림",
+    "providerA": "공급자 A",
+    "providerB": "공급자 B",
+    "providerC": "공급자 C",
+    "transcriptEnrichment": "대본 강화",
+    "translation": "번역",
+    "captionProcessing": "자막 처리",
+    "frameAnalysis": "프레임 분석",
+    "productionOutput": "제작 출력"
+  }
+}

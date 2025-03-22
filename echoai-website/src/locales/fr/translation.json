@@ -1,0 +1,123 @@
+{
+  "common": {
+    "getStarted": "Commencer",
+    "siteTitle": "echoAI - Plateforme d'assistance IA de confiance"
+  },
+  "navigation": {
+    "home": "Accueil"
+  },
+  "heroSection": {
+    "title": "La plateforme complète pour une assistance IA de confiance",
+    "description": "Transcription précise en temps réel de l'audio en direct à faible latence qui ouvre des possibilités illimitées pour engager les consommateurs avec des interactions multimodales."
+  },
+  "features": {
+    "feature1": {
+      "title": "Transcription en temps réel",
+      "description": "Latence de moins de 750 ms de la parole au texte, leader du secteur"
+    },
+    "feature2": {
+      "title": "Intégration multimodale",
+      "description": "Connectez facilement l'audio à des expériences interactives"
+    },
+    "feature3": {
+      "title": "Écosystème de plugins",
+      "description": "Étendez les fonctionnalités avec notre bibliothèque croissante de plugins"
+    }
+  },
+  "codeExample": {
+    "title": "Assistance exceptionnellement rapide sur tous les canaux",
+    "description": "Découvrez une transcription ultra-rapide avec notre plateforme de pointe qui traite l'audio en temps réel.",
+    "code": "// Initialiser la transcription echoAI\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'fr-FR',\n    latency: 'ultra-low',\n  }\n});\n\n// Commencer à écouter le flux audio\necho.listen(audioStream);\n\n// Événements de transcription en temps réel\necho.on('transcription', (result) => {\n  console.log('Transcription en direct:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "Qualité et efficacité de nouvelle génération",
+    "description": "Notre plateforme offre une précision, une fiabilité et des performances inégalées avec une latence ultra-faible qui améliore les applications en temps réel.",
+    "metric1": {
+      "value": "89%",
+      "label": "Précision de transcription"
+    },
+    "metric2": {
+      "value": "24/7",
+      "label": "Disponibilité"
+    },
+    "metric3": {
+      "value": ">4.4 CSAT",
+      "label": "Satisfaction client"
+    },
+    "metric4": {
+      "value": "50%+",
+      "label": "Temps économisé"
+    }
+  },
+  "workflow": {
+    "title": "Repensez le travail avec le meilleur canevas de flux de travail IA",
+    "description": "Notre système flexible permet une intégration transparente avec vos flux de travail existants, facilitant la création d'applications personnalisées."
+  },
+  "deployment": {
+    "title": "Déploiement et résultats ultra-rapides",
+    "description": "Soyez opérationnel en quelques minutes, pas en semaines. Notre plateforme est conçue pour une intégration facile et une valeur immédiate.",
+    "steps": {
+      "step1": {
+        "title": "Configuration",
+        "features": [
+          "Installation rapide via NPM ou CDN",
+          "Authentification simple par clé API",
+          "Documentation complète"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "APIs RESTful et WebSocket",
+          "Traitement en streaming et par lots",
+          "SDKs disponibles sur plusieurs plateformes"
+        ]
+      },
+      "step3": {
+        "title": "Intégration",
+        "features": [
+          "Intégrations prédéfinies avec des plateformes populaires",
+          "Support de webhooks personnalisés",
+          "Plugins et extensions open-source"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "Les meilleurs résultats se produisent quand l'IA et le jugement humain travaillent ensemble",
+    "description": "Notre plateforme améliore les capacités humaines plutôt que de les remplacer, créant une synergie puissante qui offre des résultats supérieurs."
+  },
+  "automateWork": {
+    "title": "Automatiser le travail"
+  },
+  "countdown": {
+    "days": "Jours",
+    "hours": "Heures",
+    "minutes": "Minutes",
+    "seconds": "Secondes",
+    "untilLaunch": "Jusqu'au lancement - 25 mars 2025 à 12h CT"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "Tous droits réservés."
+  },
+  "format": {
+    "date": "Aujourd'hui c'est le {date, date, full}",
+    "currency": "Prix: {amount, number, currency}",
+    "number": "Valeur: {value, number}"
+  },
+  "processingSteps": {
+    "title": "Pipeline de Traitement Echo Core",
+    "inputStream": "Flux d'Entrée",
+    "audioStream": "Flux Audio",
+    "videoStream": "Flux Vidéo",
+    "providerA": "Fournisseur A",
+    "providerB": "Fournisseur B",
+    "providerC": "Fournisseur C",
+    "transcriptEnrichment": "Enrichissement de Transcription",
+    "translation": "Traduction",
+    "captionProcessing": "Traitement de Sous-titres",
+    "frameAnalysis": "Analyse d'Images",
+    "productionOutput": "Sortie de Production"
+  }
+}

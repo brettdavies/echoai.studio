@@ -1,0 +1,123 @@
+{
+  "common": {
+    "getStarted": "始める",
+    "siteTitle": "echoAI - 信頼できるAIサポートプラットフォーム"
+  },
+  "navigation": {
+    "home": "ホーム"
+  },
+  "heroSection": {
+    "title": "信頼できるAIサポートのための完全なプラットフォーム",
+    "description": "マルチモーダルな対話でユーザーを魅了する無限のアプリケーションを実現する、リアルタイム、低遅延、高精度のライブ音声文字起こし。"
+  },
+  "features": {
+    "feature1": {
+      "title": "リアルタイム文字起こし",
+      "description": "業界をリードする750ミリ秒未満の音声からテキストへの遅延"
+    },
+    "feature2": {
+      "title": "マルチモーダル統合",
+      "description": "音声をインタラクティブな体験にシームレスに接続"
+    },
+    "feature3": {
+      "title": "プラグインエコシステム",
+      "description": "成長し続けるプラグインライブラリで機能を拡張"
+    }
+  },
+  "codeExample": {
+    "title": "あらゆるチャネルでの例外的に迅速なサポート",
+    "description": "リアルタイムで音声を処理する最先端のプラットフォームで、超高速の文字起こしを体験してください。",
+    "code": "// echoAI 文字起こしを初期化\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'ja-JP',\n    latency: 'ultra-low',\n  }\n});\n\n// 音声ストリームをリッスン開始\necho.listen(audioStream);\n\n// リアルタイム文字起こしイベント\necho.on('transcription', (result) => {\n  console.log('ライブ文字起こし:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "次世代の品質と効率性",
+    "description": "当社のプラットフォームは、比類のない精度、信頼性、そしてリアルタイムアプリケーションを向上させる超低遅延のパフォーマンスを提供します。",
+    "metric1": {
+      "value": "89%",
+      "label": "文字起こし精度"
+    },
+    "metric2": {
+      "value": "24/7",
+      "label": "可用性"
+    },
+    "metric3": {
+      "value": ">4.4 CSAT",
+      "label": "顧客満足度"
+    },
+    "metric4": {
+      "value": "50%+",
+      "label": "時間節約"
+    }
+  },
+  "workflow": {
+    "title": "最高のAIワークフローキャンバスで業務を再考",
+    "description": "柔軟なシステムにより、既存のワークフローにシームレスに統合でき、カスタムアプリケーションの構築が容易になります。"
+  },
+  "deployment": {
+    "title": "超高速な展開と結果",
+    "description": "数週間ではなく数分で稼働します。当社のプラットフォームはシームレスな統合と即時の価値のために設計されています。",
+    "steps": {
+      "step1": {
+        "title": "セットアップ",
+        "features": [
+          "NPMまたはCDNを介した迅速なインストール",
+          "簡単なAPIキー認証",
+          "包括的なドキュメント"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "RESTfulおよびWebSocket API",
+          "ストリーミングとバッチ処理",
+          "クロスプラットフォームSDK利用可能"
+        ]
+      },
+      "step3": {
+        "title": "統合",
+        "features": [
+          "人気プラットフォームとの事前構築された統合",
+          "カスタムウェブフックサポート",
+          "オープンソースのプラグインと拡張機能"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "AIと人間の判断が融合したときに最高の結果が生まれる",
+    "description": "私たちのプラットフォームは人間の能力を置き換えるのではなく強化し、優れた成果をもたらす強力な相乗効果を生み出します。"
+  },
+  "automateWork": {
+    "title": "業務を自動化する"
+  },
+  "countdown": {
+    "days": "日",
+    "hours": "時間",
+    "minutes": "分",
+    "seconds": "秒",
+    "untilLaunch": "開始まで - 2025年3月25日 午後12時 (CT)"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "全著作権所有。"
+  },
+  "format": {
+    "date": "今日は {date, date, full} です",
+    "currency": "価格: {amount, number, currency}",
+    "number": "値: {value, number}"
+  },
+  "processingSteps": {
+    "title": "Echo Core 処理パイプライン",
+    "inputStream": "入力ストリーム",
+    "audioStream": "音声ストリーム",
+    "videoStream": "映像ストリーム",
+    "providerA": "プロバイダー A",
+    "providerB": "プロバイダー B",
+    "providerC": "プロバイダー C",
+    "transcriptEnrichment": "文字起こし強化",
+    "translation": "翻訳",
+    "captionProcessing": "字幕処理",
+    "frameAnalysis": "フレーム分析",
+    "productionOutput": "制作出力"
+  }
+}

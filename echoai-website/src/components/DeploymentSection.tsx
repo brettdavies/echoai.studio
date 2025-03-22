@@ -1,42 +1,33 @@
 import React from 'react';
-
-const deploymentSteps = [
-  {
-    title: "Setup",
-    features: [
-      "Quick installation via NPM or CDN",
-      "Simple API key authentication",
-      "Comprehensive documentation"
-    ]
-  },
-  {
-    title: "API",
-    features: [
-      "RESTful and WebSocket APIs",
-      "Streaming and batch processing",
-      "Cross-platform SDKs available"
-    ]
-  },
-  {
-    title: "Integration",
-    features: [
-      "Pre-built integrations with popular platforms",
-      "Custom webhook support",
-      "Open-source plugins and extensions"
-    ]
-  }
-];
+import { useTranslation } from 'react-i18next';
 
 const DeploymentSection = () => {
+  const { t } = useTranslation();
+  
+  const deploymentSteps = [
+    {
+      title: t('deployment.steps.step1.title'),
+      features: t('deployment.steps.step1.features', { returnObjects: true })
+    },
+    {
+      title: t('deployment.steps.step2.title'),
+      features: t('deployment.steps.step2.features', { returnObjects: true })
+    },
+    {
+      title: t('deployment.steps.step3.title'),
+      features: t('deployment.steps.step3.features', { returnObjects: true })
+    }
+  ];
+
   return (
     <section className="py-24 bg-black">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Lightning fast deployment and results
+            {t('deployment.title')}
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Get up and running in minutes, not weeks. Our platform is designed for seamless integration and immediate value.
+            {t('deployment.description')}
           </p>
         </div>
         
