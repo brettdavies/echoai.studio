@@ -6,12 +6,8 @@
     "build": "slidev build",
     "dev": "slidev --open",
     "export": "slidev export",
-    "dev:pres1": "slidev presentations/presentation1/slides.md --port 3001",
-    "dev:pres2": "slidev presentations/presentation2/slides.md --port 3002", 
-    "dev:pres3": "slidev presentations/presentation3/slides.md --port 3003",
-    "build:pres1": "slidev build presentations/presentation1/slides.md",
-    "build:pres2": "slidev build presentations/presentation2/slides.md",
-    "build:pres3": "slidev build presentations/presentation3/slides.md"
+    "dev:dd": "slidev presentations/demo-day/slides.md --port 3001",
+    "build:dd": "slidev build presentations/demo-day/slides.md"
   },
   "dependencies": {
     "@slidev/cli": "^51.4.0",
