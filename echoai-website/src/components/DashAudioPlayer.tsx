@@ -11,12 +11,14 @@ interface DashAudioPlayerProps {
   url: string;
   className?: string;
   onPlaybackStarted?: () => void;
+  onPlaybackStateChange?: (isPlaying: boolean) => void;
 }
 
 const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({ 
   url = 'https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/cfsgc/bbc_world_service_news_internet.mpd',
   className = '',
   onPlaybackStarted,
+  onPlaybackStateChange,
 }) => {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -235,11 +237,17 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
           if (onPlaybackStarted) {
             onPlaybackStarted();
           }
+          if (onPlaybackStateChange) {
+            onPlaybackStateChange(true);
+          }
         });
         
         player.on('playbackPaused', () => {
           console.log('Playback paused');
           setIsPlaying(false);
+          if (onPlaybackStateChange) {
+            onPlaybackStateChange(false);
+          }
         });
 
         // Handle autoplay restrictions
@@ -653,9 +661,24 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
         ref={videoRef}
         className="hidden"
         playsInline
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onEnded={() => setIsPlaying(false)}
+        onPlay={() => {
+          setIsPlaying(true);
+          if (onPlaybackStateChange) {
+            onPlaybackStateChange(true);
+          }
+        }}
+        onPause={() => {
+          setIsPlaying(false);
+          if (onPlaybackStateChange) {
+            onPlaybackStateChange(false);
+          }
+        }}
+        onEnded={() => {
+          setIsPlaying(false);
+          if (onPlaybackStateChange) {
+            onPlaybackStateChange(false);
+          }
+        }}
         onError={(e) => {
           console.error('Video element error:', e);
           setError('Media playback error. Please try again.');
@@ -681,14 +704,17 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       <div className="flex flex-col space-y-4">
         {/* Controls */}
         <div className="flex items-center justify-between">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handlePlayPause}
-            className="bg-slate-800 hover:bg-slate-700 text-white border-none"
-          >
-            {isPlaying ? t('audioPlayer.pause') : t('audioPlayer.play')}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handlePlayPause}
+              className="bg-slate-800 hover:bg-slate-700 text-white border-none"
+            >
+              {isPlaying ? t('audioPlayer.pause') : t('audioPlayer.play')}
+            </Button>
+            <span className="text-xs bg-red-700 text-white px-2 py-0.5 rounded-full">LIVE</span>
+          </div>
           
           <div className="flex items-center space-x-2">
             <Button
@@ -708,10 +734,6 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
               className="w-24"
             />
           </div>
-        </div>
-        
-        <div className="mt-1 flex justify-center">
-          <span className="text-xs bg-red-700 text-white px-2 py-0.5 rounded-full">LIVE</span>
         </div>
       </div>
     </div>
