@@ -15,9 +15,11 @@
     "i18n:status": "node scripts/i18n-status.js && echo \"Status report written to: src/locales/i18n-status.md\""
   },
   "dependencies": {
+    "@radix-ui/react-slider": "^1.2.3",
     "@radix-ui/react-slot": "^1.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "dashjs": "^5.0.0",
     "i18next": "^24.2.3",
     "i18next-browser-languagedetector": "^8.0.4",
     "i18next-icu": "^2.3.0",

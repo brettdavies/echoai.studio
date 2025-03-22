@@ -97,6 +97,15 @@
     "seconds": "Seconds",
     "untilLaunch": "Until Launch - March 25th, 2025 at 12PM CT"
   },
+  "audioPlayer": {
+    "title": "Experience our voice technology",
+    "play": "Play",
+    "pause": "Pause",
+    "volume": "Vol",
+    "loading": "Loading audio...",
+    "live": "LIVE",
+    "streaming": "Live Audio Stream"
+  },
   "footer": {
     "brandName": "echoAI",
     "allRightsReserved": "All rights reserved."
