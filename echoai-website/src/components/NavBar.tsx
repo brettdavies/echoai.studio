@@ -20,6 +20,13 @@ const NavBar = () => {
         
         {/* Language selector and mobile menu button */}
         <div className="flex items-center space-x-4">
+          {/* Get Started button - to the left of language selector */}
+          <div className="hidden md:block">
+            <Button size="sm" className="rounded-full">
+              {t('common.getStarted')}
+            </Button>
+          </div>
+          
           {/* Language selector - hidden on smaller screens */}
           <div className="hidden md:block">
             <LanguageSelector />
@@ -53,6 +60,13 @@ const NavBar = () => {
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-black/95 backdrop-blur-sm`}>
         <div className="px-4 py-4 space-y-3">
           <a href="#" className="block text-white hover:text-white/70 py-2">{t('navigation.home')}</a>
+          
+          {/* Get Started button for mobile */}
+          <div className="py-2">
+            <Button size="sm" className="rounded-full w-full">
+              {t('common.getStarted')}
+            </Button>
+          </div>
           
           {/* Language selector for mobile */}
           <div className="py-2">

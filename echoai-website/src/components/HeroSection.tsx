@@ -34,10 +34,6 @@ const HeroSection = () => {
         <p className="text-white/70 max-w-2xl mx-auto mb-8 text-lg">
           {t('heroSection.description')}
         </p>
-        <Button size="lg" className="rounded-full">
-          {t('common.getStarted')}
-        </Button>
-        
         {/* Countdown Timer with Waveform Visualization */}
         <CountdownTimer />
         
