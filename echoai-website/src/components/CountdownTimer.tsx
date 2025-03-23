@@ -22,8 +22,8 @@ const CountdownTimer: React.FC = () => {
   const waveformRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Target date: March 25th, 2025 at 12pm noon US Central Time
-    const targetDate = new Date('2025-03-25T12:00:00-05:00'); // -05:00 is US Central Time
+    // Target date: March 25th, 2025 at 9am US Central Time
+    const targetDate = new Date('2025-03-25T09:00:00-05:00'); // -05:00 is US Central Time
 
     const calculateTimeLeft = () => {
       const difference = targetDate.getTime() - new Date().getTime();

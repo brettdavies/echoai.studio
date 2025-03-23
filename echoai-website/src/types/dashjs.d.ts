@@ -29,6 +29,73 @@ declare namespace dashjs {
     updateSettings(settings: any): void;
     on(type: string, listener: Function, scope?: any): void;
     off(type: string, listener: Function, scope?: any): void;
+    
+    // Stream information methods
+    getCurrentTrackFor(type: string): MediaTrack;
+    getBitrateInfoListFor(type: string): BitrateInfo[];
+    getBufferLength(type: string): number;
+    getDashMetrics(): DashMetrics;
+    getCurrentLiveLatency?(): number;
+    getTargetLiveLatency?(): number;
+  }
+
+  interface MediaTrack {
+    codec: string;
+    id: string;
+    index: number;
+    lang?: string;
+    viewpoint?: string;
+    roles?: string[];
+    mediaInfo: MediaInfo;
+    adaptation?: any;
+  }
+
+  interface MediaInfo {
+    type: string;
+    mimeType: string;
+    codec: string;
+    sampleRate?: number;
+    channelsCount?: number;
+    bitrateList?: BitrateInfo[];
+    adaptation?: any;
+  }
+
+  interface BitrateInfo {
+    mediaType?: string;
+    bitrate: number;
+    width?: number;
+    height?: number;
+    scanType?: string;
+    qualityIndex?: number;
+    bandwidth?: number;
+  }
+
+  interface DashMetrics {
+    getCurrentAdaptationFor(type: string): any;
+    getCurrentIndex?(type: string): number;
+    getCurrentRequest?(type: string): {x
+      index: number;
+      startTime: number;
+      duration: number;
+      url?: string;
+      mediaType?: string;
+      type?: string;
+      [key: string]: any;
+    };
+    getLatestFragmentRequestForQuality?(streamId: string, quality: number): {
+      index: number;
+      startTime: number;
+      duration: number;
+      url?: string;
+      mediaType?: string;
+      [key: string]: any;
+    };
+    getManifestInfo?(): {
+      availableStreams?: any[];
+      duration?: number;
+      loadedTime?: Date;
+      [key: string]: any;
+    };
   }
 
   interface Debug {
