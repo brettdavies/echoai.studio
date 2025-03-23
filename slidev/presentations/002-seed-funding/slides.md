@@ -109,9 +109,11 @@ layout: default
 class: text-white
 ---
 
-# How It Works
 <!-- PRACTICE REQUIRED 
 conenction betwen HFT and Transcription needs to be more clear -->
+
+# How It Works
+
 ```mermaid
 graph LR
     IS[Input Stream] --> AS[Audio Stream]

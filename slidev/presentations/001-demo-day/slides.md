@@ -62,7 +62,37 @@ strong {
 
 # echoAI
 
-Low Latency Real-Time Transcription For Live Events
+## Low Latency Real-Time Transcription For Live Events
+
+<p>&nbsp;</p>
+
+<div class="grid-layout mt-4">
+<div>
+<v-click>
+
+## Problem
+
+- Live captioning has 15-20+ second delays
+- Fans miss critical moments
+- Accuracy suffers with domain terminology
+- ADA requirements unmet
+
+</v-click>
+</div>
+
+<div>
+<v-click>
+
+## Solution
+
+- **750ms latency** - 20x faster than industry
+- High accuracy at unprecedented speed
+- Native pro audio/video integration
+- Extensible plugin architecture
+
+</v-click>
+</div>
+</div>
 
 <div class="absolute bottom-10">
 GauntletAI Demo Day Pitch
@@ -73,70 +103,119 @@ layout: default
 class: text-white
 ---
 
-# The Problem
+# Market Validation
 
-- **Sports & entertainment fans miss critical moments**
-<!-- @note: ASH THINKS BIGGEST MOMENT why low latency high accuraacy is required, tell story -->
+<div class="mb-4">
+In just 2 weeks:
+</div>
 
-- Live transcription has unbearable delays (15-20+ seconds)
-- Transcriptions are unreliable with domain specific terminology
-- Accuracy plummets when trying to go faster
-- Accessibility requirements unmet by current tech
+<div class="grid gap-4">
+<div>
+  
+- **NBA**: Massive alignment, excited about partnership
+
+- **Twitch**: Exploring integration for creators
+
+- **Assist**: Pending partnership for livestreaming creators
+
+- **MLBAM**: Best-in-class sports tech (upcoming conversation)
+
+</div>
+</div>
+
+<div class="mt-4">
+Each conversation generates 2+ additional leads and investor introductions
+</div>
 
 ---
 layout: default
 class: text-white
 ---
 
-# Our Solution
+# Market Opportunity
 
-echoAI delivers ultra-fast audio transcription with just **750ms latency** - making real-time interaction possible.
+<div class="grid-layout mt-8">
+<div>
 
-- 20x faster than industry standard
-- Maintains high accuracy despite speed
-- Native integration with pro audio/video workflows
-- Extensible plugin architecture
+## Sports Entertainment
+
+- $X billion market
+- All major leagues seeking improved fan experience
+- Long tail of smaller leagues = massive market
+- First mover advantage in high-value segment
+
+</div>
+<div>
+
+## Conferences & Events
+
+- $Y billion market 
+- Live captioning for accessibility compliance
+- Multilingual capabilities expand reach
+- ADA/FCC regulations increasingly enforced
+
+</div>
+</div>
+
+---
+layout: default
+class: text-white
+---
+
+# Technical Differentiation
+
+<div class="mb-4">
+High-frequency trading inspired architecture creates **defensible technical moat**
+</div>
+
+<div class="grid-layout mb-10">
+<div>
+
+- **Speed**: 750ms vs industry 15-20+ seconds
+- **Accuracy**: Context-aware AI for domain terms
+- **Redundancy**: Parallel processing with multiple providers
+- **Flexibility**: Dynamic plugins without restart
+
+</div>
+<div>
+
 - EOY target: 750ms for end-to-end captioning
+- Native integration with professional workflows
+- Technical barriers to entry create defensible moat
+- Legacy vendors can't adapt quickly enough
 
-TBW
+</div>
+</div>
 
-- Core captioning service launch
-- Enterprise sports & entertainment focus
-- Expand plugin ecosystem
-
----
-layout: default
-class: text-white
----
-
-# How It Works
-<!-- PRACTICE REQUIRED 
+<!-- @note PRACTICE REQUIRED 
 conenction betwen HFT and Transcription needs to be more clear -->
+<div class="mt-6">
+
 ```mermaid
 graph LR
     IS[Input Stream] --> AS[Audio Stream]
     IS --> VS2[Video Stream]
-    
+
     AS --> T1[Provider A]
     AS --> T2[Provider B]
     AS --> T3[Provider C]
-    
+
     T1 --> TE[Transcript Enrichment]
     T2 --> TE
     T3 --> TE
-    
+
     TE --> TL[Translation]
     TE --> C[Caption Processing]
     TL --> C
-    
+
     VS2 --> FA[Frame Analysis]
-    
+
     C --> PO[Production Output]
     FA --> PO
-    
+
     linkStyle default stroke-width:2px
     linkStyle 1,4,8 stroke-width:2px,stroke-dasharray:10
-    
+
     style IS fill:#9b5de5,stroke:#333,color:white,stroke-width:2px
     style AS fill:#4B0082,stroke:#333,color:white,stroke-width:2px
     style VS2 fill:#4B0082,stroke:#333,color:white,stroke-width:2px
@@ -150,201 +229,126 @@ graph LR
     style PO fill:#d00000,stroke:#333,color:white,stroke-width:2px
 ```
 
-- High-frequency trading inspired message bus
-- Parallel processing with intelligent load balancing
-- Context-aware AI for improved accuracy
-- Aggregation of multiple providers for redundancy
-- Dynamic plug-ins can be reconfigured on the fly
+</div>
+
 
 ---
 layout: default
-class: text-white
----
-
-# Traction & Validation
-
-In just 2 weeks:
-
-- **NBA**: Massive alignment, excited about partnership
-- **Twitch**: Exploring integration for creators
-- **Assist**: Pending partnership for livestreaming creators
-- **MLBAM**: Upcoming conversation (best-in-class sports tech)
-
-Each conversation generates 2+ additional leads and offers for investor introductions
-
-## Strategic Advisors
-<div class="grid grid-cols-3 gap-4 mt-4">
-  <div>
-    <p class="font-bold mb-0">VP Digital Growth at NBA</p>
-    <p class="mt-0">Digital fan engagement expert</p>
-  </div>
-  <div>
-    <p class="font-bold mb-0">VP TV & Streaming at NBCUniversal</p>
-    <p class="mt-0">Media strategy & M&A advisory</p>
-  </div>
-  <div>
-    <p class="font-bold mb-0">Seasoned Live Event Executive</p>
-    <p class="mt-0">Former EVP at Pac-12, CBS, ABC (Disney / ESPN)</p>
-  </div>
-</div>
-
----
-layout: default
-class: text-white
----
-
-# Market Opportunity
-
-[Market size funnel chart: TAM → SAM → SOM]
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-<p>&nbsp;</p>
-
-<div class="grid-layout">
-<div>
-
-## Sports Entertainment
-
-- $X billion market
-- All leagues seeking improved fan experiences
-- Long tail of smaller leagues = massive market
-
-</div>
-<div>
-
-## Conferences & Events
-
-- $Y billion market
-- Live captioning for accessibility compliance
-- Multilingual capabilities expand reach
-
-</div>
-</div>
-
----
-layout: default
-class: text-white
----
-
-# Business Model
-
-<div class="grid-layout">
-<div>
-
-- Enterprise subscription & usage-based pricing
-- Exceptional unit economics:
-  - UE positive from day 1
-  - Near-negligible COGS
-  - Higher margins than typical SaaS
-
-</div>
-<div>
-
-<!-- [Pricing tiers and margin visualization] -->
-
-</div>
-</div>
-
----
-layout: default
-class: text-white
----
-
-# Competitive Advantage
-
-[2x2 matrix positioning echoAI vs competitors]
-
-- **Speed**: 750ms vs industry 15-20+ seconds
-- **Accuracy**: Context-aware AI outperforms generic solutions
-- **Integrations**: Native professional workflow compatibility
-- **Plugin Framework**: No restart required, parallel processing
-- **AI-First Team**: Cracked AI Engineers operate at 20x speed
-
----
-layout: two-cols
 class: text-white
 ---
 
 # Founding Team
 
-<div class="flex justify-center pb-4">
-  <img src="/images/headshot_brett.jpg" alt="Brett" class="rounded-circle w-40 h-40" />
+<div class="grid-layout">
+<div>
+
+<div class="flex flex-col gap-4">
+  <div class="flex gap-4">
+    <img src="/images/headshot_brett.jpg" alt="Brett" class="rounded-circle w-24 h-24" />
+    <div>
+      <h3 class="mb-1">Brett (Founder)</h3>
+      <ul class="text-sm">
+        <li>Early Uber Operations leader (5+ years)</li>
+        <li>Built global driver systems from scratch</li>
+        <li>Senior roles at Lime, Cornershop, GoPuff</li>
+        <li>Co-founded Ukraine Defense Fund ($77M year 1)</li>
+        <li>Reliable logistics network - Activated & deployed Elon's donated Starlinks</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
-## Brett (Founder)
+</div>
+<div>
 
-- Early Uber Operations leader (5+ years)
-- Built global driver systems from scratch
-- Senior roles at Lime, Cornershop, GoPuff
-- Co-founded Ukraine Defense Fund ($77M year 1)
-- Reliable logistics network - Activated & deployed Elon's donated Starlinks
+<div class="flex flex-col gap-4">
+  <div class="flex gap-4">
+    <img src="/images/headshot_will.jpg" alt="Will" class="rounded-circle w-24 h-24" />
+    <div>
+      <h3 class="mb-1">Will (Founding Engineer)</h3>
+      <ul class="text-sm">
+        <li>Rising engineering talent</li>
+        <li>Top performer at GauntletAI</li>
+        <li>Technical lead on parallel processing systems</li>
+        <li>Expertise in high-performance message buses</li>
+        <li>Trajectory to become Top 1% engineer</li>
+      </ul>
+    </div>
+  </div>
+</div>
 
-::right::
+</div>
+</div>
 
 <p>&nbsp;</p>
-<div class="flex justify-center pb-4">
-  <img src="/images/headshot_will.jpg" alt="Will" class="rounded-circle w-40 h-40" />
+
+<div class="mt-4">
+  <h3 class="mb-2">Strategic Advisors</h3>
+  <div class="grid grid-cols-3 gap-2">
+    <div>
+      <p class="font-bold text-sm mb-0">VP Digital Growth at NBA</p>
+      <ul class="text-sm">
+        <li>Digital fan engagement expert</li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-bold text-sm mb-0">VP TV & Streaming at NBCUniversal</p>
+      <ul class="text-sm">
+        <li>Media strategy & M&A advisory</li>
+      </ul>
+    </div>
+    <div>
+      <p class="font-bold text-sm mb-0">Seasoned Live Event Executive</p>
+      <ul class="text-sm">
+        <li>Retired EVP at Pac-12, CBS, ABC (Disney/ESPN)</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
-## Will (Founding Engineer)
-
-- Rising engineering talent
-- Top performer at GauntletAI
-- Technical lead on parallel processing systems
-- Expertise in high-performance message buses
-- Trajectory to become Top 1% engineer
-
 ---
 layout: default
 class: text-white
 ---
 
-# Why Now?
+# The Ask & Revenue Path
 
-- AI models finally capable of required speed & accuracy
-- Sports leagues prioritizing fan experience innovation
-- Legacy captioning vendors can't adapt quickly
-- Technical barriers to entry create defensible moat
-- ADA/FCC regulations increasingly enforced
+<div class="mb-5">
+Raising seed round for minimal team expansion, marketing, customer acquisition
+</div>
 
----
-layout: default
-class: text-white
----
-
-# The Ask
-
-Raising seed round:
-
-- Minimal team expansion (1x engineering & 1x enterprise sales)
-- Marketing & brand awareness
-- Customer referral incentives
-- Domain-specific model development
+<div class="grid-layout mb-10">
+<div>
 
 ## Revenue Streams
 
-- Enterprise audio captioning & translation services
+- Enterprise captioning & translation
 - Plugin marketplace licensing fees
-- Data analytics & real-time insights platform
+- Data analytics & insights platform
 
-Clear path to $100 million ARR in 18 months
+</div>
+<div>
 
----
-layout: center
-class: text-center text-white
----
+## Unit Economics
 
-# <span class="text-[hsl(var(--primary))]">echoAI</span>
+- UE positive from day 1
+- Near-negligible COGS
+- Higher margins than typical SaaS
 
-We're building the real-time AI layer that powers the next generation of live media
-
-<p>&nbsp;</p>
-
-<div class="text-xl mt-4">
-  <a href="https://echoai.studio" class="text-3xl font-bold">echoai.studio</a>
+</div>
 </div>
 
-<div class="flex flex-col items-center justify-center mt-4">
-  <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://echoai.studio" alt="echoAI Contact" class="w-48 h-48"/>
+<div class="text-xl text-center">
+Clear path to <strong>$100 million ARR</strong> in 18 months
+</div>
+
+<div class="absolute bottom-5 right-5">
+  <a href="https://echoai.studio" class="text-xl font-bold">echoai.studio</a>
+  <div class="mt-2 relative">
+    <div class="absolute -left-71 top-8 text-right">
+      <p class="text-sm">Live demo streaming on our website</p>
+    </div>
+    <span class="text-xl absolute -left-9 top-12">→</span>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://echoai.studio" alt="echoAI Contact" class="w-34 h-34"/>
+  </div>
 </div>
