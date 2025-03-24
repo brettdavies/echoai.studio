@@ -9,11 +9,17 @@ import DashAudioPlayerLogger from '../utils/DashAudioPlayerLogger';
 import AudioProcessor from './AudioProcessor';
 /// <reference path="../types/dashjs.d.ts" />
 
+/**
+ * Props for the DashAudioPlayer component
+ */
 interface DashAudioPlayerProps {
   url: string;
   className?: string;
   onPlaybackStarted?: () => void;
   onPlaybackStateChange?: (isPlaying: boolean) => void;
+  streamingUrl?: string;
+  streamingEnabled?: boolean;
+  onStreamingStatusChange?: (status: boolean, message?: string) => void;
 }
 
 const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({ 
@@ -21,6 +27,9 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
   className = '',
   onPlaybackStarted,
   onPlaybackStateChange,
+  streamingUrl,
+  streamingEnabled = false,
+  onStreamingStatusChange,
 }) => {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -788,6 +797,9 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
           mediaElement={videoRef.current}
           sourceNode={sourceNodeRef.current}
           isPlaying={isPlaying}
+          streamingUrl={streamingUrl}
+          streamingEnabled={streamingEnabled}
+          onStreamingStatusChange={onStreamingStatusChange}
         />
       )}
       

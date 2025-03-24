@@ -18,13 +18,24 @@ export class AudioProcessingSystem {
   
   /**
    * Creates a new AudioProcessingSystem
+   * @param audioContext The audio context to use
+   * @param sourceNode The source node to connect to
+   * @param processingOptions Processing options
+   * @param onAudioDataCallback Callback for processed audio data
+   * @param customProcessorCore Optional custom processor core (e.g., StreamingAudioProcessor)
    */
   constructor(
     private audioContext: AudioContext,
     private sourceNode: MediaElementAudioSourceNode | null,
     private processingOptions: ProcessingOptions,
-    private onAudioDataCallback: (audioData: Float32Array) => void
-  ) {}
+    private onAudioDataCallback: (audioData: Float32Array) => void,
+    customProcessorCore?: AudioProcessorCore
+  ) {
+    // If a custom processor core is provided, use it
+    if (customProcessorCore) {
+      this.processorCore = customProcessorCore;
+    }
+  }
   
   /**
    * Initializes all necessary audio managers
@@ -38,8 +49,10 @@ export class AudioProcessingSystem {
     }
     
     try {
-      // Create processor core
-      this.processorCore = new AudioProcessorCore(this.processingOptions);
+      // Create processor core if not already set via constructor
+      if (!this.processorCore) {
+        this.processorCore = new AudioProcessorCore(this.processingOptions);
+      }
       
       // Create connection manager
       this.connectionManager = new AudioConnectionManager(
