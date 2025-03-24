@@ -1,11 +1,14 @@
 #!/bin/bash
 # .cursor/rules/git-capture-diffs.sh
 #
-# This script captures git diff information for specified targets (files and/or directories)
+# This script captures git diff information between commits and/or for specified targets
 # and creates a machine-readable report in JSON format.
 #
 # Usage: 
-#   ./git-capture-diffs.sh [target1] [target2] ...
+#   ./git-capture-diffs.sh [--commits SHA1 SHA2] [target1] [target2] ...
+#
+# Options:
+#   --commits SHA1 SHA2  Compare changes between two specific commit SHAs
 #
 # If no targets are specified, the current directory is used.
 # The script will create a JSON report at .idea/_gitdiff.json
@@ -20,8 +23,49 @@ if ! command -v jq &> /dev/null; then
   exit 1
 fi
 
-# If no arguments provided, use current directory
-TARGETS=("${@:-.}")
+# Initialize variables
+COMPARE_COMMITS=false
+COMMIT_FROM=""
+COMMIT_TO=""
+TARGETS=()
+
+# Parse command line arguments
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --commits)
+      if [[ $# -lt 3 ]]; then
+        echo "Error: --commits requires two SHA arguments"
+        exit 1
+      fi
+      COMPARE_COMMITS=true
+      COMMIT_FROM="$2"
+      COMMIT_TO="$3"
+      shift 3  # Skip past the option and its two values
+      ;;
+    *)
+      TARGETS+=("$1")
+      shift
+      ;;
+  esac
+done
+
+# If no targets provided, use current directory
+if [ ${#TARGETS[@]} -eq 0 ]; then
+  TARGETS=(".")
+fi
+
+# Validate commit SHAs if provided
+if [ "$COMPARE_COMMITS" = true ]; then
+  if ! git rev-parse --verify "$COMMIT_FROM" >/dev/null 2>&1; then
+    echo "Error: Invalid commit SHA: $COMMIT_FROM"
+    exit 1
+  fi
+  
+  if ! git rev-parse --verify "$COMMIT_TO" >/dev/null 2>&1; then
+    echo "Error: Invalid commit SHA: $COMMIT_TO"
+    exit 1
+  fi
+fi
 
 # Validate all targets (both files and directories)
 INVALID_TARGETS=()
@@ -69,22 +113,48 @@ TEMP_DIR=$(mktemp -d)
 STATUS_FILE="$TEMP_DIR/status.txt"
 DIFF_FILE="$TEMP_DIR/diff.txt"
 UNTRACKED_LIST="$TEMP_DIR/untracked.txt"
+CHANGED_FILES="$TEMP_DIR/changed_files.txt"
 
-# Get git status
-git status --porcelain "${TARGETS[@]}" > "$STATUS_FILE"
-
-# Get git diff
-git diff "${TARGETS[@]}" > "$DIFF_FILE"
-
-# Get untracked files
-git ls-files --others --exclude-standard "${TARGETS[@]}" > "$UNTRACKED_LIST"
+# Get git status and diff based on whether we're comparing commits
+if [ "$COMPARE_COMMITS" = true ]; then
+  # When comparing commits, we don't need the working directory status
+  echo "[]" > "$STATUS_FILE"
+  
+  # Get list of changed files between commits
+  git diff --name-only "$COMMIT_FROM" "$COMMIT_TO" -- "${TARGETS[@]}" > "$CHANGED_FILES"
+  
+  # Get the diff between commits
+  git diff "$COMMIT_FROM" "$COMMIT_TO" -- "${TARGETS[@]}" > "$DIFF_FILE"
+  
+  # No untracked files when comparing commits
+  echo "" > "$UNTRACKED_LIST"
+else
+  # Get git status
+  git status --porcelain "${TARGETS[@]}" > "$STATUS_FILE"
+  
+  # Get git diff
+  git diff "${TARGETS[@]}" > "$DIFF_FILE"
+  
+  # Get untracked files
+  git ls-files --others --exclude-standard "${TARGETS[@]}" > "$UNTRACKED_LIST"
+fi
 
 # Start building JSON
 echo "{" > "$OUTPUT_FILE"
 echo "  \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"," >> "$OUTPUT_FILE"
 echo "  \"repository\": \"$(git config --get remote.origin.url || echo "unknown")\"," >> "$OUTPUT_FILE"
 echo "  \"branch\": \"$(git rev-parse --abbrev-ref HEAD)\"," >> "$OUTPUT_FILE"
-echo "  \"commit\": \"$(git rev-parse HEAD)\"," >> "$OUTPUT_FILE"
+
+# Add commit comparison information if applicable
+if [ "$COMPARE_COMMITS" = true ]; then
+  echo "  \"comparison\": {" >> "$OUTPUT_FILE"
+  echo "    \"from\": \"$COMMIT_FROM\"," >> "$OUTPUT_FILE"
+  echo "    \"to\": \"$COMMIT_TO\"" >> "$OUTPUT_FILE"
+  echo "  }," >> "$OUTPUT_FILE"
+else
+  echo "  \"commit\": \"$(git rev-parse HEAD)\"," >> "$OUTPUT_FILE"
+fi
+
 echo "  \"targets\": [" >> "$OUTPUT_FILE"
 
 # Add targets as JSON array
@@ -116,6 +186,25 @@ if [ -s "$STATUS_FILE" ]; then
 fi
 echo "" >> "$OUTPUT_FILE"
 echo "  ]," >> "$OUTPUT_FILE"
+
+# Add changed files between commits if comparing commits
+if [ "$COMPARE_COMMITS" = true ]; then
+  echo "  \"changed_files\": [" >> "$OUTPUT_FILE"
+  if [ -s "$CHANGED_FILES" ]; then
+    first=true
+    while IFS= read -r file; do
+      if [ "$first" = true ]; then
+        first=false
+      else
+        echo "," >> "$OUTPUT_FILE"
+      fi
+      
+      echo -n "    \"$file\"" >> "$OUTPUT_FILE"
+    done < "$CHANGED_FILES"
+  fi
+  echo "" >> "$OUTPUT_FILE"
+  echo "  ]," >> "$OUTPUT_FILE"
+fi
 
 # Add diff information
 echo "  \"diff\": $(cat "$DIFF_FILE" | jq -R -s .)," >> "$OUTPUT_FILE"
@@ -151,4 +240,8 @@ echo "}" >> "$OUTPUT_FILE"
 # Clean up temp files
 rm -rf "$TEMP_DIR"
 
-echo "Git diff report created at $OUTPUT_FILE in JSON format"
+if [ "$COMPARE_COMMITS" = true ]; then
+  echo "Git diff report between commits $COMMIT_FROM and $COMMIT_TO created at $OUTPUT_FILE in JSON format"
+else
+  echo "Git diff report created at $OUTPUT_FILE in JSON format"
+fi
