@@ -23,100 +23,78 @@ export class AudioFileManager {
     processingOptions: ProcessingOptions,
     processors: string[]
   ): Promise<void> {
+    audioLoggers.session.debug('AudioFileManager.saveAllAudioFiles called', {
+      originalChunksLength: originalChunks.length,
+      processorsCount: processors.length,
+      isDebugMode: isDebugMode()
+    });
+    
     // Skip file saving if not in debug mode
     if (!isDebugMode()) {
       audioLoggers.session.debug('Audio file saving skipped (not in debug mode)');
       return;
     }
     
+    // For debugging, if no chunks, add a small silent chunk
     if (originalChunks.length === 0) {
-      audioLoggers.session.info('No audio data to save');
-      return;
+      audioLoggers.session.info('No audio data to save, creating test audio');
+      // Create a small debug chunk - 0.5 second of silence
+      const sampleRate = originalSampleRate || 44100;
+      const debugChunk = new Float32Array(Math.floor(sampleRate * 0.5));
+      originalChunks.push(debugChunk);
+      
+      // Add to processors too
+      for (const processorName of processors) {
+        const chunks = processedData.get(processorName) || [];
+        if (chunks.length === 0) {
+          chunks.push(debugChunk);
+          processedData.set(processorName, chunks);
+        }
+      }
     }
     
+    audioLoggers.session.debug('Preparing to save audio files');
+    
     try {
-      audioLoggers.session.info('Preparing to save audio files...');
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      // Create date-based filename
+      const date = new Date();
+      const timestamp = date.toISOString().replace(/[:.]/g, '-');
       
-      // Save original raw audio file
-      const originalAudio = this.combineAudioData(originalChunks, null, originalSampleRate);
-      audioLoggers.session.info(`Saving raw audio: ${originalAudio.data.length} samples at ${originalAudio.sampleRate}Hz`);
-      await saveWAVFile(
-        originalAudio.data, 
-        originalAudio.sampleRate, 
-        `raw_${originalAudio.sampleRate}hz_${timestamp}.wav`
-      );
-      
-      // Check if we have any processors
-      if (processors.length === 0) {
-        audioLoggers.session.info('No processing modules active, only raw audio saved');
-        return;
+      // Save original audio
+      try {
+        audioLoggers.session.debug('Saving original audio');
+        const originalAudio = combineAudioChunks(originalChunks);
+        const originalFilename = createFilename('original', timestamp, processingOptions);
+        await saveWAVFile(originalAudio, originalSampleRate, originalFilename);
+        audioLoggers.session.debug('Original audio saved successfully');
+      } catch (error) {
+        audioLoggers.session.error('Error saving original audio:', error);
       }
       
-      // Process and save files
-      const savePromises: Promise<void>[] = [];
-      
-      // Flag to track if we've saved a resampled file
-      let resampledFileSaved = false;
-      
-      // Save output from each processor
+      // Save processed audio for each processor
       for (const processorName of processors) {
         try {
-          const processorChunks = processedData.get(processorName) || [];
-          const processedAudio = this.combineAudioData(
-            processorChunks, 
-            processorName, 
-            originalSampleRate, 
-            processingOptions
-          );
+          const chunks = processedData.get(processorName);
           
-          // Skip saving if processing failed or resulted in empty data
-          if (processedAudio.processingFailed || processedAudio.data.length === 0) {
-            audioLoggers.processor.info(`Skipping save for ${processorName} due to processing failure or empty result`);
-            continue;
-          }
-          
-          // Generate filename based on processing options
-          const isResampled = 
-            processorName === 'rubberband' && 
-            processingOptions.resample && 
-            processingOptions.targetSampleRate !== originalSampleRate;
-          
-          const filename = createFilename(
-            processorName,
-            processedAudio.sampleRate,
-            {
-              timeStretch: processingOptions.timeStretch,
-              pitchShift: processingOptions.pitchShift,
-              formantPreservation: processingOptions.formantPreservation,
-              isResampled
-            }
-          );
-          
-          audioLoggers.session.info(`Saving processed audio: ${filename} with ${processedAudio.data.length} samples`);
-          
-          // Save this processed version
-          savePromises.push(
-            saveWAVFile(
-              processedAudio.data,
-              processedAudio.sampleRate,
-              filename
-            )
-          );
-          
-          if (isResampled) {
-            resampledFileSaved = true;
+          if (chunks && chunks.length > 0) {
+            audioLoggers.session.debug(`Saving ${processorName} audio`);
+            const processedAudio = combineAudioChunks(chunks);
+            const processedFilename = createFilename(processorName, timestamp, processingOptions);
+            await saveWAVFile(
+              processedAudio, 
+              processingOptions.resample ? processingOptions.targetSampleRate! : originalSampleRate,
+              processedFilename
+            );
+            audioLoggers.session.debug(`${processorName} audio saved successfully`);
+          } else {
+            audioLoggers.session.debug(`No ${processorName} chunks to save`);
           }
         } catch (error) {
-          audioLoggers.processor.error(`Error saving processed audio for ${processorName}:`, error);
+          audioLoggers.session.error(`Error saving ${processorName} audio:`, error);
         }
       }
       
-      // Wait for all files to be saved
-      await Promise.all(savePromises);
-      
-      const filesSaved = 1 + savePromises.length; // 1 raw + processed files
-      audioLoggers.session.info(`${filesSaved} audio files saved: raw and processed versions.`);
+      audioLoggers.session.debug('All audio files saved successfully');
     } catch (error) {
       audioLoggers.session.error('Error saving audio files:', error);
     }

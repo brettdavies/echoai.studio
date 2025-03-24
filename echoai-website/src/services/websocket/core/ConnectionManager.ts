@@ -328,9 +328,46 @@ export class ConnectionManager {
           
           return; // Don't forward heartbeat responses to application code
         }
+        
+        // Log all non-heartbeat JSON messages
+        if (message && message.type) {
+          // Log all message types explicitly with the WebSocket logger
+          logger.info(LogCategory.WS, `Received ${message.type} message`, { 
+            type: message.type,
+            size: event.data.length,
+            // Extract a subset of fields for logging - avoid sensitive data
+            messageId: message.message_id,
+            sampleCount: message.sample_count,
+            // Include timestamp for time-sensitive messages
+            timestamp: Date.now()
+          });
+        } else {
+          // Unknown JSON structure
+          logger.info(LogCategory.WS, 'Received unstructured JSON message', { 
+            size: event.data.length,
+            dataPreview: event.data.substring(0, 50) + '...'
+          });
+        }
       } catch (e) {
-        // Not JSON or not a heartbeat, continue normal processing
+        // Not JSON, log as string
+        logger.debug(LogCategory.WS, 'Received non-JSON string message', { 
+          size: event.data.length,
+          dataPreview: event.data.substring(0, 50) + '...'
+        });
       }
+    } else if (event.data instanceof ArrayBuffer) {
+      // Log binary data
+      logger.debug(LogCategory.WS, 'Received binary message', { 
+        size: event.data.byteLength,
+        type: 'ArrayBuffer'
+      });
+    } else if (event.data instanceof Blob) {
+      // Log blob data
+      logger.debug(LogCategory.WS, 'Received blob message', { 
+        size: event.data.size,
+        type: 'Blob',
+        contentType: event.data.type || 'unknown'
+      });
     }
     
     // Normal message handling

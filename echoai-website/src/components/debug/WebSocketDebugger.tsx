@@ -84,12 +84,6 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({
 
   // Set up log capture on mount
   useEffect(() => {
-    // Save original log level
-    originalLogLevel.current = logger.getLogLevel();
-    
-    // Set to TRACE level for maximum detail
-    logger.setLogLevel(LogLevel.TRACE);
-    
     // Define our custom log handler
     const logHandler = (level: LogLevel, category: LogCategory, message: string, data?: any) => {
       // Only capture websocket related logs
@@ -134,10 +128,9 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({
     // Generate a fresh audio sample
     generateAudioSample();
     
-    // Restore original settings on unmount
+    // Cleanup on unmount
     return () => {
       logger.removeLogHandler(logHandler);
-      logger.setLogLevel(originalLogLevel.current);
     };
   }, []);
 

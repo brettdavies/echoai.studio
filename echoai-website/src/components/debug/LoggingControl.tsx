@@ -181,8 +181,8 @@ const LoggingControl: React.FC = () => {
   
   // Reset to defaults
   const resetToDefaults = () => {
+    // Use the logger's resetLoggingConfig method which now also resets the log level
     logger.resetLoggingConfig();
-    logger.setLogLevel(isProductionMode() ? LogLevel.ERROR : LogLevel.DEBUG);
     
     // Refresh state
     setLogLevel(logger.getLogLevel());

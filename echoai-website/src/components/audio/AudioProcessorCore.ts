@@ -10,22 +10,28 @@ import { audioLoggers } from '../../utils/LoggerFactory';
  */
 export class AudioProcessorCore {
   // Raw audio data
-  private originalChunks: Float32Array[] = [];
+  protected originalChunks: Float32Array[] = [];
   
-  // Processed data storage
-  private processedData: Map<string, Float32Array[]> = new Map();
+  // Processed audio data by processor
+  protected processedData: Map<string, Float32Array[]> = new Map();
   
-  // Active processor modules
-  private processorModules: AudioProcessorModule[] = [];
+  // Processor modules
+  protected processorModules: AudioProcessorModule[] = [];
   
   // Original sample rate
-  private originalSampleRate: number = 0;
+  protected originalSampleRate: number = 0;
+  
+  // Batch processing properties
+  private pendingChunks: Float32Array[] = [];
+  private batchDurationMs: number = 250; // 250ms batch size
+  private batchSampleCount: number = 0;
+  private isProcessingBatch: boolean = false;
   
   /**
-   * Creates a new AudioProcessorCore
-   * @param processingOptions The processing options
+   * Constructor
+   * @param processingOptions Processing options
    */
-  constructor(private processingOptions: ProcessingOptions) {
+  constructor(protected processingOptions: ProcessingOptions) {
     this.initializeProcessors();
   }
   
@@ -59,36 +65,73 @@ export class AudioProcessorCore {
    */
   async processAudioChunk(audioChunk: Float32Array): Promise<void> {
     // Debug - track original audio data
-    console.log(`[AUDIO DEBUG] Processing chunk with ${audioChunk.length} samples, first few values:`, 
+    audioLoggers.processor.debug(`Received chunk with ${audioChunk.length} samples, first few values:`, 
       Array.from(audioChunk.slice(0, 5)));
     
     // Store original chunk
     this.originalChunks.push(audioChunk);
     
-    // Process through each module
-    for (const module of this.processorModules) {
+    // Calculate batch size if not already done
+    if (this.batchSampleCount === 0 && this.originalSampleRate > 0) {
+      this.batchSampleCount = Math.ceil(this.originalSampleRate * (this.batchDurationMs / 1000));
+      audioLoggers.processor.debug(`Batch size calculated: ${this.batchSampleCount} samples for ${this.batchDurationMs}ms at ${this.originalSampleRate}Hz`);
+    }
+    
+    // Add to pending chunks
+    this.pendingChunks.push(audioChunk);
+    
+    // Calculate total length of pending chunks
+    const pendingLength = this.pendingChunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    
+    // Only process when we have enough data or if processing is explicitly forced
+    if (pendingLength >= this.batchSampleCount && !this.isProcessingBatch) {
+      audioLoggers.processor.debug(`Processing batch of ${this.pendingChunks.length} chunks (${pendingLength} samples)`);
+      
+      // Set flag to prevent reentrant processing
+      this.isProcessingBatch = true;
+      
       try {
-        // Get the storage array for this processor
-        const processedChunks = this.processedData.get(module.name) || [];
+        // Process all pending chunks as a batch through each module
+        for (const module of this.processorModules) {
+          try {
+            // Get the storage array for this processor
+            const processedChunks = this.processedData.get(module.name) || [];
+            
+            // Process each chunk in the batch
+            for (const chunk of this.pendingChunks) {
+              // Debug before processing
+              audioLoggers.processor.debug(`Processing through module ${module.name}`);
+              
+              // Process the chunk
+              const processedChunk = await module.processChunk(
+                chunk,
+                this.originalSampleRate
+              );
+              
+              // Skip empty chunks
+              if (processedChunk.length > 0) {
+                // Debug after processing
+                audioLoggers.processor.debug(`Module ${module.name} produced chunk with ${processedChunk.length} samples`);
+                
+                // Store the processed chunk
+                processedChunks.push(processedChunk);
+              }
+            }
+            
+            this.processedData.set(module.name, processedChunks);
+          } catch (error) {
+            audioLoggers.processor.error(`Error in processor module ${module.name}:`, error);
+          }
+        }
         
-        // Debug before processing
-        console.log(`[AUDIO DEBUG] Processing through module ${module.name}`);
-        
-        // Process the chunk
-        const processedChunk = await module.processChunk(
-          audioChunk,
-          this.originalSampleRate
-        );
-        
-        // Debug after processing
-        console.log(`[AUDIO DEBUG] Module ${module.name} produced chunk with ${processedChunk.length} samples`);
-        
-        // Store the processed chunk
-        processedChunks.push(processedChunk);
-        this.processedData.set(module.name, processedChunks);
-      } catch (error) {
-        audioLoggers.processor.error(`Error in processor module ${module.name}:`, error);
+        // Clear pending chunks after processing
+        this.pendingChunks = [];
+      } finally {
+        // Clear processing flag
+        this.isProcessingBatch = false;
       }
+    } else {
+      audioLoggers.processor.debug(`Added to batch queue: ${pendingLength}/${this.batchSampleCount} samples (${Math.floor(pendingLength / Math.max(1, this.batchSampleCount) * 100)}% of batch)`);
     }
   }
   
@@ -124,10 +167,14 @@ export class AudioProcessorCore {
    * Processes and saves all audio files
    */
   async saveAudioFiles(): Promise<void> {
+    audioLoggers.processor.debug('saveAudioFiles called - chunks:', this.originalChunks.length);
+    
     if (this.originalChunks.length === 0) {
-      audioLoggers.processor.info('No audio data to save');
-      return;
+      audioLoggers.processor.info('No audio data to save, aborting save operation');
+      return; // Don't save anything if no audio data is available
     }
+    
+    audioLoggers.processor.debug('Has audio data, proceeding with save');
     
     // Get processor names
     const processorNames = this.processorModules.map(module => module.name);
@@ -138,16 +185,22 @@ export class AudioProcessorCore {
         // Check if module has finalize method
         if (module.finalize) {
           const chunks = this.processedData.get(module.name) || [];
+          audioLoggers.processor.debug(`Finalizing processor ${module.name} with ${chunks.length} chunks`);
+          
           const processedAudio = await module.finalize(chunks, this.originalSampleRate);
           
           // Replace chunks with finalized data
           const finalizedChunks = [processedAudio.data];
           this.processedData.set(module.name, finalizedChunks);
+          
+          audioLoggers.processor.debug(`Finalized ${module.name} data: ${processedAudio.data.length} samples`);
         }
       } catch (error) {
         audioLoggers.processor.error(`Error finalizing processor ${module.name}:`, error);
       }
     }
+    
+    audioLoggers.processor.debug('About to call AudioFileManager.saveAllAudioFiles');
     
     // Save all audio files
     await AudioFileManager.saveAllAudioFiles(
@@ -158,8 +211,19 @@ export class AudioProcessorCore {
       processorNames
     );
     
+    audioLoggers.processor.debug('AudioFileManager.saveAllAudioFiles completed');
+    
     // Clear data after saving
     this.clearData();
+  }
+  
+  /**
+   * Add an audio chunk directly for debugging
+   * @param audioChunk The audio chunk to add
+   */
+  addDebugAudioChunk(audioChunk: Float32Array): void {
+    audioLoggers.processor.debug(`Adding debug audio chunk with ${audioChunk.length} samples`);
+    this.originalChunks.push(audioChunk);
   }
   
   /**

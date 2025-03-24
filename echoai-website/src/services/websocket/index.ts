@@ -51,9 +51,7 @@ export {
   convertToInt16,
   combineAudioChunks,
   arrayBufferToBase64,
-  createBinaryMessage,
   createJsonMessage,
-  createConfigMessage,
   processAudioData
 } from './audio';
 
@@ -179,7 +177,9 @@ export async function sendAudioToServer(
   const webSocketService = WebSocketManager.getInstance().getService(serverUrl);
   
   // Create a one-time use streaming bridge
-  const streamingBridge = new AudioStreamingBridge(webSocketService);
+  const streamingBridge = new AudioStreamingBridge(webSocketService, {
+    base64Encode: true
+  });
   
   // Set the sample rate
   streamingBridge.setSampleRate(sampleRate);

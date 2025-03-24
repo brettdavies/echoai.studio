@@ -46,7 +46,10 @@ export class AudioSessionManager {
     
     // Save audio files if we have data
     if (this.processorCore.hasAudioData()) {
+      audioLoggers.session.debug('Audio data detected, saving files');
       await this.processorCore.saveAudioFiles();
+    } else {
+      audioLoggers.session.debug('No audio data detected, skipping save operation');
     }
     
     // Disconnect audio nodes

@@ -32,8 +32,6 @@ export {
 
 // Message formatting (exported for testing or advanced use)
 export {
-  createBinaryMessage,
   createJsonMessage,
-  createConfigMessage,
   processAudioData
 } from './MessageFormatter'; 

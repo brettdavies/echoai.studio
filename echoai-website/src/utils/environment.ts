@@ -28,7 +28,8 @@ export const isDevelopmentMode = (): boolean => {
  * @returns boolean indicating if in debug mode
  */
 export const isDebugMode = (): boolean => {
-  return isDevelopmentMode();
+  // Always return true to enable audio downloads in all environments
+  return true;
 };
 
 /**

@@ -5,12 +5,9 @@ import './index.css'
 import App from './App'
 import WebSocketTestPage from './pages/WebSocketTestPage'
 import './lib/i18n' // Import i18n configuration
-import { LogComponent, logger } from './utils/Logger'
 import { appLogger } from './utils/LoggerFactory'
 import { isDevelopmentMode } from './utils/environment'
 import { WebSocketProvider } from './contexts/WebSocketContext'
-// Disable RubberBand logs by default - users can enable via UI if needed
-logger.disableComponents(LogComponent.RESAMPLER)
 
 // Initialize debug utilities in development mode
 if (isDevelopmentMode()) {

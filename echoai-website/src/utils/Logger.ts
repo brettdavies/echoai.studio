@@ -73,14 +73,17 @@ export interface LoggingConfig {
   components: {
     [key in LogComponent]?: boolean;
   };
+  logLevel?: LogLevel;
 }
 
-// Default logging configuration - all components enabled by default
+// Default logging configuration with appropriate defaults for production readiness
 export const DEFAULT_LOGGING_CONFIG: LoggingConfig = {
   components: Object.values(LogComponent).reduce((config, component) => {
+    // All components are enabled by default
     config[component] = true;
     return config;
-  }, {} as { [key in LogComponent]: boolean })
+  }, {} as { [key in LogComponent]: boolean }),
+  logLevel: LogLevel.DEBUG
 };
 
 // Log message format for structured logging
@@ -101,7 +104,7 @@ export type LogHandler = (level: LogLevel, category: LogCategory, message: strin
  */
 export class Logger {
   private static instance: Logger;
-  private logLevel: LogLevel = LogLevel.DEBUG; // Default to DEBUG in development
+  private static logLevel: LogLevel; // No initial default value
   private logs: LogMessage[] = [];
   private maxLogSize: number = 1000;
   private serviceId: string = '';
@@ -131,22 +134,26 @@ export class Logger {
    * Protected constructor to allow extension but prevent direct instantiation
    */
   protected constructor() {
-    // Set default log level based on environment
-    if (isProductionMode()) {
-      this.logLevel = LogLevel.ERROR;
-    } else {
-      // Default to DEBUG level for development
-      this.logLevel = LogLevel.DEBUG;
-    }
+    // First, try to load logging config from localStorage in browser environments
+    const loadedFromStorage = this.loadConfigFromStorage();
     
-    // Try to load logging config from localStorage in browser environments
-    this.loadConfigFromStorage();
+    // Only set default log level if it hasn't been loaded from storage
+    if (!loadedFromStorage || Logger.logLevel === undefined) {
+      // Set default log level based on environment
+      if (isProductionMode()) {
+        Logger.logLevel = LogLevel.ERROR;
+      } else {
+        // Default to DEBUG level for development
+        Logger.logLevel = LogLevel.DEBUG;
+      }
+    }
   }
   
   /**
    * Load logging configuration from localStorage if available
+   * @returns Whether configuration was successfully loaded
    */
-  private loadConfigFromStorage(): void {
+  private loadConfigFromStorage(): boolean {
     try {
       // Only try to access localStorage in browser environments
       if (typeof localStorage !== 'undefined') {
@@ -154,10 +161,13 @@ export class Logger {
         if (storedConfig) {
           const config = JSON.parse(storedConfig) as LoggingConfig;
           this.applyLoggingConfig(config);
+          return true;
         }
       }
+      return false;
     } catch (e) {
       console.debug('Failed to load logging config from storage:', e);
+      return false;
     }
   }
   
@@ -168,7 +178,8 @@ export class Logger {
     try {
       if (typeof localStorage !== 'undefined') {
         const config: LoggingConfig = {
-          components: {}
+          components: {},
+          logLevel: Logger.logLevel
         };
         
         // Convert map to object
@@ -194,23 +205,41 @@ export class Logger {
       });
     }
     
+    // Set log level if provided in config
+    if (config.logLevel !== undefined) {
+      Logger.logLevel = config.logLevel;
+    }
+    
     // Save the updated configuration
     this.saveConfigToStorage();
   }
   
   /**
    * Reset logging configuration to defaults
+   * This uses the DEFAULT_LOGGING_CONFIG settings
    */
   public resetLoggingConfig(): void {
     this.applyLoggingConfig(DEFAULT_LOGGING_CONFIG);
+    
+    // Also reset log level to default
+    if (DEFAULT_LOGGING_CONFIG.logLevel !== undefined) {
+      Logger.logLevel = DEFAULT_LOGGING_CONFIG.logLevel;
+    } else {
+      // Fallback to environment-specific default
+      Logger.logLevel = isProductionMode() ? LogLevel.ERROR : LogLevel.DEBUG;
+    }
+    
+    // Save the updated configuration
+    this.saveConfigToStorage();
   }
   
   /**
-   * Set the log level
+   * Set the log level and save it to storage
    * @param level The log level to set
    */
   public setLogLevel(level: LogLevel): void {
-    this.logLevel = level;
+    Logger.logLevel = level;
+    this.saveConfigToStorage();
   }
   
   /**
@@ -218,7 +247,7 @@ export class Logger {
    * @returns The current log level
    */
   public getLogLevel(): LogLevel {
-    return this.logLevel;
+    return Logger.logLevel;
   }
   
   /**
@@ -430,7 +459,7 @@ export class Logger {
    */
   protected log(level: LogLevel, category: LogCategory, message: string, data?: any, component?: LogComponent): void {
     // Skip logging if level is too verbose for current settings
-    if (level > this.logLevel) {
+    if (level > Logger.logLevel) {
       return;
     }
     
@@ -576,8 +605,6 @@ export class AudioLogger extends Logger {
    */
   constructor() {
     super();
-    // Configure default settings for audio logging
-    this.setLogLevel(LogLevel.INFO); // Less verbose by default
   }
   
   /**
@@ -610,7 +637,7 @@ export class AudioLogger extends Logger {
   }
   
   /**
-   * Log a RubberBand-related message
+   * Log a Resampler-related message
    * @param level Log level
    * @param message The message to log
    * @param data Additional data

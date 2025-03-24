@@ -90,6 +90,7 @@ const WebSocketTestPage: React.FC = () => {
             {/* DashAudioPlayer */}
             <section className="bg-gray-800 p-4 rounded-lg shadow-lg">
               <h2 className="text-lg font-semibold text-white mb-4">Audio Player</h2>
+              {networkLoggers.websocket.info('WebSocketTestPage: Rendering DashAudioPlayer with streamingEnabled=true')}
               <DashAudioPlayer 
                 url="https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/cfsgc/bbc_world_service_news_internet.mpd"
                 streamingEnabled={true}

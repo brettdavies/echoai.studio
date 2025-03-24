@@ -34,9 +34,6 @@ export interface WebSocketTestOptions {
  * @returns Promise that resolves when the test is complete
  */
 export async function testWebSocketConnection(options: WebSocketTestOptions): Promise<boolean> {
-  // Set debug level to maximum for the test
-  logger.setLogLevel(options.debugLevel || LogLevel.TRACE);
-  
   // Log test start
   logger.info(LogCategory.WS, 'WebSocket connection test started', options);
   
@@ -85,9 +82,6 @@ export async function testWebSocketConnection(options: WebSocketTestOptions): Pr
  * @returns Promise that resolves when the test is complete
  */
 export async function testWebSocketSend(options: WebSocketTestOptions): Promise<boolean> {
-  // Set debug level to maximum for the test
-  logger.setLogLevel(options.debugLevel || LogLevel.TRACE);
-  
   // Log test start
   logger.info(LogCategory.WS, 'WebSocket send test started', options);
   
@@ -274,7 +268,6 @@ export function initializeGlobalTestUtilities(): void {
   networkLoggers.websocket.info('  - testWebSocketConnection({url: "wss://example.com/socket"})');
   networkLoggers.websocket.info('  - testWebSocketSend({url: "wss://example.com/socket"})');
   networkLoggers.websocket.info('  - debugWebSocketFailure("wss://example.com/socket")');
-  networkLoggers.websocket.info('  - webSocketLogger.setLogLevel(LogLevel.TRACE)');
   
   // Use logger instead of direct console logs
   networkLoggers.websocket.info('WebSocket Debug Tools available in console');

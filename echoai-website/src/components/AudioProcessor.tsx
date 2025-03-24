@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { AudioProcessorProps } from './audio/types';
 import { DEFAULT_PROCESSING_OPTIONS } from './audio/constants';
 import { AudioProcessingSystem } from './audio/AudioProcessingSystem';
@@ -38,7 +38,7 @@ interface AudioProcessorPropsWithStreaming extends AudioProcessorProps {
  * 
  * Uses a facade pattern to coordinate the audio processing system
  */
-const AudioProcessor = ({
+const AudioProcessor = forwardRef<any, AudioProcessorPropsWithStreaming>(({
   audioContext,
   mediaElement,
   sourceNode,
@@ -48,7 +48,7 @@ const AudioProcessor = ({
   streamingEnabled = false,
   onStreamingStatusChange,
   loggerConfig,
-}: AudioProcessorPropsWithStreaming) => {
+}, ref) => {
   // Reference to the audio processing system
   const systemRef = useRef<AudioProcessingSystem | null>(null);
   
@@ -56,13 +56,26 @@ const AudioProcessor = ({
   const streamingProcessorRef = useRef<StreamingAudioProcessor | null>(null);
   
   // Playback state ref for callbacks
-  const isPlayingRef = useRef<boolean>(false);
+  const isPlayingRef = useRef<boolean>(isPlaying);
   
   // Streaming state
-  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [isStreaming, setIsStreaming] = useState<boolean>(streamingEnabled);
   
   // Get the global WebSocket service
   const { webSocketService, connect, isConnected } = useWebSocket();
+  
+  // Expose the streamingProcessor and system to the parent component via ref
+  useImperativeHandle(ref, () => ({
+    getStreamingProcessor: () => streamingProcessorRef.current,
+    getSystem: () => systemRef.current,
+    setStreaming: (enabled: boolean) => {
+      audioLogger.logProcessor(LogLevel.INFO, `Setting streaming state via ref: ${enabled}`);
+      if (streamingProcessorRef.current) {
+        streamingProcessorRef.current.setStreaming(enabled);
+        setIsStreaming(enabled);
+      }
+    }
+  }), []);
   
   // Configure logger based on props
   useEffect(() => {
@@ -88,7 +101,7 @@ const AudioProcessor = ({
           
           // Check if streaming is enabled and URL is provided
           if (streamingUrl) {
-            audioLogger.logProcessor(LogLevel.INFO, 'Streaming enabled, creating streaming processor', {
+            audioLogger.logProcessor(LogLevel.INFO, `Streaming enabled (${streamingEnabled}), creating streaming processor`, {
               url: streamingUrl,
               usingGlobalWebSocket: !!webSocketService
             });
@@ -123,6 +136,7 @@ const AudioProcessor = ({
             }
             
             // Enable/disable streaming based on prop
+            audioLogger.logProcessor(LogLevel.INFO, `Explicitly setting streaming state to: ${streamingEnabled}`);
             streamingProcessor.setStreaming(streamingEnabled);
             setIsStreaming(streamingEnabled);
             
@@ -204,21 +218,40 @@ const AudioProcessor = ({
   
   // Handle audio data callback
   const handleAudioData = async (audioData: Float32Array) => {
-    if (!isPlayingRef.current || !systemRef.current) return;
+    // Always log some sample data to debug audio processing
+    const sampleValues = Array.from(audioData.slice(0, 5)).map(v => v.toFixed(4));
+    audioLogger.logProcessor(LogLevel.INFO, `Received audio chunk: ${audioData.length} samples, is playing: ${isPlayingRef.current}, streaming: ${isStreaming}`);
+    audioLogger.logProcessor(LogLevel.INFO, `Audio data samples: [${sampleValues.join(', ')}]`);
     
-    // Debug if we're receiving audio data
-    audioLogger.logProcessor(LogLevel.DEBUG, `Received audio chunk: ${audioData.length} samples, is playing: ${isPlayingRef.current}`);
+    if (!isPlayingRef.current) {
+      audioLogger.logProcessor(LogLevel.DEBUG, `Not processing audio because isPlaying is false`);
+      return;
+    }
     
-    // Get the processor core using the getter method
-    const processorCore = systemRef.current.getProcessorCore();
-    if (processorCore) {
-      processorCore.setOriginalSampleRate(audioContext.sampleRate);
-      await processorCore.processAudioChunk(audioData);
-      
-      // Debug successful processing
-      audioLogger.logProcessor(LogLevel.DEBUG, `Processed audio chunk with sample rate ${audioContext.sampleRate}`);
-    } else {
-      audioLogger.logProcessor(LogLevel.WARN, `No processor core available to process audio`);
+    if (!systemRef.current) {
+      audioLogger.logProcessor(LogLevel.ERROR, `Cannot process audio: system is null`);
+      return;
+    }
+    
+    // Log before processing with streaming info
+    audioLogger.logProcessor(LogLevel.INFO, `About to process audio chunk with streaming=${isStreaming}`);
+    
+    try {
+      // Get the processor core
+      const processorCore = systemRef.current.getProcessorCore();
+      if (processorCore) {
+        processorCore.setOriginalSampleRate(audioContext.sampleRate);
+        
+        // Process the audio data
+        await processorCore.processAudioChunk(audioData);
+        
+        // Log successful processing
+        audioLogger.logProcessor(LogLevel.INFO, `Successfully processed audio chunk with sample rate ${audioContext.sampleRate}`);
+      } else {
+        audioLogger.logProcessor(LogLevel.WARN, `No processor core available to process audio`);
+      }
+    } catch (error) {
+      audioLogger.logProcessor(LogLevel.ERROR, `Error processing audio chunk: ${error}`);
     }
   };
   
@@ -228,10 +261,17 @@ const AudioProcessor = ({
     
     // Notify the system about playback state change
     if (systemRef.current) {
-      audioLogger.logProcessor(LogLevel.DEBUG, `Setting playback state: ${isPlaying}`);
+      audioLogger.logProcessor(LogLevel.INFO, `Setting playback state: ${isPlaying}`);
       systemRef.current.setPlaybackState(isPlaying);
     }
-  }, [isPlaying]);
+    
+    // Ensure streaming is enabled when playing
+    if (isPlaying && streamingEnabled && streamingProcessorRef.current) {
+      audioLogger.logProcessor(LogLevel.INFO, `Ensuring streaming is enabled during playback`);
+      streamingProcessorRef.current.setStreaming(true);
+      setIsStreaming(true);
+    }
+  }, [isPlaying, streamingEnabled]);
   
   // Handle playback state changes - start/stop processing
   useEffect(() => {
@@ -248,6 +288,8 @@ const AudioProcessor = ({
   
   // Update streaming state when streamingEnabled prop changes
   useEffect(() => {
+    audioLogger.logProcessor(LogLevel.INFO, `[DEBUG] Checking streaming state: streamingEnabled=${streamingEnabled}, isStreaming=${isStreaming}, streamingProcessor exists=${!!streamingProcessorRef.current}`);
+    
     if (streamingProcessorRef.current && streamingEnabled !== isStreaming) {
       audioLogger.logProcessor(LogLevel.INFO, `Setting streaming state: ${streamingEnabled}`);
       streamingProcessorRef.current.setStreaming(streamingEnabled);
@@ -256,6 +298,6 @@ const AudioProcessor = ({
   }, [streamingEnabled, isStreaming]);
   
   return null;
-};
+});
 
 export default AudioProcessor; 

@@ -32,12 +32,6 @@ export const createRubberBandModule = (
   let initializationFailed = false;
   let tempContext: AudioContext | null = null;
   
-  // Batch processing state
-  let pendingChunks: Float32Array[] = [];
-  let batchSampleRate: number = 0;
-  let batchDurationMs: number = 250; // 250ms batch size
-  let batchSampleCount: number = 0; // Will be calculated based on sample rate
-  
   // Tracking metrics
   let initCount = 0;
   let batchCount = 0;
@@ -64,11 +58,6 @@ export const createRubberBandModule = (
     // Start initialization
     initCount++;
     audioLoggers.resampler.debug(`Initialization #${initCount}, sample rate: ${sampleRate}Hz`);
-    
-    // Calculate batch sample count based on sample rate and batch duration
-    batchSampleRate = sampleRate;
-    batchSampleCount = Math.ceil(sampleRate * (batchDurationMs / 1000));
-    audioLoggers.resampler.debug(`Batch size: ${batchDurationMs}ms = ${batchSampleCount} samples at ${sampleRate}Hz`);
     
     // Create initialization promise
     moduleInitPromise = (async () => {
@@ -388,70 +377,31 @@ export const createRubberBandModule = (
       // Skip if initialization failed
       if (initializationFailed) return chunk;
       
-      // Store original sample rate on first chunk
-      if (totalChunkCount === 0 && batchSampleRate === 0) {
-        batchSampleRate = sampleRate;
-        batchSampleCount = Math.ceil(sampleRate * (batchDurationMs / 1000));
-        audioLoggers.resampler.debug(`Initial sample rate: ${sampleRate}Hz, input chunk size: ${chunk.length} samples`);
-      }
+      // Track total chunks seen
+      totalChunkCount++;
       
       // Check for silent input
       if (chunk.length === 0 || isAllZeros(chunk)) {
         return new Float32Array(0);
       }
       
-      // Track total chunks seen
-      totalChunkCount++;
+      // Since AudioProcessorCore is now handling batching, we can process each chunk directly
+      audioLoggers.resampler.debug(`Processing chunk of ${chunk.length} samples at ${sampleRate}Hz`);
       
-      // If sample rate changed, recalculate batch size
-      if (sampleRate !== batchSampleRate) {
-        batchSampleRate = sampleRate;
-        batchSampleCount = Math.ceil(sampleRate * (batchDurationMs / 1000));
-        audioLoggers.resampler.debug(`Sample rate changed to ${sampleRate}Hz, batch size: ${batchSampleCount} samples`);
+      // Process the chunk directly without batching
+      batchCount++;
+      const result = await processBatch([chunk], sampleRate);
+      
+      // Log status periodically
+      if (batchCount % 5 === 0) {
+        audioLoggers.resampler.info(`Status: ${totalChunkCount} chunks processed, ${nodeCreationCount} nodes created`);
       }
       
-      // Add the chunk to pending chunks
-      pendingChunks.push(chunk);
-      
-      // Calculate current batch length
-      const currentBatchLength = pendingChunks.reduce((acc, chunk) => acc + chunk.length, 0);
-      
-      // Only process when we have enough audio data (250ms worth)
-      if (currentBatchLength >= batchSampleCount) {
-        // Take a copy of the pending chunks
-        const chunksToProcess = [...pendingChunks];
-        // Clear pending chunks
-        pendingChunks = [];
-        
-        // Process the batch
-        const processedBatch = await processBatch(chunksToProcess, sampleRate);
-        
-        // Every 5 batches, log a status update
-        if (batchCount % 5 === 0) {
-          audioLoggers.resampler.info(`Status: ${totalChunkCount} chunks, ${batchCount} batches, ${nodeCreationCount} nodes created`);
-        }
-        
-        // Return the processed batch
-        return processedBatch;
-      }
-      
-      // For small batches that don't meet the threshold, return an empty array
-      // The chunks will be processed later when enough have accumulated or during finalize
-      return new Float32Array(0);
+      return result;
     },
     
     finalize: async (chunks: Float32Array[], inputSampleRate: number): Promise<ProcessedAudio> => {
       try {
-        // Process any remaining chunks that haven't been batched yet
-        if (pendingChunks.length > 0) {
-          audioLoggers.resampler.info(`Processing remaining ${pendingChunks.length} pending chunks in finalize`);
-          const processedPending = await processBatch(pendingChunks, inputSampleRate);
-          if (processedPending.length > 0) {
-            chunks.push(processedPending);
-          }
-          pendingChunks = [];
-        }
-        
         // Skip if no data
         if (chunks.length === 0) {
           audioLoggers.resampler.warn('[RubberBand] No audio data to process');
@@ -482,9 +432,7 @@ export const createRubberBandModule = (
 - Total chunks received: ${totalChunkCount}
 - Batches processed: ${batchCount}
 - AudioWorkletNodes created: ${nodeCreationCount}
-- Initialization count: ${initCount}
-- Input chunks/batch: ${(totalChunkCount / Math.max(1, batchCount)).toFixed(2)}
-- Average batch size: ${(combinedData.length / Math.max(1, batchCount)).toFixed(2)} samples`);
+- Initialization count: ${initCount}`);
         
         // Clean up resources
         await cleanup();
@@ -520,7 +468,6 @@ export const createRubberBandModule = (
       
       // Clear references for garbage collection
       moduleInitialized = false;
-      pendingChunks = [];
       
       audioLoggers.resampler.info('[RubberBand] Resources cleaned up');
     } catch (err) {

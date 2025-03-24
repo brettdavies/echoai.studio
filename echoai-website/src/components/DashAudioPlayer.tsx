@@ -33,6 +33,9 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
   streamingEnabled = false,
   onStreamingStatusChange,
 }) => {
+  // Log streaming configuration
+  audioLoggers.dashPlayer.info(`DashAudioPlayer: Component initialized with streamingEnabled=${streamingEnabled}, streamingUrl=${streamingUrl}`);
+  
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<dashjs.MediaPlayerInstance | null>(null);
@@ -177,8 +180,80 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
           audioLoggers.dashPlayer.warn('Error resuming AudioContext:', err)
         );
       }
+      
+      // Ensure streaming is enabled when playing
+      if (audioProcessorRef.current && streamingEnabled) {
+        audioLoggers.dashPlayer.info('DashAudioPlayer: Ensuring streaming is enabled via ref on playback');
+        audioProcessorRef.current.setStreaming(true);
+        
+        // Force a reconnection of the audio nodes to ensure proper routing
+        if (sourceNodeRef.current && audioContextRef.current) {
+          try {
+            audioLoggers.dashPlayer.info('DashAudioPlayer: Reconnecting audio nodes to ensure proper audio flow');
+            
+            // Completely rebuild the audio graph
+            sourceNodeRef.current.disconnect();
+            
+            // First connect to analyzer for visualization
+            sourceNodeRef.current.connect(analyserRef.current!);
+            
+            // Then connect analyzer to destination for audio output
+            analyserRef.current!.connect(audioContextRef.current.destination);
+            
+            // Log successful reconnection
+            audioLoggers.dashPlayer.info('DashAudioPlayer: Audio nodes reconnected successfully');
+            
+            // Create a processor to capture audio data
+            const captureProcessor = audioContextRef.current.createScriptProcessor(4096, 1, 1);
+            captureProcessor.onaudioprocess = (event) => {
+              // Only process audio if we're actually playing and streaming is enabled
+              if (!isPlaying || !streamingEnabled || !audioProcessorRef.current) {
+                return; // Skip all processing when not playing
+              }
+              
+              const inputBuffer = event.inputBuffer;
+              const channelData = inputBuffer.getChannelData(0);
+              
+              // Debug audio output
+              const hasAudioData = channelData.some(sample => Math.abs(sample) > 0.001);
+              audioLoggers.dashPlayer.debug(`Audio data active: ${hasAudioData}, buffer size: ${channelData.length}`);
+              
+              // Clone data since it's a reference that will be reused
+              const audioData = new Float32Array(channelData.length);
+              audioData.set(channelData);
+                
+              // Log data for debugging
+              const sampleValues = Array.from(audioData.slice(0, 5)).map(v => v.toFixed(4));
+              audioLoggers.dashPlayer.debug(`Captured audio data: ${audioData.length} samples, samples: [${sampleValues.join(', ')}]`);
+                
+              // Send to processor directly
+              try {
+                if (audioProcessorRef.current.getStreamingProcessor) {
+                  const streamingProcessor = audioProcessorRef.current.getStreamingProcessor();
+                  if (streamingProcessor) {
+                    audioLoggers.dashPlayer.info(`Sending ${audioData.length} samples to streaming processor`);
+                    streamingProcessor.processAudioChunk(audioData).catch((err: Error) => {
+                      audioLoggers.dashPlayer.error('Error processing audio chunk:', err);
+                    });
+                  }
+                }
+              } catch (err) {
+                audioLoggers.dashPlayer.error('Error sending audio to processor:', err);
+              }
+            };
+            
+            // Connect source to script processor and then to destination
+            sourceNodeRef.current.connect(captureProcessor);
+            captureProcessor.connect(audioContextRef.current.destination);
+            
+            audioLoggers.dashPlayer.info('DashAudioPlayer: Audio capture processor connected');
+          } catch (err) {
+            audioLoggers.dashPlayer.warn('DashAudioPlayer: Error reconnecting audio nodes:', err);
+          }
+        }
+      }
     }
-  }, [isPlaying]);
+  }, [isPlaying, streamingEnabled]);
 
   // Initialize dash.js player
   const initializeDashPlayer = () => {
@@ -361,91 +436,55 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     }
   };
 
-  // Set up audio visualization
-  const setupAudioVisualization = () => {
-    // Initialize visualization for the audio
-    setShowCanvas(true);
+  // Setup audio context and analyzer for visualization
+  const setupAudioVisualization = async () => {
+    if (!videoRef.current || !playerRef.current) return;
     
     try {
-      // Check if audio context is supported
-      if (typeof window === 'undefined' || !window.AudioContext && !(window as any).webkitAudioContext) {
-        audioLoggers.dashPlayer.warn('DashAudioPlayer: AudioContext not supported in this browser');
-        setupFakeVisualization();
-        return;
-      }
-      
-      const canvas = canvasRef.current;
-      if (!canvas || !videoRef.current) {
-        audioLoggers.dashPlayer.warn('DashAudioPlayer: Missing canvas or video element');
-        setupFakeVisualization();
-        return;
-      }
-      
-      // Check if we already have a source node connected to this video element
-      if (sourceNodeRef.current) {
-        audioLoggers.dashPlayer.info('DashAudioPlayer: Audio visualization already set up, reusing existing connections');
-        // Just make sure the visualization is running
-        renderVisualization();
-        return;
-      }
-      
-      // Create audio context
+      // Create AudioContext
       audioLoggers.dashPlayer.info('DashAudioPlayer: Creating new AudioContext');
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      audioContextRef.current = new AudioContextClass();
-      audioLoggers.dashPlayer.info('DashAudioPlayer: AudioContext created, state:', audioContextRef.current.state);
+      
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = ctx;
+      
+      audioLoggers.dashPlayer.info(`DashAudioPlayer: AudioContext created, state: ${ctx.state}`);
       
       // Create analyzer
       audioLoggers.dashPlayer.info('DashAudioPlayer: Creating AnalyserNode');
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 256;
+      const analyserNode = ctx.createAnalyser();
+      analyserNode.fftSize = 256;
+      analyserNode.smoothingTimeConstant = 0.8;
+      analyserRef.current = analyserNode;
       
-      // Create buffer for frequency data
-      const bufferLength = analyserRef.current.frequencyBinCount;
+      // Create a buffer to store frequency data
+      const bufferLength = analyserNode.frequencyBinCount;
       dataArrayRef.current = new Uint8Array(bufferLength);
       
-      // Connect video element to analyzer
+      // Connect video element to the audio context
       audioLoggers.dashPlayer.info('DashAudioPlayer: Creating MediaElementAudioSourceNode');
-      sourceNodeRef.current = audioContextRef.current.createMediaElementSource(videoRef.current);
+      const sourceNode = ctx.createMediaElementSource(videoRef.current);
+      sourceNodeRef.current = sourceNode;
       
-      // IMPORTANT: Create connections for audio flow with visualizer
+      // Connect the source to the analyzer
       audioLoggers.dashPlayer.info('DashAudioPlayer: Setting up audio graph connections');
+      sourceNode.connect(analyserNode);
       
-      // Wait for next frame to ensure stable connections
-      setTimeout(() => {
-        try {
-          // Source -> Analyser -> Destination
-          // This leaves the sourceNode free for the AudioProcessor to connect to
-          audioLoggers.dashPlayer.info('DashAudioPlayer: Connecting source to analyser');
-          sourceNodeRef.current?.connect(analyserRef.current!);
-          audioLoggers.dashPlayer.info('DashAudioPlayer: Connecting analyser to destination');
-          analyserRef.current?.connect(audioContextRef.current!.destination);
-          audioLoggers.dashPlayer.info('DashAudioPlayer: Audio nodes connected successfully');
-        } catch (error) {
-          audioLoggers.dashPlayer.error('DashAudioPlayer: Error connecting audio nodes:', error);
-        }
-      }, 50);
+      // Also connect analyzer to destination so we can hear the audio
+      analyserNode.connect(ctx.destination);
+      
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Audio visualization set up with Web Audio API');
+      
+      // Set canvas visible
+      setShowCanvas(true);
       
       // Start visualization
       renderVisualization();
       
-      audioLoggers.dashPlayer.info('DashAudioPlayer: Audio visualization set up with Web Audio API');
-      
-      // Try to resume the audio context after user interaction
-      document.addEventListener('click', function resumeAudioContext() {
-        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-          audioLoggers.dashPlayer.info('DashAudioPlayer: Attempting to resume AudioContext after user interaction');
-          audioContextRef.current.resume().then(() => {
-            audioLoggers.dashPlayer.info('DashAudioPlayer: AudioContext resumed by user interaction');
-            document.removeEventListener('click', resumeAudioContext);
-          });
-        }
-      }, { once: false });
-      
-    } catch (err) {
-      audioLoggers.dashPlayer.warn('DashAudioPlayer: Error setting up Web Audio API visualization:', err);
-      // Fall back to fake visualization
-      setupFakeVisualization();
+      return true;
+    } catch (error) {
+      audioLoggers.dashPlayer.error('Error setting up audio visualization:', error);
+      setError('Failed to set up audio visualization');
+      return false;
     }
   };
   
@@ -621,6 +660,8 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
   // Handle play/pause
   const handlePlayPause = () => {
     if (!videoRef.current || !playerRef.current) return;
+    
+    audioLoggers.dashPlayer.info(`DashAudioPlayer: handlePlayPause called, current isPlaying=${isPlaying}, showCanvas=${showCanvas}, audioProcessor exists=${!!audioProcessorRef.current}`);
     
     if (isPlaying) {
       audioLoggers.dashPlayer.info('DashAudioPlayer: Pausing playback');
@@ -803,6 +844,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       {/* Audio processor component */}
       {showCanvas && audioContextRef.current && videoRef.current && sourceNodeRef.current && (
         <AudioProcessor
+          ref={audioProcessorRef}
           audioContext={audioContextRef.current}
           mediaElement={videoRef.current}
           sourceNode={sourceNodeRef.current}
@@ -812,13 +854,19 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
             targetSampleRate: 16000,
             timeStretch: 1.0
           }}
-          streamingUrl={streamingUrl}
-          streamingEnabled={streamingEnabled}
-          onStreamingStatusChange={onStreamingStatusChange}
+          streamingUrl={streamingUrl || "ws://localhost:8081"}
+          streamingEnabled={true}
+          onStreamingStatusChange={(status, message) => {
+            audioLoggers.dashPlayer.info(`DashAudioPlayer: Streaming status changed to ${status}`, { message });
+            if (onStreamingStatusChange) {
+              onStreamingStatusChange(status, message);
+            }
+          }}
           loggerConfig={{
             level: LogLevel.DEBUG,
             enableProcessor: true,
-            enableWasm: true
+            enableWasm: true,
+            enableWorklet: true
           }}
         />
       )}

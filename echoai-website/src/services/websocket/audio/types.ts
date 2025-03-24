@@ -7,12 +7,6 @@
  * Configuration options for the streaming bridge
  */
 export interface AudioStreamingOptions {
-  // Message format ('binary' or 'json')
-  messageFormat?: 'binary' | 'json';
-  
-  // Chunk size in bytes for binary format
-  chunkSize?: number;
-  
   // Base64 encode binary data for JSON messages
   base64Encode?: boolean;
   
@@ -33,9 +27,7 @@ export interface AudioStreamingOptions {
  * Default streaming options
  */
 export const DEFAULT_AUDIO_OPTIONS: AudioStreamingOptions = {
-  messageFormat: 'binary',
-  chunkSize: 16000, // 1 second of 16kHz audio
-  base64Encode: false,
+  base64Encode: true,
   bufferTimeout: 1000, // Flush buffer after 1 second
   maxBufferSize: 32000, // About 2 seconds of 16kHz audio
   addSequenceNumber: true,
