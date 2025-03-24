@@ -196,8 +196,9 @@ const DevLayout = () => (
 ```
 
 The LoggingControl component provides:
+
 - Toggle switches for each component's logging
-- Radio buttons to set the global log level 
+- Radio buttons to set the global log level
 - Quick actions for common tasks
 - Persistent settings through browser refresh
 

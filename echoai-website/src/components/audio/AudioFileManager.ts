@@ -1,6 +1,7 @@
 import { ProcessingOptions, ProcessedAudio } from './types';
 import { createFilename, saveWAVFile, combineAudioChunks } from './utils';
 import { audioLoggers } from '../../utils/LoggerFactory';
+import { isDebugMode } from '../../utils/environment';
 
 /**
  * Manages audio file operations such as saving WAV files
@@ -22,6 +23,12 @@ export class AudioFileManager {
     processingOptions: ProcessingOptions,
     processors: string[]
   ): Promise<void> {
+    // Skip file saving if not in debug mode
+    if (!isDebugMode()) {
+      audioLoggers.session.debug('Audio file saving skipped (not in debug mode)');
+      return;
+    }
+    
     if (originalChunks.length === 0) {
       audioLoggers.session.info('No audio data to save');
       return;

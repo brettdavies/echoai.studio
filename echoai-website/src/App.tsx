@@ -11,6 +11,7 @@ import FormattingExampleSection from './components/FormattingExampleSection'
 import Footer from './components/Footer'
 import DocumentTitle from './components/DocumentTitle'
 import LoggingControl from './components/debug/LoggingControl'
+import { isDevelopmentMode } from './utils/environment'
 
 function App() {
   return (
@@ -30,7 +31,7 @@ function App() {
       </main>
       <Footer />
       {/* Only include LoggingControl in development mode */}
-      {process.env.NODE_ENV !== 'production' && <LoggingControl />}
+      {isDevelopmentMode() && <LoggingControl />}
     </div>
   )
 }

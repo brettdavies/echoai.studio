@@ -2,6 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import ICU from 'i18next-icu';
+import { isDevelopmentMode } from '../utils/environment';
 
 import enTranslation from '../locales/en/translation.json';
 import esTranslation from '../locales/es/translation.json';
@@ -43,15 +44,13 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    debug: process.env.NODE_ENV === 'development',
+    debug: isDevelopmentMode(),
     interpolation: {
       escapeValue: false, // not needed for React as it escapes by default
     },
     detection: {
       order: ['localStorage', 'navigator'],
-      lookupLocalStorage: 'i18nextLng',
-      caches: ['localStorage'],
-      checkWhitelist: true
+      caches: ['localStorage']
     }
   });
 

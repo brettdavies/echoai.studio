@@ -15,6 +15,7 @@ import {
   DEFAULT_LOGGING_CONFIG 
 } from '../../utils/Logger';
 import { audioLoggers, uiLoggers } from '../../utils/LoggerFactory';
+import { isProductionMode } from '../../utils/environment';
 
 // Component styles
 const styles = {
@@ -181,7 +182,7 @@ const LoggingControl: React.FC = () => {
   // Reset to defaults
   const resetToDefaults = () => {
     logger.resetLoggingConfig();
-    logger.setLogLevel(process.env.NODE_ENV === 'production' ? LogLevel.ERROR : LogLevel.DEBUG);
+    logger.setLogLevel(isProductionMode() ? LogLevel.ERROR : LogLevel.DEBUG);
     
     // Refresh state
     setLogLevel(logger.getLogLevel());
@@ -211,7 +212,7 @@ const LoggingControl: React.FC = () => {
   };
 
   // Only render in development mode
-  if (process.env.NODE_ENV === 'production') {
+  if (isProductionMode()) {
     return null;
   }
 

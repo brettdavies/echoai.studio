@@ -5,9 +5,10 @@
 // Export WebSocket test utilities
 export * from './testWebSocket';
 import { appLogger } from './LoggerFactory';
+import { isDevelopmentMode } from './environment';
 
 // Initialize browser testing utilities in development
-if (process.env.NODE_ENV === 'development') {
+if (isDevelopmentMode()) {
   // Import and initialize test utilities
   import('./testWebSocket').then(module => {
     appLogger.info('WebSocket test utilities loaded in development mode');
@@ -22,6 +23,9 @@ if (process.env.NODE_ENV === 'development') {
 
 // Export utilities - import the default export correctly
 export { default as testWebSocket } from './testWebSocket';
+
+// Export environment utilities
+export * from './environment';
 
 // Export Logger module
 export {

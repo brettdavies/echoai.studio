@@ -1,13 +1,20 @@
 import { ProcessedAudio } from './types';
 import { audioLoggers } from '../../utils/LoggerFactory';
+import { isDebugMode } from '../../utils/environment';
 
 /**
  * Creates a WAV file from audio data
  * @param audioData The audio data as a Float32Array
  * @param sampleRate The sample rate of the audio
- * @returns A Blob containing the WAV file
+ * @returns A Blob containing the WAV file or null if not in debug mode
  */
-export const createWAVFile = (audioData: Float32Array, sampleRate: number): Blob => {
+export const createWAVFile = (audioData: Float32Array, sampleRate: number): Blob | null => {
+  // Skip WAV file creation if not in debug mode
+  if (!isDebugMode()) {
+    audioLoggers.session.debug('WAV file creation skipped (not in debug mode)');
+    return null;
+  }
+
   const numChannels = 1;
   const bitsPerSample = 16; // Using 16-bit PCM for better compatibility
   const blockAlign = numChannels * (bitsPerSample / 8);
@@ -66,17 +73,29 @@ export const createWAVFile = (audioData: Float32Array, sampleRate: number): Blob
  * @param audioData The audio data as a Float32Array
  * @param sampleRate The sample rate of the audio
  * @param filename The filename to save as
- * @returns A promise that resolves when the file is saved
+ * @returns A promise that resolves when the file is saved or immediately if not in debug mode
  */
 export const saveWAVFile = (
   audioData: Float32Array, 
   sampleRate: number, 
   filename: string
 ): Promise<void> => {
+  // Skip WAV file saving if not in debug mode
+  if (!isDebugMode()) {
+    audioLoggers.session.debug('WAV file download skipped (not in debug mode)');
+    return Promise.resolve();
+  }
+
   return new Promise((resolve, reject) => {
     try {
       // Create WAV blob
       const wavBlob = createWAVFile(audioData, sampleRate);
+      
+      // If wavBlob is null (not in debug mode), resolve immediately
+      if (!wavBlob) {
+        resolve();
+        return;
+      }
       
       // Create download link
       const url = URL.createObjectURL(wavBlob);

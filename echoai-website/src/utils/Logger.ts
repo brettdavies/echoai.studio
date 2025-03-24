@@ -1,3 +1,5 @@
+import { isProductionMode } from './environment';
+
 /**
  * Application Logger
  * 
@@ -124,16 +126,11 @@ export class Logger {
    */
   protected constructor() {
     // Set default log level based on environment
-    // Check for Vite's import.meta.env (browser-compatible)
-    try {
-      if (import.meta.env?.MODE === 'production') {
-        this.logLevel = LogLevel.ERROR;
-      } else if (import.meta.env?.MODE === 'test') {
-        this.logLevel = LogLevel.WARN;
-      }
-    } catch (e) {
-      // Fallback to default DEBUG level if import.meta is not available
-      console.debug('Using default log level: DEBUG');
+    if (isProductionMode()) {
+      this.logLevel = LogLevel.ERROR;
+    } else {
+      // Default to DEBUG level for development
+      this.logLevel = LogLevel.DEBUG;
     }
     
     // Try to load logging config from localStorage in browser environments
