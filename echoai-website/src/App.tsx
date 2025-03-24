@@ -9,7 +9,6 @@ import AutomateWorkSection from './components/AutomateWorkSection'
 import Footer from './components/Footer'
 import DocumentTitle from './components/DocumentTitle'
 import LoggingControl from './components/debug/LoggingControl'
-import WebSocketDebugger from './components/debug/WebSocketDebugger'
 import { isDevelopmentMode } from './utils/environment'
 
 function App() {
@@ -29,8 +28,6 @@ function App() {
       <Footer />
       {/* Only include LoggingControl in development mode */}
       {isDevelopmentMode() && <LoggingControl />}
-      {/* Add WebSocket Debugger in Development Mode */}
-      {isDevelopmentMode() && <WebSocketDebugger />}
     </div>
   )
 }

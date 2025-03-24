@@ -2,6 +2,8 @@ import { Button } from "../components/ui/button";
 import { useState } from "react";
 import LanguageSelector from "./LanguageSelector";
 import { useTranslation } from "react-i18next";
+import { Link } from 'react-router-dom';
+import { isDevelopmentMode } from '../utils/environment';
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +17,14 @@ const NavBar = () => {
           
           <div className="hidden md:flex ml-10 space-x-8">
             <a href="#" className="text-white/70 hover:text-white text-sm">{t('navigation.home')}</a>
+            {isDevelopmentMode() && (
+              <Link 
+                to="/websockettest" 
+                className="text-white/70 hover:text-white text-sm"
+              >
+                WebSocket Test
+              </Link>
+            )}
           </div>
         </div>
         
@@ -60,6 +70,16 @@ const NavBar = () => {
       <div className={`md:hidden ${isOpen ? 'block' : 'hidden'} bg-black/95 backdrop-blur-sm`}>
         <div className="px-4 py-4 space-y-3">
           <a href="#" className="block text-white hover:text-white/70 py-2">{t('navigation.home')}</a>
+          
+          {/* WebSocket test link for mobile */}
+          {isDevelopmentMode() && (
+            <Link 
+              to="/websockettest" 
+              className="block text-white hover:text-white/70 py-2"
+            >
+              WebSocket Test
+            </Link>
+          )}
           
           {/* Get Started button for mobile */}
           <div className="py-2">

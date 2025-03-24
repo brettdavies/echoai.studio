@@ -19,8 +19,12 @@ interface LogEntry {
   data?: any;
 }
 
-export const WebSocketDebugger: React.FC = () => {
-  const [url, setUrl] = useState<string>('ws://localhost:8080');
+interface WebSocketDebuggerProps {
+  initialUrl?: string;
+}
+
+export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({ initialUrl = 'ws://localhost:8080' }) => {
+  const [url, setUrl] = useState<string>(initialUrl);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   const originalLogLevel = useRef<LogLevel>(LogLevel.INFO);
@@ -420,6 +424,11 @@ export const WebSocketDebugger: React.FC = () => {
     setTestMessage(JSON.stringify(newMessage, null, 2));
     addLog('Generated new base64-encoded audio sample (16kHz PCM)', false);
   };
+
+  // Update URL when initialUrl prop changes
+  useEffect(() => {
+    setUrl(initialUrl);
+  }, [initialUrl]);
 
   return (
     <section className="container mx-auto mt-6 mb-10">
