@@ -5,7 +5,7 @@
  */
 
 // Core AudioStreamingBridge class
-export { AudioStreamingBridge } from './AudioStreamingBridge';
+// export { AudioStreamingBridge } from './AudioStreamingBridge';
 
 // Types and interfaces
 export type { 

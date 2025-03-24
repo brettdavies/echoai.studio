@@ -6,7 +6,7 @@ import { Slider } from './ui/slider';
 import { useTranslation } from 'react-i18next';
 import { Volume2, VolumeX } from 'lucide-react';
 import DashAudioPlayerLogger from '../utils/DashAudioPlayerLogger';
-import AudioProcessor from './AudioProcessor';
+// import AudioProcessor from './AudioProcessor';
 import { audioLoggers } from '../utils/LoggerFactory';
 import { LogLevel } from '../utils/Logger';
 /// <reference path="../types/dashjs.d.ts" />
@@ -842,34 +842,36 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       />
       
       {/* Audio processor component */}
-      {showCanvas && audioContextRef.current && videoRef.current && sourceNodeRef.current && (
-        <AudioProcessor
-          ref={audioProcessorRef}
-          audioContext={audioContextRef.current}
-          mediaElement={videoRef.current}
-          sourceNode={sourceNodeRef.current}
-          isPlaying={isPlaying}
-          processingOptions={{
-            resample: true,
-            targetSampleRate: 16000,
-            timeStretch: 1.0
-          }}
-          streamingUrl={streamingUrl || "ws://localhost:8081"}
-          streamingEnabled={true}
-          onStreamingStatusChange={(status, message) => {
-            audioLoggers.dashPlayer.info(`DashAudioPlayer: Streaming status changed to ${status}`, { message });
-            if (onStreamingStatusChange) {
-              onStreamingStatusChange(status, message);
-            }
-          }}
-          loggerConfig={{
-            level: LogLevel.DEBUG,
-            enableProcessor: true,
-            enableWasm: true,
-            enableWorklet: true
-          }}
-        />
-      )}
+      {
+      // showCanvas && audioContextRef.current && videoRef.current && sourceNodeRef.current && (
+      //   <AudioProcessor
+      //     ref={audioProcessorRef}
+      //     audioContext={audioContextRef.current}
+      //     mediaElement={videoRef.current}
+      //     sourceNode={sourceNodeRef.current}
+      //     isPlaying={isPlaying}
+      //     processingOptions={{
+      //       resample: true,
+      //       targetSampleRate: 16000,
+      //       timeStretch: 1.0
+      //     }}
+      //     streamingUrl={streamingUrl || "ws://localhost:8081"}
+      //     streamingEnabled={true}
+      //     onStreamingStatusChange={(status, message) => {
+      //       audioLoggers.dashPlayer.info(`DashAudioPlayer: Streaming status changed to ${status}`, { message });
+      //       if (onStreamingStatusChange) {
+      //         onStreamingStatusChange(status, message);
+      //       }
+      //     }}
+      //     loggerConfig={{
+      //       level: LogLevel.DEBUG,
+      //       enableProcessor: true,
+      //       enableWasm: true,
+      //       enableWorklet: true
+      //     }}
+      //   />
+      // )
+      }
       
       <div className="mb-4 bg-black/30 rounded-md overflow-hidden">
         <canvas 

@@ -16,7 +16,7 @@ import { logger, audioLogger, WebSocketLogger } from './WebSocketLogger';
 // Export all classes
 export { WebSocketService } from './WebSocketService';
 export { WebSocketManager } from './WebSocketManager';
-export { StreamingAudioProcessor } from './StreamingAudioProcessor';
+// export { StreamingAudioProcessor } from './StreamingAudioProcessor';
 export { AudioStreamingBridge } from './audio/AudioStreamingBridge';
 
 // Export types
@@ -62,7 +62,7 @@ import { ProcessingOptions } from '../../components/audio/types';
 import { WebSocketService } from './WebSocketService';
 import { WebSocketManager } from './WebSocketManager';
 import { AudioStreamingBridge } from './audio/AudioStreamingBridge';
-import { StreamingAudioProcessor } from './StreamingAudioProcessor';
+// import { StreamingAudioProcessor } from './StreamingAudioProcessor';
 
 // Export schemas for external use
 export * from './WebSocketSchemas';
@@ -104,54 +104,54 @@ export interface AudioStreamingConfig {
  * @param config Configuration options
  * @returns A configured StreamingAudioProcessor instance
  */
-export function createAudioStreaming(config: AudioStreamingConfig): StreamingAudioProcessor {
-  const { 
-    serverUrl, 
-    processingOptions = {}, 
-    debug = false, 
-    loggerOptions,
-    webSocketService: explicitService, // Renamed for clarity
-    webSocketOptions = {}
-  } = config;
+// export function createAudioStreaming(config: AudioStreamingConfig): StreamingAudioProcessor {
+//   const { 
+//     serverUrl, 
+//     processingOptions = {}, 
+//     debug = false, 
+//     loggerOptions,
+//     webSocketService: explicitService, // Renamed for clarity
+//     webSocketOptions = {}
+//   } = config;
   
-  // Enable debugging if requested
-  if (debug) {
-    logger.setLogLevel(LogLevel.TRACE);
-    logger.info(LogCategory.WS, 'Creating audio streaming processor with debugging enabled', {
-      serverUrl,
-      processingOptions
-    });
+//   // Enable debugging if requested
+//   if (debug) {
+//     logger.setLogLevel(LogLevel.TRACE);
+//     logger.info(LogCategory.WS, 'Creating audio streaming processor with debugging enabled', {
+//       serverUrl,
+//       processingOptions
+//     });
     
-    // Configure audio logger with trace level as well
-    audioLogger.setLogLevel(LogLevel.TRACE);
-  }
+//     // Configure audio logger with trace level as well
+//     audioLogger.setLogLevel(LogLevel.TRACE);
+//   }
   
-  // Apply specific logger configuration if provided
-  if (loggerOptions) {
-    audioLogger.configure(loggerOptions);
-  }
+//   // Apply specific logger configuration if provided
+//   if (loggerOptions) {
+//     audioLogger.configure(loggerOptions);
+//   }
   
-  // Get WebSocketService from the WebSocketManager or use the explicit one if provided
-  const webSocketService = explicitService || 
-    WebSocketManager.getInstance().getService(serverUrl, webSocketOptions);
+//   // Get WebSocketService from the WebSocketManager or use the explicit one if provided
+//   const webSocketService = explicitService || 
+//     WebSocketManager.getInstance().getService(serverUrl, webSocketOptions);
   
-  logger.info(LogCategory.WS, 'Creating StreamingAudioProcessor', {
-    usingSharedConnection: !explicitService,
-    serverUrl
-  });
+//   logger.info(LogCategory.WS, 'Creating StreamingAudioProcessor', {
+//     usingSharedConnection: !explicitService,
+//     serverUrl
+//   });
   
-  // Create the streaming processor
-  const streamingProcessor = new StreamingAudioProcessor(
-    processingOptions,
-    serverUrl,
-    webSocketService
-  );
+//   // Create the streaming processor
+//   const streamingProcessor = new StreamingAudioProcessor(
+//     processingOptions,
+//     serverUrl,
+//     webSocketService
+//   );
   
-  // Enable streaming by default
-  streamingProcessor.setStreaming(true);
+//   // Enable streaming by default
+//   streamingProcessor.setStreaming(true);
   
-  return streamingProcessor;
-}
+//   return streamingProcessor;
+// }
 
 /**
  * Helper function to extract processed audio data and send it to a WebSocket server
