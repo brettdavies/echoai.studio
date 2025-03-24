@@ -11,6 +11,7 @@ import {
   createRubberBandOptions,
   configureRubberBandNode
 } from './RubberBandConfig';
+import { audioLoggers } from '../../utils/LoggerFactory';
 
 /**
  * Creates a RubberBand processor module
@@ -62,12 +63,12 @@ export const createRubberBandModule = (
     
     // Start initialization
     initCount++;
-    console.log(`[RubberBand] Initialization #${initCount}, sample rate: ${sampleRate}Hz`);
+    audioLoggers.resampler.debug(`Initialization #${initCount}, sample rate: ${sampleRate}Hz`);
     
     // Calculate batch sample count based on sample rate and batch duration
     batchSampleRate = sampleRate;
     batchSampleCount = Math.ceil(sampleRate * (batchDurationMs / 1000));
-    console.log(`[RubberBand] Batch size: ${batchDurationMs}ms = ${batchSampleCount} samples at ${sampleRate}Hz`);
+    audioLoggers.resampler.debug(`Batch size: ${batchDurationMs}ms = ${batchSampleCount} samples at ${sampleRate}Hz`);
     
     // Create initialization promise
     moduleInitPromise = (async () => {
@@ -81,10 +82,10 @@ export const createRubberBandModule = (
         
         // Mark as initialized
         moduleInitialized = true;
-        console.log('[RubberBand] Module initialized successfully');
+        audioLoggers.resampler.info('Module initialized successfully');
         return true;
       } catch (error) {
-        console.error('[RubberBand] Failed to initialize module:', error);
+        audioLoggers.resampler.error('Failed to initialize module:', error);
         initializationFailed = true;
         return false;
       } finally {
@@ -119,7 +120,7 @@ export const createRubberBandModule = (
       output[i] = input[inputIndex];
     }
     
-    console.log(`[RubberBand] Performed basic resampling: ${input.length} samples at ${inputSampleRate}Hz -> ${output.length} samples at ${outputSampleRate}Hz`);
+    audioLoggers.resampler.debug(`Performed basic resampling: ${input.length} samples at ${inputSampleRate}Hz -> ${output.length} samples at ${outputSampleRate}Hz`);
     return output;
   };
   
@@ -150,12 +151,12 @@ export const createRubberBandModule = (
       }
       
       batchCount++;
-      console.log(`[RubberBand] Processing batch #${batchCount} (${chunks.length} chunks, ${totalLength} samples)`);
+      audioLoggers.resampler.debug(`Processing batch #${batchCount} (${chunks.length} chunks, ${totalLength} samples)`);
       
       // Check if we have silent input (all zeros)
       const hasSilentInput = isAllZeros(combinedInput);
       if (hasSilentInput) {
-        console.warn(`[RubberBand] Batch #${batchCount} contains all zeros, processing empty audio instead of skipping`);
+        audioLoggers.resampler.warn(`Batch #${batchCount} contains all zeros, processing empty audio instead of skipping`);
         // Create an appropriately sized silent buffer that matches the expected output size
         const targetRate = options.resample ? options.targetSampleRate! : sampleRate;
         const expectedOutputLength = Math.ceil(
@@ -163,7 +164,7 @@ export const createRubberBandModule = (
           (options.timeStretch || 1.0) * 
           (options.resample ? (targetRate / sampleRate) : 1.0)
         );
-        console.log(`[RubberBand] Creating silent buffer of ${expectedOutputLength} samples for silent input`);
+        audioLoggers.resampler.debug(`Creating silent buffer of ${expectedOutputLength} samples for silent input`);
         return new Float32Array(expectedOutputLength);
       }
       
@@ -176,7 +177,7 @@ export const createRubberBandModule = (
         (options.resample ? (targetRate / sampleRate) : 1.0)
       );
       
-      console.log(`[RubberBand] Calculated output length: ${outputLength} samples (from ${totalLength} input samples, timeStretch=${options.timeStretch || 1.0}, sampleRate=${sampleRate}->${targetRate})`);
+      audioLoggers.resampler.debug(`Calculated output length: ${outputLength} samples (from ${totalLength} input samples, timeStretch=${options.timeStretch || 1.0}, sampleRate=${sampleRate}->${targetRate})`);
       
       const context = new OfflineAudioContext({
         numberOfChannels: fullConfig.numberOfChannels,
@@ -195,7 +196,7 @@ export const createRubberBandModule = (
       source.buffer = sourceBuffer;
       
       // Debug the buffer we're sending to RubberBand
-      console.log(`[RubberBand] Processing batch with input buffer: length=${sourceBuffer.length}, sampleRate=${sourceBuffer.sampleRate}, context.sampleRate=${context.sampleRate}`);
+      audioLoggers.resampler.debug(`Processing batch with input buffer: length=${sourceBuffer.length}, sampleRate=${sourceBuffer.sampleRate}, context.sampleRate=${context.sampleRate}`);
       
       // Create node options with explicit sample rates
       const nodeOptions = createRubberBandOptions(
@@ -215,7 +216,7 @@ export const createRubberBandModule = (
       
       // Add debugger hooks
       processorNode.onprocessorerror = (err: Event) => {
-        console.error(`[RubberBand] Processor error in batch #${batchCount}:`, err);
+        audioLoggers.resampler.error(`Processor error in batch #${batchCount}:`, err);
       };
       
       // Configure the node with the same settings
@@ -235,7 +236,7 @@ export const createRubberBandModule = (
       // Check if output is silent
       const hasSilentOutput = isAllZeros(processedBatch);
       if (hasSilentOutput) {
-        console.warn(`[RubberBand] Batch #${batchCount} produced silent output, using basic resampling as fallback`);
+        audioLoggers.resampler.warn(`Batch #${batchCount} produced silent output, using basic resampling as fallback`);
         // Use basic resampling as fallback
         const targetRate = options.resample ? options.targetSampleRate! : sampleRate;
         
@@ -252,7 +253,7 @@ export const createRubberBandModule = (
             stretched[i] = combinedInput[idx];
           }
           stretchedInput = stretched;
-          console.log(`[RubberBand] Applied simple time stretching: ${totalLength} -> ${stretchedLength} samples (factor: ${stretchFactor})`);
+          audioLoggers.resampler.debug(`Applied simple time stretching: ${totalLength} -> ${stretchedLength} samples (factor: ${stretchFactor})`);
         }
         
         // Then apply resampling if needed
@@ -267,15 +268,15 @@ export const createRubberBandModule = (
         }
         
         // If no processing was applied, return original (this shouldn't happen)
-        console.warn(`[RubberBand] No processing applied in fallback, returning original`);
+        audioLoggers.resampler.warn(`No processing applied in fallback, returning original`);
         return combinedInput;
       }
       
       // Log success
-      console.log(`[RubberBand] Batch #${batchCount} processed successfully: ${processedBatch.length} samples`);
+      audioLoggers.resampler.info(`Batch #${batchCount} processed successfully: ${processedBatch.length} samples`);
       return processedBatch;
     } catch (error) {
-      console.error('[RubberBand] Error processing batch:', error);
+      audioLoggers.resampler.error('[RubberBand] Error processing batch:', error);
       
       // Use basic resampling as fallback
       const totalInputLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
@@ -289,7 +290,7 @@ export const createRubberBandModule = (
         offset += chunk.length;
       }
       
-      console.warn(`[RubberBand] Using basic resampling fallback due to processing error`);
+      audioLoggers.resampler.warn(`Using basic resampling fallback due to processing error`);
       
       // Apply time stretching first if needed
       let stretchedInput = combinedInput;
@@ -304,7 +305,7 @@ export const createRubberBandModule = (
           stretched[i] = combinedInput[idx];
         }
         stretchedInput = stretched;
-        console.log(`[RubberBand] Applied simple time stretching in error handler: ${totalInputLength} -> ${stretchedLength} samples (factor: ${stretchFactor})`);
+        audioLoggers.resampler.debug(`Applied simple time stretching in error handler: ${totalInputLength} -> ${stretchedLength} samples (factor: ${stretchFactor})`);
       }
       
       // Then apply resampling if needed
@@ -348,7 +349,7 @@ export const createRubberBandModule = (
         nonZeroCount++;
         
         if (nonZeroCount >= nonZeroThreshold) {
-          console.log(`[RubberBand] Buffer has audio: ${nonZeroCount} non-zero samples detected in ${Math.ceil(i/step)} samples checked`);
+          audioLoggers.resampler.info(`Buffer has audio: ${nonZeroCount} non-zero samples detected in ${Math.ceil(i/step)} samples checked`);
           return false;
         }
       }
@@ -362,14 +363,14 @@ export const createRubberBandModule = (
         nonZeroCount++;
         
         if (nonZeroCount >= nonZeroThreshold) {
-          console.log(`[RubberBand] Buffer has audio after random sampling: ${nonZeroCount} non-zero samples found`);
+          audioLoggers.resampler.info(`Buffer has audio after random sampling: ${nonZeroCount} non-zero samples found`);
           return false;
         }
       }
     }
     
     // If we got here, the buffer is most likely silent
-    console.log(`[RubberBand] Buffer appears to be completely silent after checking ${maxCheckSamples} + 10000 random samples`);
+    audioLoggers.resampler.info(`Buffer appears to be completely silent after checking ${maxCheckSamples} + 10000 random samples`);
     return true;
   };
   
@@ -391,7 +392,7 @@ export const createRubberBandModule = (
       if (totalChunkCount === 0 && batchSampleRate === 0) {
         batchSampleRate = sampleRate;
         batchSampleCount = Math.ceil(sampleRate * (batchDurationMs / 1000));
-        console.log(`[RubberBand] Initial sample rate: ${sampleRate}Hz, input chunk size: ${chunk.length} samples`);
+        audioLoggers.resampler.debug(`Initial sample rate: ${sampleRate}Hz, input chunk size: ${chunk.length} samples`);
       }
       
       // Check for silent input
@@ -406,7 +407,7 @@ export const createRubberBandModule = (
       if (sampleRate !== batchSampleRate) {
         batchSampleRate = sampleRate;
         batchSampleCount = Math.ceil(sampleRate * (batchDurationMs / 1000));
-        console.log(`[RubberBand] Sample rate changed to ${sampleRate}Hz, batch size: ${batchSampleCount} samples`);
+        audioLoggers.resampler.debug(`Sample rate changed to ${sampleRate}Hz, batch size: ${batchSampleCount} samples`);
       }
       
       // Add the chunk to pending chunks
@@ -427,7 +428,7 @@ export const createRubberBandModule = (
         
         // Every 5 batches, log a status update
         if (batchCount % 5 === 0) {
-          console.log(`[RubberBand] Status: ${totalChunkCount} chunks, ${batchCount} batches, ${nodeCreationCount} nodes created`);
+          audioLoggers.resampler.info(`Status: ${totalChunkCount} chunks, ${batchCount} batches, ${nodeCreationCount} nodes created`);
         }
         
         // Return the processed batch
@@ -443,7 +444,7 @@ export const createRubberBandModule = (
       try {
         // Process any remaining chunks that haven't been batched yet
         if (pendingChunks.length > 0) {
-          console.log(`[RubberBand] Processing remaining ${pendingChunks.length} pending chunks in finalize`);
+          audioLoggers.resampler.info(`Processing remaining ${pendingChunks.length} pending chunks in finalize`);
           const processedPending = await processBatch(pendingChunks, inputSampleRate);
           if (processedPending.length > 0) {
             chunks.push(processedPending);
@@ -453,7 +454,7 @@ export const createRubberBandModule = (
         
         // Skip if no data
         if (chunks.length === 0) {
-          console.warn('[RubberBand] No audio data to process');
+          audioLoggers.resampler.warn('[RubberBand] No audio data to process');
           return {
             data: new Float32Array(0),
             sampleRate: inputSampleRate,
@@ -465,19 +466,19 @@ export const createRubberBandModule = (
         const nonEmptyChunks = chunks.filter(chunk => chunk.length > 0);
         
         // Combine all processed chunks
-        console.log(`[RubberBand] Finalizing: Combining ${nonEmptyChunks.length} non-empty chunks`);
+        audioLoggers.resampler.info(`Finalizing: Combining ${nonEmptyChunks.length} non-empty chunks`);
         const combinedData = combineAudioChunks(nonEmptyChunks);
         
         // Check if our final result is silent
         const isSilent = isAllZeros(combinedData);
         if (isSilent) {
-          console.error('[RubberBand] ERROR: Final audio output is completely silent!');
+          audioLoggers.resampler.error('[RubberBand] ERROR: Final audio output is completely silent!');
         }
         
         // Log processing statistics
         const finalSampleRate = options.resample ? options.targetSampleRate! : inputSampleRate;
-        console.log(`[RubberBand] Processing complete: ${combinedData.length} samples at ${finalSampleRate}Hz (${isSilent ? 'SILENT' : 'with audio'})`);
-        console.log(`[RubberBand] Performance metrics:
+        audioLoggers.resampler.info(`Processing complete: ${combinedData.length} samples at ${finalSampleRate}Hz (${isSilent ? 'SILENT' : 'with audio'})`);
+        audioLoggers.resampler.info(`Performance metrics:
 - Total chunks received: ${totalChunkCount}
 - Batches processed: ${batchCount}
 - AudioWorkletNodes created: ${nodeCreationCount}
@@ -494,7 +495,7 @@ export const createRubberBandModule = (
           processingFailed: false
         };
       } catch (error) {
-        console.error('[RubberBand] Error in finalization:', error);
+        audioLoggers.resampler.error('[RubberBand] Error in finalization:', error);
         await cleanup();
         
         return {
@@ -521,9 +522,9 @@ export const createRubberBandModule = (
       moduleInitialized = false;
       pendingChunks = [];
       
-      console.log('[RubberBand] Resources cleaned up');
+      audioLoggers.resampler.info('[RubberBand] Resources cleaned up');
     } catch (err) {
-      console.warn('[RubberBand] Failed to clean up resources:', err);
+      audioLoggers.resampler.warn('[RubberBand] Failed to clean up resources:', err);
     }
   }
   

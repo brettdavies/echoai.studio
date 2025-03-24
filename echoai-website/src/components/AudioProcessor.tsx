@@ -6,7 +6,7 @@ import {
   createAudioStreaming, 
   StreamingAudioProcessor
 } from '../services/websocket';
-import { audioLogger, LogLevel, LogCategory } from '../utils/Logger';
+import { audioLogger, LogLevel } from '../utils/Logger';
 
 /**
  * Extended props interface with streaming support
@@ -167,7 +167,6 @@ const AudioProcessor = ({
         }
       } catch (error) {
         audioLogger.logProcessor(LogLevel.ERROR, 'Failed to initialize audio processing system', error);
-        console.error('Failed to initialize audio processing system:', error);
       }
     };
     

@@ -2,6 +2,7 @@ import { AudioProcessorModule, ProcessingOptions } from './types';
 import { createRubberBandModule } from './RubberBandProcessor';
 import { needsProcessing } from './utils';
 import { AudioFileManager } from './AudioFileManager';
+import { audioLoggers } from '../../utils/LoggerFactory';
 
 /**
  * Core processing logic for audio processing, extracted from the AudioProcessor component
@@ -76,7 +77,7 @@ export class AudioProcessorCore {
         processedChunks.push(processedChunk);
         this.processedData.set(module.name, processedChunks);
       } catch (error) {
-        console.error(`Error in processor module ${module.name}:`, error);
+        audioLoggers.processor.error(`Error in processor module ${module.name}:`, error);
       }
     }
   }
@@ -88,13 +89,13 @@ export class AudioProcessorCore {
   async preloadProcessors(sampleRate: number): Promise<void> {
     if (needsProcessing(this.processingOptions) && this.processorModules.length > 0) {
       try {
-        console.log('Preloading audio processing modules...');
+        audioLoggers.processor.info('Preloading audio processing modules...');
         await this.processorModules[0].processChunk(
           new Float32Array(0), 
           sampleRate
         );
       } catch (error) {
-        console.error('Failed to preload audio processing modules:', error);
+        audioLoggers.processor.error('Failed to preload audio processing modules:', error);
       }
     }
   }
@@ -114,7 +115,7 @@ export class AudioProcessorCore {
    */
   async saveAudioFiles(): Promise<void> {
     if (this.originalChunks.length === 0) {
-      console.log('No audio data to save');
+      audioLoggers.processor.info('No audio data to save');
       return;
     }
     
@@ -134,7 +135,7 @@ export class AudioProcessorCore {
           this.processedData.set(module.name, finalizedChunks);
         }
       } catch (error) {
-        console.error(`Error finalizing processor ${module.name}:`, error);
+        audioLoggers.processor.error(`Error finalizing processor ${module.name}:`, error);
       }
     }
     
@@ -161,7 +162,7 @@ export class AudioProcessorCore {
     if (needsProcessing(this.processingOptions)) {
       // Add RubberBand module with options
       modules.push(createRubberBandModule(this.processingOptions));
-      console.log('RubberBand processing enabled - processing and saving audio files');
+      audioLoggers.processor.info('RubberBand processing enabled - processing and saving audio files');
     }
     
     this.processorModules = modules;
@@ -172,11 +173,11 @@ export class AudioProcessorCore {
       this.processedData.set(module.name, []);
     });
     
-    console.log(`Initialized ${modules.length} audio processor modules`);
+    audioLoggers.processor.info(`Initialized ${modules.length} audio processor modules`);
     
     // Log active processing options
     if (modules.length > 0) {
-      console.log('Active processing options:', {
+      audioLoggers.processor.debug('Active processing options:', {
         resample: this.processingOptions.resample,
         targetSampleRate: this.processingOptions.targetSampleRate,
         timeStretch: this.processingOptions.timeStretch,

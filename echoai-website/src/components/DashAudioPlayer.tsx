@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Volume2, VolumeX } from 'lucide-react';
 import DashAudioPlayerLogger from '../utils/DashAudioPlayerLogger';
 import AudioProcessor from './AudioProcessor';
+import { audioLoggers } from '../utils/LoggerFactory';
 /// <reference path="../types/dashjs.d.ts" />
 
 /**
@@ -65,7 +66,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     
     // Skip if already initialized or currently initializing
     if (initialized || playerRef.current || isInitializing) {
-      console.log('Player already initialized or initializing, skipping setup');
+      audioLoggers.dashPlayer.info('Player already initialized or initializing, skipping setup');
       return;
     }
     
@@ -74,19 +75,19 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     const loadDashScript = () => {
       return new Promise<void>((resolve, reject) => {
         // Log status before loading script
-        console.log('Attempting to load dash.js from CDN...');
+        audioLoggers.dashPlayer.info('Attempting to load dash.js from CDN...');
         
         // Check if script already exists
         if (document.querySelector('script[src*="dash.all.min.js"]')) {
           // If script exists but dashjs is not defined, remove and reload
           if (!window.dashjs) {
-            console.log('Found dash.js script tag but no dashjs object, reloading...');
+            audioLoggers.dashPlayer.info('Found dash.js script tag but no dashjs object, reloading...');
             const oldScript = document.querySelector('script[src*="dash.all.min.js"]');
             if (oldScript) {
               oldScript.remove();
             }
           } else {
-            console.log('dash.js already loaded and available in window object');
+            audioLoggers.dashPlayer.info('dash.js already loaded and available in window object');
             resolve();
             return;
           }
@@ -96,21 +97,21 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
         // Use the latest version from the CDN
         script.src = 'https://cdn.dashjs.org/latest/dash.all.min.js';
         script.async = true;
-        console.log(`Loading dash.js from ${script.src}...`);
+        audioLoggers.dashPlayer.info(`Loading dash.js from ${script.src}...`);
         
         script.onload = () => {
-          console.log('Script loaded, checking for window.dashjs object...');
+          audioLoggers.dashPlayer.info('Script loaded, checking for window.dashjs object...');
           // Add a safety check before resolving
           if (window.dashjs) {
-            console.log('dash.js successfully loaded and available in window object');
+            audioLoggers.dashPlayer.info('dash.js successfully loaded and available in window object');
             resolve();
           } else {
-            console.warn('Script loaded but dashjs object not found in window');
+            audioLoggers.dashPlayer.warn('Script loaded but dashjs object not found in window');
             // If dashjs still not defined after script load, try global assignment
             const checkInterval = setInterval(() => {
-              console.log('Checking for dashjs object...');
+              audioLoggers.dashPlayer.info('Checking for dashjs object...');
               if (window.dashjs) {
-                console.log('dashjs object now available in window');
+                audioLoggers.dashPlayer.info('dashjs object now available in window');
                 clearInterval(checkInterval);
                 resolve();
               }
@@ -119,13 +120,13 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
             // Give up after 2 seconds
             setTimeout(() => {
               clearInterval(checkInterval);
-              console.error('Timed out waiting for dashjs object');
+              audioLoggers.dashPlayer.error('Timed out waiting for dashjs object');
               reject(new Error('dash.js failed to initialize after script load'));
             }, 2000);
           }
         };
         script.onerror = () => {
-          console.error('Failed to load dash.js script');
+          audioLoggers.dashPlayer.error('Failed to load dash.js script');
           reject(new Error('Failed to load dash.js script'));
         };
         document.head.appendChild(script);
@@ -137,16 +138,16 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     loadDashScript()
       .then(() => {
         if (!isMounted) return;
-        console.log('dash.js loaded successfully');
+        audioLoggers.dashPlayer.info('dash.js loaded successfully');
         // Wait longer to ensure dash.js is properly initialized
         setTimeout(() => {
           if (!isMounted) return;
           // Double-check dashjs is available
           if (window.dashjs) {
-            console.log('Initializing player with dash.js version:', window.dashjs.Version || 'unknown');
+            audioLoggers.dashPlayer.info('Initializing player with dash.js version:', window.dashjs.Version || 'unknown');
             initializeDashPlayer();
           } else {
-            console.error('dash.js not found in window object');
+            audioLoggers.dashPlayer.error('dash.js not found in window object');
             setError('Could not load the dash.js library properly');
           }
           isInitializing = false;
@@ -154,7 +155,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       })
       .catch(err => {
         if (!isMounted) return;
-        console.error('Error loading dash.js:', err);
+        audioLoggers.dashPlayer.error('Error loading dash.js:', err);
         setError('Could not load the dash.js library. Please check your internet connection.');
         isInitializing = false;
       });
@@ -171,7 +172,9 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     if (isPlaying && analyserRef.current && audioContextRef.current) {
       // Make sure audio context is running when playing
       if (audioContextRef.current.state === 'suspended') {
-        audioContextRef.current.resume().catch(console.warn);
+        audioContextRef.current.resume().catch(err => 
+          audioLoggers.dashPlayer.warn('Error resuming AudioContext:', err)
+        );
       }
     }
   }, [isPlaying]);
@@ -181,7 +184,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     if (!videoRef.current || initialized || typeof window === 'undefined' || !window.dashjs) return;
 
     try {
-      console.log('Initializing dash.js player...');
+      audioLoggers.dashPlayer.info('Initializing dash.js player...');
       
       // Set initialized flag early to prevent multiple initialization attempts
       setInitialized(true);
@@ -197,10 +200,10 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       playerRef.current = player;
       
       // Check if running latest version (v5+) which has different APIs
-      console.log('Player instance created successfully');
+      audioLoggers.dashPlayer.info('Player instance created successfully');
       
       // Configure player settings
-      console.log('Configuring player settings...');
+      audioLoggers.dashPlayer.info('Configuring player settings...');
       
       try {
         // Latest version settings
@@ -218,39 +221,39 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
             }
           }
         });
-        console.log('Player settings updated successfully');
+        audioLoggers.dashPlayer.info('Player settings updated successfully');
       } catch (settingsError) {
-        console.warn('Error updating settings, might be using older dash.js version:', settingsError);
+        audioLoggers.dashPlayer.warn('Error updating settings, might be using older dash.js version:', settingsError);
         // Fallback for older versions if needed
       }
 
-      console.log('Initializing player with video element and URL:', url);
+      audioLoggers.dashPlayer.info('Initializing player with video element and URL:', url);
       // Initialize player with video element and MPD URL
       // Set autoPlay to false
       player.initialize(videoRef.current, url, false);
-      console.log('Player initialized successfully');
+      audioLoggers.dashPlayer.info('Player initialized successfully');
       
       try {
         // Set volume and mute
         player.setVolume(volume); // Set volume to 80%
         player.setMute(false); // Don't mute by default
-        console.log('Volume and mute settings applied, player not muted');
+        audioLoggers.dashPlayer.info('Volume and mute settings applied, player not muted');
       } catch (volumeError) {
-        console.warn('Error setting volume/mute:', volumeError);
+        audioLoggers.dashPlayer.warn('Error setting volume/mute:', volumeError);
       }
       
-      console.log('Setting up event listeners...');
+      audioLoggers.dashPlayer.info('Setting up event listeners...');
       // Add event listeners - handle both latest and older dash.js versions
       try {
         // Set up event listeners for v5
         player.on('error', (error: any) => {
-          console.error('Dash player error:', error);
+          audioLoggers.dashPlayer.error('Dash player error:', error);
           setError(`Dash.js error: ${error?.event?.message || 'Unknown error'}`);
         });
         
         // Add listener to log specs once stream is initialized
         player.on('streamInitialized', () => {
-          console.log('Stream initialized successfully');
+          audioLoggers.dashPlayer.info('Stream initialized successfully');
           
           // Log stream specifications using our logger utility
           if (loggerRef.current && playerRef.current) {
@@ -263,14 +266,14 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
                 //   analyserRef.current || undefined
                 // );
               } catch (error) {
-                console.error('Error during stream specification logging:', error);
+                audioLoggers.dashPlayer.error('Error during stream specification logging:', error);
               }
             }, 1000);
           }
         });
         
         player.on('playbackStarted', () => {
-          console.log('Playback started');
+          audioLoggers.dashPlayer.info('Playback started');
           
           // Start periodic logging using our logger utility
           if (loggerRef.current && playerRef.current && videoRef.current) {
@@ -292,7 +295,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
               //   isPlaying: true
               // });
             } catch (error) {
-              console.error('Error starting stream logging:', error);
+              audioLoggers.dashPlayer.error('Error starting stream logging:', error);
             }
           }
           
@@ -307,7 +310,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
         });
         
         player.on('playbackPaused', () => {
-          console.log('Playback paused');
+          audioLoggers.dashPlayer.info('Playback paused');
           setIsPlaying(false);
           if (onPlaybackStateChange) {
             onPlaybackStateChange(false);
@@ -316,7 +319,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
 
         // Handle autoplay restrictions
         player.on('playbackNotAllowed', () => {
-          console.log('Playback not allowed due to autoplay restrictions, trying with muted audio');
+          audioLoggers.dashPlayer.info('Playback not allowed due to autoplay restrictions, trying with muted audio');
           player.setMute(true);
           
           // Add small delay before trying to play again
@@ -324,33 +327,33 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
             try {
               player.play();
             } catch (e) {
-              console.warn('Could not autoplay even with muted audio:', e);
+              audioLoggers.dashPlayer.warn('Could not autoplay even with muted audio:', e);
             }
           }, 100);
         });
         
         // Add more event handlers for troubleshooting
         player.on('manifestLoaded', () => {
-          console.log('Manifest loaded successfully');
+          audioLoggers.dashPlayer.info('Manifest loaded successfully');
         });
         
         player.on('playbackError', (error: any) => {
-          console.error('Playback error:', error);
+          audioLoggers.dashPlayer.error('Playback error:', error);
           setError(`Playback error: ${error?.message || 'Unknown playback error'}`);
         });
         
-        console.log('Event listeners set up successfully');
+        audioLoggers.dashPlayer.info('Event listeners set up successfully');
         
         // Setup visualization
         setupAudioVisualization();
         
-        console.log('dash.js player initialized successfully');
+        audioLoggers.dashPlayer.info('dash.js player initialized successfully');
       } catch (err) {
-        console.error('Error setting up event listeners:', err);
+        audioLoggers.dashPlayer.error('Error setting up event listeners:', err);
         setError('Error setting up event listeners');
       }
     } catch (err) {
-      console.error('Error initializing DASH player:', err);
+      audioLoggers.dashPlayer.error('Error initializing DASH player:', err);
       setError(`Failed to initialize DASH player: ${err instanceof Error ? err.message : 'Unknown error'}`);
       // Reset initialized flag in case of error
       setInitialized(false);
@@ -365,34 +368,34 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     try {
       // Check if audio context is supported
       if (typeof window === 'undefined' || !window.AudioContext && !(window as any).webkitAudioContext) {
-        console.warn('DashAudioPlayer: AudioContext not supported in this browser');
+        audioLoggers.dashPlayer.warn('DashAudioPlayer: AudioContext not supported in this browser');
         setupFakeVisualization();
         return;
       }
       
       const canvas = canvasRef.current;
       if (!canvas || !videoRef.current) {
-        console.warn('DashAudioPlayer: Missing canvas or video element');
+        audioLoggers.dashPlayer.warn('DashAudioPlayer: Missing canvas or video element');
         setupFakeVisualization();
         return;
       }
       
       // Check if we already have a source node connected to this video element
       if (sourceNodeRef.current) {
-        console.log('DashAudioPlayer: Audio visualization already set up, reusing existing connections');
+        audioLoggers.dashPlayer.info('DashAudioPlayer: Audio visualization already set up, reusing existing connections');
         // Just make sure the visualization is running
         renderVisualization();
         return;
       }
       
       // Create audio context
-      console.log('DashAudioPlayer: Creating new AudioContext');
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Creating new AudioContext');
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       audioContextRef.current = new AudioContextClass();
-      console.log('DashAudioPlayer: AudioContext created, state:', audioContextRef.current.state);
+      audioLoggers.dashPlayer.info('DashAudioPlayer: AudioContext created, state:', audioContextRef.current.state);
       
       // Create analyzer
-      console.log('DashAudioPlayer: Creating AnalyserNode');
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Creating AnalyserNode');
       analyserRef.current = audioContextRef.current.createAnalyser();
       analyserRef.current.fftSize = 256;
       
@@ -401,45 +404,45 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       dataArrayRef.current = new Uint8Array(bufferLength);
       
       // Connect video element to analyzer
-      console.log('DashAudioPlayer: Creating MediaElementAudioSourceNode');
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Creating MediaElementAudioSourceNode');
       sourceNodeRef.current = audioContextRef.current.createMediaElementSource(videoRef.current);
       
       // IMPORTANT: Create connections for audio flow with visualizer
-      console.log('DashAudioPlayer: Setting up audio graph connections');
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Setting up audio graph connections');
       
       // Wait for next frame to ensure stable connections
       setTimeout(() => {
         try {
           // Source -> Analyser -> Destination
           // This leaves the sourceNode free for the AudioProcessor to connect to
-          console.log('DashAudioPlayer: Connecting source to analyser');
+          audioLoggers.dashPlayer.info('DashAudioPlayer: Connecting source to analyser');
           sourceNodeRef.current?.connect(analyserRef.current!);
-          console.log('DashAudioPlayer: Connecting analyser to destination');
+          audioLoggers.dashPlayer.info('DashAudioPlayer: Connecting analyser to destination');
           analyserRef.current?.connect(audioContextRef.current!.destination);
-          console.log('DashAudioPlayer: Audio nodes connected successfully');
+          audioLoggers.dashPlayer.info('DashAudioPlayer: Audio nodes connected successfully');
         } catch (error) {
-          console.error('DashAudioPlayer: Error connecting audio nodes:', error);
+          audioLoggers.dashPlayer.error('DashAudioPlayer: Error connecting audio nodes:', error);
         }
       }, 50);
       
       // Start visualization
       renderVisualization();
       
-      console.log('DashAudioPlayer: Audio visualization set up with Web Audio API');
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Audio visualization set up with Web Audio API');
       
       // Try to resume the audio context after user interaction
       document.addEventListener('click', function resumeAudioContext() {
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-          console.log('DashAudioPlayer: Attempting to resume AudioContext after user interaction');
+          audioLoggers.dashPlayer.info('DashAudioPlayer: Attempting to resume AudioContext after user interaction');
           audioContextRef.current.resume().then(() => {
-            console.log('DashAudioPlayer: AudioContext resumed by user interaction');
+            audioLoggers.dashPlayer.info('DashAudioPlayer: AudioContext resumed by user interaction');
             document.removeEventListener('click', resumeAudioContext);
           });
         }
       }, { once: false });
       
     } catch (err) {
-      console.warn('DashAudioPlayer: Error setting up Web Audio API visualization:', err);
+      audioLoggers.dashPlayer.warn('DashAudioPlayer: Error setting up Web Audio API visualization:', err);
       // Fall back to fake visualization
       setupFakeVisualization();
     }
@@ -447,7 +450,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
   
   // Set up fake visualization with random data as fallback
   const setupFakeVisualization = () => {
-    console.log('Setting up fake visualization');
+    audioLoggers.dashPlayer.info('Setting up fake visualization');
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -475,7 +478,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     
     // Store cleanup function for later
     intervalCleanupRef.current = () => {
-      console.log('Cleaning up fake visualization interval');
+      audioLoggers.dashPlayer.info('Cleaning up fake visualization interval');
       window.clearInterval(interval);
     };
   };
@@ -571,7 +574,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       try {
         sourceNodeRef.current.disconnect();
       } catch (e) {
-        console.warn('Error disconnecting source node:', e);
+        audioLoggers.dashPlayer.warn('Error disconnecting source node:', e);
       }
       sourceNodeRef.current = null;
     }
@@ -580,7 +583,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       try {
         analyserRef.current.disconnect();
       } catch (e) {
-        console.warn('Error disconnecting analyser node:', e);
+        audioLoggers.dashPlayer.warn('Error disconnecting analyser node:', e);
       }
       analyserRef.current = null;
     }
@@ -589,7 +592,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       try {
         audioContextRef.current.close();
       } catch (e) {
-        console.warn('Error closing audio context:', e);
+        audioLoggers.dashPlayer.warn('Error closing audio context:', e);
       }
       audioContextRef.current = null;
     }
@@ -599,7 +602,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
       try {
         playerRef.current.reset();
       } catch (e) {
-        console.warn('Error resetting dash player:', e);
+        audioLoggers.dashPlayer.warn('Error resetting dash player:', e);
       }
       playerRef.current = null;
     }
@@ -619,59 +622,61 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     if (!videoRef.current || !playerRef.current) return;
     
     if (isPlaying) {
-      console.log('DashAudioPlayer: Pausing playback');
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Pausing playback');
       playerRef.current.pause();
     } else {
-      console.log('DashAudioPlayer: Starting playback');
+      audioLoggers.dashPlayer.info('DashAudioPlayer: Starting playback');
       // Try to play the audio
       try {
         // Resume audio context if suspended
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-          console.log('DashAudioPlayer: Resuming suspended audio context');
+          audioLoggers.dashPlayer.info('DashAudioPlayer: Resuming suspended audio context');
           audioContextRef.current.resume().then(() => {
-            console.log('DashAudioPlayer: Audio context resumed successfully, state:', audioContextRef.current?.state);
+            audioLoggers.dashPlayer.info('DashAudioPlayer: Audio context resumed successfully, state:', audioContextRef.current?.state);
           }).catch(err => {
-            console.warn('DashAudioPlayer: Error resuming audio context:', err);
+            audioLoggers.dashPlayer.warn('DashAudioPlayer: Error resuming audio context:', err);
           });
         }
         
-        console.log('DashAudioPlayer: Calling play() on player');
+        audioLoggers.dashPlayer.info('DashAudioPlayer: Calling play() on player');
         const playPromise = playerRef.current.play();
         
         // Handle play promise (modern browsers return a promise from play())
         if (playPromise !== undefined) {
           playPromise
             .then(() => {
-              console.log('DashAudioPlayer: Playback started successfully');
+              audioLoggers.dashPlayer.info('DashAudioPlayer: Playback started successfully');
               if (onPlaybackStarted) {
                 onPlaybackStarted();
               }
             })
             .catch((error: Error) => {
-              console.error('DashAudioPlayer: Error starting playback:', error);
+              audioLoggers.dashPlayer.error('DashAudioPlayer: Error starting playback:', error);
               
               // Autoplay was prevented, try muted
               if (error.name === 'NotAllowedError') {
-                console.log('DashAudioPlayer: Autoplay prevented, trying with muted audio');
+                audioLoggers.dashPlayer.info('DashAudioPlayer: Autoplay prevented, trying with muted audio');
                 playerRef.current?.setMute(true);
                 setIsMuted(true);
                 
                 // Resume audio context again when trying muted
                 if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-                  audioContextRef.current.resume().catch(console.warn);
+                  audioContextRef.current.resume().catch(err => 
+                    audioLoggers.dashPlayer.warn('Error resuming AudioContext:', err)
+                  );
                 }
                 
                 const mutePlayPromise = playerRef.current?.play();
-                if (mutePlayPromise) {
+                if (mutePlayPromise && typeof mutePlayPromise.catch === 'function') {
                   mutePlayPromise.catch((e: Error) => {
-                    console.error('DashAudioPlayer: Still could not play even when muted:', e);
+                    audioLoggers.dashPlayer.error('DashAudioPlayer: Still could not play even when muted:', e);
                   });
                 }
               }
             });
         }
       } catch (error) {
-        console.error('DashAudioPlayer: Error calling play():', error);
+        audioLoggers.dashPlayer.error('DashAudioPlayer: Error calling play():', error);
       }
     }
   };
@@ -729,7 +734,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
         loadScript.src = 'https://cdn.dashjs.org/latest/dash.all.min.js';
         loadScript.async = true;
         loadScript.onload = () => {
-          console.log('dash.js reloaded successfully');
+          audioLoggers.dashPlayer.info('dash.js reloaded successfully');
           // Give more time for initialization
           setTimeout(initializeDashPlayer, 300);
         };
@@ -785,7 +790,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
           }
         }}
         onError={(e) => {
-          console.error('Video element error:', e);
+          audioLoggers.dashPlayer.error('Video element error:', e);
           setError('Media playback error. Please try again.');
         }}
       />

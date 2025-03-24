@@ -1,5 +1,6 @@
 import { ProcessingOptions, ProcessedAudio } from './types';
 import { createFilename, saveWAVFile, combineAudioChunks } from './utils';
+import { audioLoggers } from '../../utils/LoggerFactory';
 
 /**
  * Manages audio file operations such as saving WAV files
@@ -22,17 +23,17 @@ export class AudioFileManager {
     processors: string[]
   ): Promise<void> {
     if (originalChunks.length === 0) {
-      console.log('No audio data to save');
+      audioLoggers.session.info('No audio data to save');
       return;
     }
     
     try {
-      console.log('Preparing to save audio files...');
+      audioLoggers.session.info('Preparing to save audio files...');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       
       // Save original raw audio file
       const originalAudio = this.combineAudioData(originalChunks, null, originalSampleRate);
-      console.log(`Saving raw audio: ${originalAudio.data.length} samples at ${originalAudio.sampleRate}Hz`);
+      audioLoggers.session.info(`Saving raw audio: ${originalAudio.data.length} samples at ${originalAudio.sampleRate}Hz`);
       await saveWAVFile(
         originalAudio.data, 
         originalAudio.sampleRate, 
@@ -41,7 +42,7 @@ export class AudioFileManager {
       
       // Check if we have any processors
       if (processors.length === 0) {
-        console.log('No processing modules active, only raw audio saved');
+        audioLoggers.session.info('No processing modules active, only raw audio saved');
         return;
       }
       
@@ -64,7 +65,7 @@ export class AudioFileManager {
           
           // Skip saving if processing failed or resulted in empty data
           if (processedAudio.processingFailed || processedAudio.data.length === 0) {
-            console.log(`Skipping save for ${processorName} due to processing failure or empty result`);
+            audioLoggers.processor.info(`Skipping save for ${processorName} due to processing failure or empty result`);
             continue;
           }
           
@@ -85,7 +86,7 @@ export class AudioFileManager {
             }
           );
           
-          console.log(`Saving processed audio: ${filename} with ${processedAudio.data.length} samples`);
+          audioLoggers.session.info(`Saving processed audio: ${filename} with ${processedAudio.data.length} samples`);
           
           // Save this processed version
           savePromises.push(
@@ -100,7 +101,7 @@ export class AudioFileManager {
             resampledFileSaved = true;
           }
         } catch (error) {
-          console.error(`Error saving processed audio for ${processorName}:`, error);
+          audioLoggers.processor.error(`Error saving processed audio for ${processorName}:`, error);
         }
       }
       
@@ -108,9 +109,9 @@ export class AudioFileManager {
       await Promise.all(savePromises);
       
       const filesSaved = 1 + savePromises.length; // 1 raw + processed files
-      console.log(`${filesSaved} audio files saved: raw and processed versions.`);
+      audioLoggers.session.info(`${filesSaved} audio files saved: raw and processed versions.`);
     } catch (error) {
-      console.error('Error saving audio files:', error);
+      audioLoggers.session.error('Error saving audio files:', error);
     }
   }
   

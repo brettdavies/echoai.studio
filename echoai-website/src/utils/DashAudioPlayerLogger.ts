@@ -5,10 +5,8 @@
  * This centralizes all logging functionality from the DashAudioPlayer component
  */
 
-import { logger, LogLevel, LogCategory } from './Logger';
-
-// Create a dedicated category for the dash player
-const DASH_LOG_CATEGORY = LogCategory.AUDIO;
+import { LogLevel } from './Logger';
+import { audioLoggers } from './LoggerFactory';
 
 export interface LoggingContext {
   player: dashjs.MediaPlayerInstance;
@@ -29,9 +27,6 @@ export class DashAudioPlayerLogger {
 
   constructor(private loggingInterval: number = 2000) {
     this.logInterval = loggingInterval;
-    
-    // Set a specific service ID for this logger
-    logger.setServiceId('DashPlayer');
   }
 
   /**
@@ -1077,8 +1072,27 @@ export class DashAudioPlayerLogger {
     // Only log if the level is appropriate
     if (level > this.logLevel) return;
     
-    // Log to the shared logger
-    logger.info(DASH_LOG_CATEGORY, `[DashPlayer] ${message}`, data);
+    // Log to the appropriate logger with the correct component
+    switch (level) {
+      case LogLevel.ERROR:
+        audioLoggers.dashPlayer.error(message, data);
+        break;
+      case LogLevel.WARN:
+        audioLoggers.dashPlayer.warn(message, data);
+        break;
+      case LogLevel.INFO:
+        audioLoggers.dashPlayer.info(message, data);
+        break;
+      case LogLevel.DEBUG:
+        audioLoggers.dashPlayer.debug(message, data);
+        break;
+      case LogLevel.TRACE:
+        audioLoggers.dashPlayer.trace(message, data);
+        break;
+      default:
+        // No logging for NONE level
+        break;
+    }
   }
 }
 

@@ -45,6 +45,42 @@ export enum LogCategory {
   MISC = 'misc'
 }
 
+// Application components for fine-grained logging control
+export enum LogComponent {
+  // Audio components
+  RESAMPLER = 'resampler',
+  AUDIO_WORKLET = 'audio_worklet',
+  AUDIO_PROCESSOR = 'audio_processor',
+  
+  // Network components
+  WEBSOCKET = 'websocket',
+  HTTP_CLIENT = 'http_client',
+  
+  // UI components
+  UI_CONTROLS = 'ui_controls',
+  
+  // Media components
+  DASH_PLAYER = 'dash_player',
+  
+  // Other
+  MISC = 'misc'
+}
+
+// Default config for component logging - determines which components have logging enabled
+export interface LoggingConfig {
+  components: {
+    [key in LogComponent]?: boolean;
+  };
+}
+
+// Default logging configuration - all components enabled by default
+export const DEFAULT_LOGGING_CONFIG: LoggingConfig = {
+  components: Object.values(LogComponent).reduce((config, component) => {
+    config[component] = true;
+    return config;
+  }, {} as { [key in LogComponent]: boolean })
+};
+
 // Log message format for structured logging
 export interface LogMessage {
   category: LogCategory;
@@ -52,6 +88,7 @@ export interface LogMessage {
   message: string;
   data?: any;
   timestamp: number;
+  component?: LogComponent;
 }
 
 /**
@@ -66,6 +103,11 @@ export class Logger {
   
   // Add category filters to control which categories are logged
   private categoryFilters: Set<LogCategory> = new Set(Object.values(LogCategory));
+  
+  // Add component filters to control which components are logged
+  private componentFilters: Map<LogComponent, boolean> = new Map(
+    Object.values(LogComponent).map(component => [component, true])
+  );
   
   /**
    * Gets the singleton logger instance
@@ -93,6 +135,71 @@ export class Logger {
       // Fallback to default DEBUG level if import.meta is not available
       console.debug('Using default log level: DEBUG');
     }
+    
+    // Try to load logging config from localStorage in browser environments
+    this.loadConfigFromStorage();
+  }
+  
+  /**
+   * Load logging configuration from localStorage if available
+   */
+  private loadConfigFromStorage(): void {
+    try {
+      // Only try to access localStorage in browser environments
+      if (typeof localStorage !== 'undefined') {
+        const storedConfig = localStorage.getItem('echoai_logging_config');
+        if (storedConfig) {
+          const config = JSON.parse(storedConfig) as LoggingConfig;
+          this.applyLoggingConfig(config);
+        }
+      }
+    } catch (e) {
+      console.debug('Failed to load logging config from storage:', e);
+    }
+  }
+  
+  /**
+   * Save current logging configuration to localStorage
+   */
+  private saveConfigToStorage(): void {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const config: LoggingConfig = {
+          components: {}
+        };
+        
+        // Convert map to object
+        this.componentFilters.forEach((enabled, component) => {
+          config.components[component] = enabled;
+        });
+        
+        localStorage.setItem('echoai_logging_config', JSON.stringify(config));
+      }
+    } catch (e) {
+      console.debug('Failed to save logging config to storage:', e);
+    }
+  }
+  
+  /**
+   * Apply a logging configuration
+   * @param config The logging configuration to apply
+   */
+  public applyLoggingConfig(config: LoggingConfig): void {
+    if (config.components) {
+      Object.entries(config.components).forEach(([component, enabled]) => {
+        this.componentFilters.set(component as LogComponent, enabled);
+      });
+    }
+    
+    // Save the updated configuration
+    this.saveConfigToStorage();
+  }
+  
+  /**
+   * Reset logging configuration to defaults
+   */
+  public resetLoggingConfig(): void {
+    this.applyLoggingConfig(DEFAULT_LOGGING_CONFIG);
   }
   
   /**
@@ -128,12 +235,40 @@ export class Logger {
   }
   
   /**
+   * Enable logging for specific components
+   * @param components Components to enable
+   */
+  public enableComponents(...components: LogComponent[]): void {
+    components.forEach(component => this.componentFilters.set(component, true));
+    this.saveConfigToStorage();
+  }
+  
+  /**
+   * Disable logging for specific components
+   * @param components Components to disable
+   */
+  public disableComponents(...components: LogComponent[]): void {
+    components.forEach(component => this.componentFilters.set(component, false));
+    this.saveConfigToStorage();
+  }
+  
+  /**
    * Check if a category is enabled
    * @param category Category to check
    * @returns Whether the category is enabled
    */
   public isCategoryEnabled(category: LogCategory): boolean {
     return this.categoryFilters.has(category);
+  }
+  
+  /**
+   * Check if a component is enabled
+   * @param component Component to check
+   * @returns Whether the component is enabled
+   */
+  public isComponentEnabled(component?: LogComponent): boolean {
+    if (!component) return true; // If no component specified, logging is enabled
+    return this.componentFilters.get(component) ?? true;
   }
   
   /**
@@ -149,9 +284,10 @@ export class Logger {
    * @param category Log category
    * @param message The message to log
    * @param data Additional data
+   * @param component Optional component identifier
    */
-  public trace(category: LogCategory, message: string, data?: any): void {
-    this.log(LogLevel.TRACE, category, message, data);
+  public trace(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+    this.log(LogLevel.TRACE, category, message, data, component);
   }
   
   /**
@@ -159,9 +295,10 @@ export class Logger {
    * @param category Log category
    * @param message The message to log
    * @param data Additional data
+   * @param component Optional component identifier
    */
-  public debug(category: LogCategory, message: string, data?: any): void {
-    this.log(LogLevel.DEBUG, category, message, data);
+  public debug(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+    this.log(LogLevel.DEBUG, category, message, data, component);
   }
   
   /**
@@ -169,9 +306,10 @@ export class Logger {
    * @param category Log category
    * @param message The message to log
    * @param data Additional data
+   * @param component Optional component identifier
    */
-  public info(category: LogCategory, message: string, data?: any): void {
-    this.log(LogLevel.INFO, category, message, data);
+  public info(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+    this.log(LogLevel.INFO, category, message, data, component);
   }
   
   /**
@@ -179,9 +317,10 @@ export class Logger {
    * @param category Log category
    * @param message The message to log
    * @param data Additional data
+   * @param component Optional component identifier
    */
-  public warn(category: LogCategory, message: string, data?: any): void {
-    this.log(LogLevel.WARN, category, message, data);
+  public warn(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+    this.log(LogLevel.WARN, category, message, data, component);
   }
   
   /**
@@ -189,9 +328,10 @@ export class Logger {
    * @param category Log category
    * @param message The message to log
    * @param data Additional data
+   * @param component Optional component identifier
    */
-  public error(category: LogCategory, message: string, data?: any): void {
-    this.log(LogLevel.ERROR, category, message, data);
+  public error(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+    this.log(LogLevel.ERROR, category, message, data, component);
   }
   
   /**
@@ -212,6 +352,15 @@ export class Logger {
   }
   
   /**
+   * Get logs filtered by component
+   * @param component Component to filter by
+   * @returns Filtered log messages
+   */
+  public getLogsByComponent(component: LogComponent): LogMessage[] {
+    return this.logs.filter(log => log.component === component);
+  }
+  
+  /**
    * Clear all stored logs
    */
   public clearLogs(): void {
@@ -224,16 +373,22 @@ export class Logger {
    * @param category Log category
    * @param message The message to log
    * @param data Additional data
+   * @param component Optional component identifier
    */
-  protected log(level: LogLevel, category: LogCategory, message: string, data?: any): void {
+  protected log(level: LogLevel, category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+    // Skip if log level is too verbose or category is disabled
     if (level > this.logLevel || !this.isCategoryEnabled(category)) return;
+    
+    // Skip if component is disabled
+    if (!this.isComponentEnabled(component)) return;
     
     const logMessage: LogMessage = {
       category,
       level,
       message,
       timestamp: Date.now(),
-      data
+      data,
+      component
     };
     
     // Add to in-memory logs with size limit
@@ -246,7 +401,8 @@ export class Logger {
     const prefix = this.serviceId ? `[${this.serviceId}]` : '[App]';
     const timestamp = new Date(logMessage.timestamp).toISOString();
     const levelName = LogLevel[level];
-    const formattedMessage = `${prefix} ${timestamp} [${levelName}] [${category}]: ${message}`;
+    const componentStr = component ? `[${component}]` : '';
+    const formattedMessage = `${prefix} ${timestamp} [${levelName}] [${category}]${componentStr}: ${message}`;
     
     // Log to console with appropriate level
     switch (level) {
@@ -265,6 +421,74 @@ export class Logger {
         console.log(formattedMessage, data || '');
         break;
     }
+  }
+}
+
+/**
+ * Component-specific logger that includes component identification
+ */
+export class ComponentLogger {
+  private logger: Logger;
+  private component: LogComponent;
+  
+  /**
+   * Create a component logger
+   * @param component The component identifier
+   * @param logger Optional logger instance (uses global logger by default)
+   */
+  constructor(component: LogComponent, logger?: Logger) {
+    this.component = component;
+    this.logger = logger || Logger.getInstance();
+  }
+  
+  /**
+   * Log a trace message
+   * @param category Log category
+   * @param message The message
+   * @param data Additional data
+   */
+  public trace(category: LogCategory, message: string, data?: any): void {
+    this.logger.trace(category, message, data, this.component);
+  }
+  
+  /**
+   * Log a debug message
+   * @param category Log category
+   * @param message The message
+   * @param data Additional data
+   */
+  public debug(category: LogCategory, message: string, data?: any): void {
+    this.logger.debug(category, message, data, this.component);
+  }
+  
+  /**
+   * Log an info message
+   * @param category Log category
+   * @param message The message
+   * @param data Additional data
+   */
+  public info(category: LogCategory, message: string, data?: any): void {
+    this.logger.info(category, message, data, this.component);
+  }
+  
+  /**
+   * Log a warning message
+   * @param category Log category
+   * @param message The message
+   * @param data Additional data
+   */
+  public warn(category: LogCategory, message: string, data?: any): void {
+    this.logger.warn(category, message, data, this.component);
+  }
+  
+  /**
+   * Log an error message
+   * @param category Log category
+   * @param message The message
+   * @param data Additional data
+   */
+  public error(category: LogCategory, message: string, data?: any): void {
+    this.logger.error(category, message, data, this.component);
   }
 }
 
@@ -332,19 +556,19 @@ export class AudioLogger extends Logger {
   public logResampler(level: LogLevel, message: string, data?: any): void {
     switch (level) {
       case LogLevel.ERROR:
-        this.error(LogCategory.RESAMPLER, message, data);
+        this.error(LogCategory.RESAMPLER, message, data, LogComponent.RESAMPLER);
         break;
       case LogLevel.WARN:
-        this.warn(LogCategory.RESAMPLER, message, data);
+        this.warn(LogCategory.RESAMPLER, message, data, LogComponent.RESAMPLER);
         break;
       case LogLevel.INFO:
-        this.info(LogCategory.RESAMPLER, message, data);
+        this.info(LogCategory.RESAMPLER, message, data, LogComponent.RESAMPLER);
         break;
       case LogLevel.DEBUG:
-        this.debug(LogCategory.RESAMPLER, message, data);
+        this.debug(LogCategory.RESAMPLER, message, data, LogComponent.RESAMPLER);
         break;
       case LogLevel.TRACE:
-        this.trace(LogCategory.RESAMPLER, message, data);
+        this.trace(LogCategory.RESAMPLER, message, data, LogComponent.RESAMPLER);
         break;
       default:
         // No logging for NONE level
@@ -361,19 +585,19 @@ export class AudioLogger extends Logger {
   public logWorklet(level: LogLevel, message: string, data?: any): void {
     switch (level) {
       case LogLevel.ERROR:
-        this.error(LogCategory.WORKLET, message, data);
+        this.error(LogCategory.WORKLET, message, data, LogComponent.AUDIO_WORKLET);
         break;
       case LogLevel.WARN:
-        this.warn(LogCategory.WORKLET, message, data);
+        this.warn(LogCategory.WORKLET, message, data, LogComponent.AUDIO_WORKLET);
         break;
       case LogLevel.INFO:
-        this.info(LogCategory.WORKLET, message, data);
+        this.info(LogCategory.WORKLET, message, data, LogComponent.AUDIO_WORKLET);
         break;
       case LogLevel.DEBUG:
-        this.debug(LogCategory.WORKLET, message, data);
+        this.debug(LogCategory.WORKLET, message, data, LogComponent.AUDIO_WORKLET);
         break;
       case LogLevel.TRACE:
-        this.trace(LogCategory.WORKLET, message, data);
+        this.trace(LogCategory.WORKLET, message, data, LogComponent.AUDIO_WORKLET);
         break;
       default:
         // No logging for NONE level
@@ -390,19 +614,19 @@ export class AudioLogger extends Logger {
   public logProcessor(level: LogLevel, message: string, data?: any): void {
     switch (level) {
       case LogLevel.ERROR:
-        this.error(LogCategory.PROCESSOR, message, data);
+        this.error(LogCategory.PROCESSOR, message, data, LogComponent.AUDIO_PROCESSOR);
         break;
       case LogLevel.WARN:
-        this.warn(LogCategory.PROCESSOR, message, data);
+        this.warn(LogCategory.PROCESSOR, message, data, LogComponent.AUDIO_PROCESSOR);
         break;
       case LogLevel.INFO:
-        this.info(LogCategory.PROCESSOR, message, data);
+        this.info(LogCategory.PROCESSOR, message, data, LogComponent.AUDIO_PROCESSOR);
         break;
       case LogLevel.DEBUG:
-        this.debug(LogCategory.PROCESSOR, message, data);
+        this.debug(LogCategory.PROCESSOR, message, data, LogComponent.AUDIO_PROCESSOR);
         break;
       case LogLevel.TRACE:
-        this.trace(LogCategory.PROCESSOR, message, data);
+        this.trace(LogCategory.PROCESSOR, message, data, LogComponent.AUDIO_PROCESSOR);
         break;
       default:
         // No logging for NONE level
@@ -435,23 +659,32 @@ export class AudioLogger extends Logger {
     
     if (options.enableResampler === false) {
       this.disableCategories(LogCategory.RESAMPLER);
+      this.disableComponents(LogComponent.RESAMPLER);
     } else if (options.enableResampler === true) {
       this.enableCategories(LogCategory.RESAMPLER);
+      this.enableComponents(LogComponent.RESAMPLER);
     }
     
     if (options.enableWorklet === false) {
       this.disableCategories(LogCategory.WORKLET);
+      this.disableComponents(LogComponent.AUDIO_WORKLET);
     } else if (options.enableWorklet === true) {
       this.enableCategories(LogCategory.WORKLET);
+      this.enableComponents(LogComponent.AUDIO_WORKLET);
     }
     
     if (options.enableProcessor === false) {
       this.disableCategories(LogCategory.PROCESSOR);
+      this.disableComponents(LogComponent.AUDIO_PROCESSOR);
     } else if (options.enableProcessor === true) {
       this.enableCategories(LogCategory.PROCESSOR);
+      this.enableComponents(LogComponent.AUDIO_PROCESSOR);
     }
   }
 }
+
+// Export the RubberBand component logger for use in RubberBand modules
+export const rubberBandLogger = new ComponentLogger(LogComponent.RESAMPLER);
 
 // Export singleton instances for shared usage
 export const logger = Logger.getInstance();

@@ -1,6 +1,8 @@
 /**
  * Manager for audio processing sessions
  */
+import { audioLoggers } from '../../utils/LoggerFactory';
+
 export class AudioSessionManager {
   /**
    * Creates a new AudioSessionManager
@@ -25,7 +27,7 @@ export class AudioSessionManager {
    * @returns A promise that resolves when processing has started
    */
   async startProcessing(): Promise<void> {
-    console.log('Starting audio capture');
+    audioLoggers.session.info('Starting audio capture');
     
     // Clear previous data
     this.processorCore.clearData();
@@ -40,7 +42,7 @@ export class AudioSessionManager {
    * @returns A promise that resolves when processing has stopped
    */
   async stopProcessing(): Promise<void> {
-    console.log('Stopping audio capture');
+    audioLoggers.session.info('Stopping audio capture');
     
     // Save audio files if we have data
     if (this.processorCore.hasAudioData()) {

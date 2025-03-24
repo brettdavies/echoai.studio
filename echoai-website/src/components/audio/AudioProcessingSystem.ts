@@ -4,6 +4,7 @@ import { AudioWorkletManager } from './AudioWorkletManager';
 import { AudioSessionManager } from './AudioSessionManager';
 import { ProcessingOptions } from './types';
 import { setupUserInteractionHandlers } from './AudioContextHelper';
+import { audioLoggers } from '../../utils/LoggerFactory';
 
 /**
  * Main coordinator for the audio processing system 
@@ -44,7 +45,7 @@ export class AudioProcessingSystem {
   async initialize(): Promise<void> {
     // Skip if required components are missing
     if (!this.audioContext || !this.sourceNode) {
-      console.error('Cannot initialize audio system: missing AudioContext or source node');
+      audioLoggers.processor.error('Cannot initialize audio system: missing AudioContext or source node');
       return;
     }
     
@@ -77,9 +78,9 @@ export class AudioProcessingSystem {
         this.workletManager
       );
       
-      console.log('Audio processing system initialized successfully');
+      audioLoggers.processor.info('Audio processing system initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize audio processing system:', error);
+      audioLoggers.processor.error('Failed to initialize audio processing system:', error);
       this.cleanup();
       throw error;
     }
@@ -124,7 +125,7 @@ export class AudioProcessingSystem {
    */
   async startProcessing(): Promise<void> {
     if (!this.sessionManager) {
-      console.error('Cannot start processing: session manager not initialized');
+      audioLoggers.processor.error('Cannot start processing: session manager not initialized');
       return;
     }
     
@@ -136,7 +137,7 @@ export class AudioProcessingSystem {
    */
   async stopProcessing(): Promise<void> {
     if (!this.sessionManager) {
-      console.error('Cannot stop processing: session manager not initialized');
+      audioLoggers.processor.error('Cannot stop processing: session manager not initialized');
       return;
     }
     

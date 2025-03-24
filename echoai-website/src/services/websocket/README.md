@@ -23,19 +23,19 @@ websocket/
 
 ## Logging System
 
-The WebSocket module uses a specialized logger that extends the shared application logger. It's designed to provide detailed logging for both WebSocket communication and audio processing.
+The WebSocket module uses domain-specific loggers from our logging factory system to provide detailed logging for both WebSocket communication and audio processing.
 
 ```typescript
-import { logger, audioLogger, LogLevel, LogCategory } from '../services/websocket';
+import { LogLevel, LogCategory } from '../utils/Logger';
+import { networkLoggers, audioLoggers } from '../utils/LoggerFactory';
 
 // WebSocket-specific logging
-logger.logConnection(LogLevel.INFO, 'Connecting to server', { url });
-logger.logMessage(LogLevel.DEBUG, 'Message received', { size: data.length });
+networkLoggers.websocket.info('Connecting to server', { url });
+networkLoggers.websocket.debug('Message received', { size: data.length });
 
-// Audio-specific logging (uses specialized audio logger)
-audioLogger.logProcessor(LogLevel.INFO, 'Audio processor initialized');
-audioLogger.logWasm(LogLevel.DEBUG, 'WASM module loaded');
-audioLogger.logResampler(LogLevel.INFO, 'Sample rate conversion completed');
+// Audio-specific logging (uses specialized audio loggers)
+audioLoggers.processor.info('Audio processor initialized');
+audioLoggers.resampler.debug('Sample rate conversion completed');
 ```
 
 ## Streaming Audio Processing
@@ -43,7 +43,8 @@ audioLogger.logResampler(LogLevel.INFO, 'Sample rate conversion completed');
 The audio streaming system integrates with the logging system to provide detailed debugging information.
 
 ```typescript
-import { createAudioStreaming, LogLevel } from '../services/websocket';
+import { createAudioStreaming } from '../services/websocket';
+import { LogLevel } from '../utils/Logger';
 
 // Create a streaming processor with logging configuration
 const processor = createAudioStreaming({
@@ -62,31 +63,32 @@ const processor = createAudioStreaming({
 });
 ```
 
-## Using the Logger in WebAssembly and RubberBand Components
+## Using the Logger in WebAssembly and Resampler Components
 
-When working with WebAssembly or RubberBand components, use the appropriate logging methods:
+When working with WebAssembly or Resampler components, use the appropriate domain loggers:
 
 ```typescript
 // In a WebAssembly module wrapper
-import { audioLogger, LogLevel } from '../services/websocket';
+import { LogLevel } from '../utils/Logger';
+import { audioLoggers } from '../utils/LoggerFactory';
 
 export class WasmModule {
   async initialize() {
     try {
-      audioLogger.logWasm(LogLevel.INFO, 'Initializing WASM module');
+      audioLoggers.session.info('Initializing WASM module');
       // ... initialization code
-      audioLogger.logWasm(LogLevel.INFO, 'WASM module initialized successfully');
+      audioLoggers.session.info('WASM module initialized successfully');
     } catch (error) {
-      audioLogger.logWasm(LogLevel.ERROR, 'Failed to initialize WASM module', error);
+      audioLoggers.session.error('Failed to initialize WASM module', error);
       throw error;
     }
   }
 }
 
-// In a RubberBand wrapper
-export class RubberBandResampler {
+// In a Resampler wrapper
+export class ResamplerModule {
   resample(input: Float32Array): Float32Array {
-    audioLogger.logResampler(LogLevel.DEBUG, 'Resampling audio data', { 
+    audioLoggers.resampler.debug('Resampling audio data', { 
       inputSize: input.length 
     });
     // ... resampling logic
@@ -109,6 +111,7 @@ Example usage:
 
 ```typescript
 import { WebSocketService } from '../services/websocket';
+import { networkLoggers } from '../utils/LoggerFactory';
 
 const ws = new WebSocketService({
   url: 'wss://example.com/socket',
@@ -118,8 +121,8 @@ const ws = new WebSocketService({
 });
 
 ws.connect()
-  .then(() => console.log('Connected!'))
-  .catch(error => console.error('Connection failed:', error));
+  .then(() => networkLoggers.websocket.info('Connected!'))
+  .catch(error => networkLoggers.websocket.error('Connection failed:', error));
 
 // Send messages with priority
 ws.send(data, 1, true); // high priority, reliable

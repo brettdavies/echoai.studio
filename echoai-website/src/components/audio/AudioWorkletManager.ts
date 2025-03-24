@@ -1,6 +1,8 @@
 /**
  * Creates and manages an AudioWorklet for processing audio
  */
+import { audioLoggers } from '../../utils/LoggerFactory';
+
 export class AudioWorkletManager {
   private workletNode: AudioWorkletNode | null = null;
   private isPlaying = false;
@@ -68,7 +70,7 @@ export class AudioWorkletManager {
       
       URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to initialize AudioWorklet:', error);
+      audioLoggers.worklet.error('Failed to initialize AudioWorklet:', error);
       throw error;
     }
   }
@@ -105,6 +107,27 @@ export class AudioWorkletManager {
       if (event.data.type === 'audioData' && this.isPlaying && this.onAudioData) {
         const audioData = new Float32Array(event.data.audioData);
         this.onAudioData(audioData);
+      } else if (event.data.type === 'log') {
+        // Handle log messages from the worklet
+        switch (event.data.level) {
+          case 'info':
+            audioLoggers.worklet.info(event.data.message);
+            break;
+          case 'error':
+            audioLoggers.worklet.error(event.data.message);
+            break;
+          case 'warn':
+            audioLoggers.worklet.warn(event.data.message);
+            break;
+          case 'debug':
+            audioLoggers.worklet.debug(event.data.message);
+            break;
+          default:
+            audioLoggers.worklet.info(event.data.message);
+        }
+      } else if (typeof event.data === 'string') {
+        // Handle string messages (older messaging format)
+        audioLoggers.worklet.info(event.data);
       }
     };
   }
@@ -151,7 +174,9 @@ export class AudioWorkletManager {
           
           // Only log once every 1000 frames to reduce console spam
           if (this.processedFrameCount % 1000 === 0) {
-            console.log('AudioWorklet: Processing frame ' + this.processedFrameCount);
+            // Format to match our logger output
+            const timestamp = new Date().toISOString();
+            console.log('[AudioWorklet] ' + timestamp + ' [INFO] [worklet][audio_worklet]: Processing frame ' + this.processedFrameCount);
           }
           
           // Send the audio data to the main thread
@@ -176,9 +201,13 @@ export class AudioWorkletManager {
       // Use try-catch to handle the case where processor is already registered
       try {
         registerProcessor('audio-processor-worklet', AudioProcessorWorklet);
-        console.log('AudioWorklet: Processor registered successfully');
+        // Format to match our logger output
+        const timestamp = new Date().toISOString();
+        console.log('[AudioWorklet] ' + timestamp + ' [INFO] [worklet][audio_worklet]: Processor registered successfully');
       } catch (error) {
-        console.log('AudioWorklet: Processor already registered');
+        // Format to match our logger output
+        const timestamp = new Date().toISOString();
+        console.log('[AudioWorklet] ' + timestamp + ' [INFO] [worklet][audio_worklet]: Processor already registered');
       }
     `;
   }

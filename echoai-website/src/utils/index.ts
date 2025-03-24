@@ -4,14 +4,15 @@
 
 // Export WebSocket test utilities
 export * from './testWebSocket';
+import { appLogger } from './LoggerFactory';
 
 // Initialize browser testing utilities in development
 if (process.env.NODE_ENV === 'development') {
   // Import and initialize test utilities
   import('./testWebSocket').then(module => {
-    console.log('WebSocket test utilities loaded in development mode');
+    appLogger.info('WebSocket test utilities loaded in development mode');
   }).catch(error => {
-    console.error('Failed to load WebSocket test utilities:', error);
+    appLogger.error('Failed to load WebSocket test utilities:', error);
   });
 }
 
@@ -19,7 +20,7 @@ if (process.env.NODE_ENV === 'development') {
  * Utility module exports
  */
 
-// Export utilities
+// Export utilities - import the default export correctly
 export { default as testWebSocket } from './testWebSocket';
 
 // Export Logger module
@@ -28,8 +29,9 @@ export {
   AudioLogger,
   LogLevel,
   LogCategory,
+  LogComponent,
   logger,
   audioLogger
 } from './Logger';
 
-export type { LogMessage } from './Logger'; 
+export type { LogMessage, LoggingConfig } from './Logger'; 

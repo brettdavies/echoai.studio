@@ -10,6 +10,7 @@ import AutomateWorkSection from './components/AutomateWorkSection'
 import FormattingExampleSection from './components/FormattingExampleSection'
 import Footer from './components/Footer'
 import DocumentTitle from './components/DocumentTitle'
+import LoggingControl from './components/debug/LoggingControl'
 
 function App() {
   return (
@@ -28,6 +29,8 @@ function App() {
         <FormattingExampleSection />
       </main>
       <Footer />
+      {/* Only include LoggingControl in development mode */}
+      {process.env.NODE_ENV !== 'production' && <LoggingControl />}
     </div>
   )
 }

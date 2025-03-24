@@ -1,4 +1,5 @@
 import { ProcessedAudio } from './types';
+import { audioLoggers } from '../../utils/LoggerFactory';
 
 /**
  * Creates a WAV file from audio data
@@ -91,7 +92,7 @@ export const saveWAVFile = (
       setTimeout(() => {
         try {
           link.click();
-          console.log('File download triggered for:', filename);
+          audioLoggers.session.info('File download triggered for:', filename);
           
           // Clean up
           setTimeout(() => {
@@ -100,12 +101,12 @@ export const saveWAVFile = (
             resolve();
           }, 1000);
         } catch (err) {
-          console.error('Error triggering download:', err);
+          audioLoggers.session.error('Error triggering download:', err);
           reject(err);
         }
       }, 100);
     } catch (error) {
-      console.error('Error saving WAV file:', error);
+      audioLoggers.session.error('Error saving WAV file:', error);
       reject(error);
     }
   });

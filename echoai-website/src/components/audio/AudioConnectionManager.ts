@@ -1,6 +1,8 @@
 /**
  * Manages audio connections between nodes in the Web Audio API
  */
+import { audioLoggers } from '../../utils/LoggerFactory';
+
 export class AudioConnectionManager {
   private isConnected: boolean = false;
   
@@ -53,7 +55,7 @@ export class AudioConnectionManager {
       
       return true;
     } catch (error) {
-      console.error('Error connecting audio nodes:', error);
+      audioLoggers.session.error('Error connecting audio nodes:', error);
       return false;
     }
   }
@@ -87,9 +89,9 @@ export class AudioConnectionManager {
     if (this.audioContext.state === 'suspended') {
       try {
         await this.audioContext.resume();
-        console.log('AudioContext resumed successfully');
+        audioLoggers.session.info('AudioContext resumed successfully');
       } catch (error) {
-        console.warn('Failed to resume AudioContext:', error);
+        audioLoggers.session.warn('Failed to resume AudioContext:', error);
       }
     }
   }

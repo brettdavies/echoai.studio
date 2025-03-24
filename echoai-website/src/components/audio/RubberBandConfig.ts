@@ -1,4 +1,5 @@
 import { ProcessingOptions } from './types';
+import { audioLoggers } from '../../utils/LoggerFactory';
 
 /**
  * Configuration for the RubberBand processor
@@ -47,7 +48,7 @@ export const createRubberBandOptions = (
     }
   };
   
-  console.log('[RubberBand] Creating processor with options:', JSON.stringify(processorOptions, null, 2));
+  audioLoggers.resampler.debug('Creating processor with options:', JSON.stringify(processorOptions, null, 2));
   
   return {
     numberOfInputs: 1,
@@ -68,9 +69,9 @@ export const configureRubberBandNode = (node: any, options: ProcessingOptions): 
   if (typeof node.setHighQuality === 'function') {
     // Set this first as it can change the processing mode
     node.setHighQuality(true);
-    console.log('[RubberBand] Set high quality mode');
+    audioLoggers.resampler.info('Set high quality mode');
   } else {
-    console.warn('[RubberBand] setHighQuality method not available');
+    audioLoggers.resampler.warn('setHighQuality method not available');
   }
   
   // Then set time stretching if needed
@@ -78,9 +79,9 @@ export const configureRubberBandNode = (node: any, options: ProcessingOptions): 
     if (typeof node.setTempo === 'function') {
       const tempo = 1.0 / options.timeStretch;  // Convert time stretch to tempo
       node.setTempo(tempo);
-      console.log(`[RubberBand] Set tempo to ${tempo} (1.0/timeStretch: ${options.timeStretch})`);
+      audioLoggers.resampler.info(`Set tempo to ${tempo} (1.0/timeStretch: ${options.timeStretch})`);
     } else {
-      console.warn('[RubberBand] setTempo method not available');
+      audioLoggers.resampler.warn('setTempo method not available');
     }
   }
   
@@ -91,9 +92,9 @@ export const configureRubberBandNode = (node: any, options: ProcessingOptions): 
     
     if (typeof node.setPitch === 'function') {
       node.setPitch(pitchScale);
-      console.log(`[RubberBand] Set pitch scale to ${pitchScale} (from semitones: ${options.pitchShift})`);
+      audioLoggers.resampler.info(`Set pitch scale to ${pitchScale} (from semitones: ${options.pitchShift})`);
     } else {
-      console.warn('[RubberBand] setPitch method not available');
+      audioLoggers.resampler.warn('setPitch method not available');
     }
   }
   
@@ -107,8 +108,8 @@ export const configureRubberBandNode = (node: any, options: ProcessingOptions): 
         tempo: options.timeStretch ? 1.0 / options.timeStretch : 1.0
       }
     });
-    console.log('[RubberBand] Configuration message sent to processor');
+    audioLoggers.resampler.info('Configuration message sent to processor');
   } catch (error) {
-    console.error('[RubberBand] Failed to send configuration message:', error);
+    audioLoggers.resampler.error('Failed to send configuration message:', error);
   }
 }; 

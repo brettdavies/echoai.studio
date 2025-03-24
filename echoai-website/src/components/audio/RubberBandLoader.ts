@@ -2,6 +2,8 @@
  * Module to handle loading and managing the RubberBand WebAssembly module
  */
 
+import { audioLoggers } from '../../utils/LoggerFactory';
+
 // Lazy-loading RubberBand WebAssembly
 let rubberBandPromise: Promise<any> | null = null;
 // Global reference to initialized module
@@ -16,7 +18,7 @@ export const loadRubberBandModule = async (): Promise<any> => {
   if (!globalRubberBandModule) {
     // Dynamically import RubberBand only when needed
     if (!rubberBandPromise) {
-      console.log('Lazy-loading RubberBand WebAssembly module...');
+      audioLoggers.resampler.info('Lazy-loading RubberBand WebAssembly module...');
       rubberBandPromise = import('rubberband-web').then(module => {
         globalRubberBandModule = module;
         return module;
@@ -27,7 +29,7 @@ export const loadRubberBandModule = async (): Promise<any> => {
     globalRubberBandModule = await rubberBandPromise;
     
     // Log available exports to help diagnose the structure
-    console.log('Available RubberBand exports:', Object.keys(globalRubberBandModule));
+    audioLoggers.resampler.debug('Available RubberBand exports:', Object.keys(globalRubberBandModule));
     
     // Check if module has the createRubberBandNode method
     if (!globalRubberBandModule || typeof globalRubberBandModule.createRubberBandNode !== 'function') {
@@ -68,7 +70,7 @@ export const createRubberBandNode = async (
   const module = await loadRubberBandModule();
   
   // Debug audio context details
-  console.log(`[RubberBand] Creating node with context: ${context.constructor.name}, sampleRate: ${context.sampleRate}`);
+  audioLoggers.resampler.debug(`Creating node with context: ${context.constructor.name}, sampleRate: ${context.sampleRate}`);
   
   try {
     // Create the node
@@ -84,7 +86,7 @@ export const createRubberBandNode = async (
     
     // Add debug message handler to check communication
     node.port.onmessage = (event: MessageEvent) => {
-      console.log(`[RubberBand] Message from processor:`, event.data);
+      audioLoggers.resampler.debug(`Message from processor:`, event.data);
     };
     
     // Force immediate message to test communication
@@ -98,14 +100,14 @@ export const createRubberBandNode = async (
     const missingMethods = requiredMethods.filter(method => typeof node[method] !== 'function');
     
     if (missingMethods.length > 0) {
-      console.warn(`[RubberBand] Node missing expected methods: ${missingMethods.join(', ')}`);
+      audioLoggers.resampler.warn(`Node missing expected methods: ${missingMethods.join(', ')}`);
     } else {
-      console.log('[RubberBand] Node created with all required methods');
+      audioLoggers.resampler.info('Node created with all required methods');
     }
     
     return node;
   } catch (error) {
-    console.error('[RubberBand] Error creating RubberBand node:', error);
+    audioLoggers.resampler.error('Error creating RubberBand node:', error);
     throw error;
   }
 }; 

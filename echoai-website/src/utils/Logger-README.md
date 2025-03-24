@@ -6,10 +6,13 @@ This module provides a configurable logging system that can be used throughout t
 
 - Configurable log levels
 - Category-based filtering
+- Component-based filtering
 - Specialized loggers for different components
 - Thread-safe singleton instances
 - Consistent formatting across the application
 - In-memory log storage with retrieval capabilities
+- Persistent configuration through localStorage
+- Development UI for controlling logging settings
 
 ## Basic Usage
 
@@ -71,6 +74,49 @@ Log messages are categorized to allow filtering:
 - `LogCategory.STORAGE` - Storage events
 - `LogCategory.CACHE` - Cache operations
 
+## Component-Level Logging
+
+The logging system allows for fine-grained control over which components generate logs:
+
+```typescript
+import { logger, LogComponent } from '../utils';
+
+// Disable logging for specific components
+logger.disableComponents(LogComponent.RUBBER_BAND, LogComponent.WEBSOCKET);
+
+// Enable logging for specific components
+logger.enableComponents(LogComponent.RUBBER_BAND);
+
+// Check if a component's logging is enabled
+const isEnabled = logger.isComponentEnabled(LogComponent.RUBBER_BAND);
+```
+
+### Available Components
+
+- `LogComponent.RUBBER_BAND` - RubberBand audio processing
+- `LogComponent.AUDIO_WORKLET` - Audio worklet processing
+- `LogComponent.AUDIO_PROCESSOR` - General audio processing
+- `LogComponent.WEBSOCKET` - WebSocket communications
+- `LogComponent.HTTP_CLIENT` - HTTP client operations
+- `LogComponent.UI_CONTROLS` - UI control interactions
+
+### Component-Specific Loggers
+
+For frequently used components, specialized loggers are available:
+
+```typescript
+import RubberBandLogger from '../components/audio/RubberBandLogger';
+
+// Log messages
+RubberBandLogger.info('Processing audio chunk');
+RubberBandLogger.debug('Detailed processing info', { chunkSize, options });
+
+// Control logging for this component
+RubberBandLogger.disable(); // Turn off all RubberBand logs
+RubberBandLogger.enable();  // Turn on RubberBand logs
+const isEnabled = RubberBandLogger.isEnabled();
+```
+
 ## Specialized Loggers
 
 ### Audio Logger
@@ -113,18 +159,63 @@ logger.enableCategories(LogCategory.PERFORMANCE, LogCategory.WASM);
 logger.disableCategories(LogCategory.UI, LogCategory.HTTP);
 ```
 
+## Logging Configuration
+
+The logging system supports persistent configuration through localStorage:
+
+```typescript
+import { logger, LoggingConfig, DEFAULT_LOGGING_CONFIG } from '../utils';
+
+// Apply a custom configuration
+const config: LoggingConfig = {
+  components: {
+    rubber_band: false,  // Disable RubberBand logs
+    websocket: true      // Enable WebSocket logs
+  }
+};
+logger.applyLoggingConfig(config);
+
+// Reset to default configuration
+logger.resetLoggingConfig();
+```
+
+## Development UI Controls
+
+During development, you can use the LoggingControl component to adjust logging settings via a UI:
+
+```tsx
+import LoggingControl from '../components/debug/LoggingControl';
+
+// Add to your app's development layout
+const DevLayout = () => (
+  <>
+    <MainApp />
+    {process.env.NODE_ENV !== 'production' && <LoggingControl />}
+  </>
+);
+```
+
+The LoggingControl component provides:
+- Toggle switches for each component's logging
+- Radio buttons to set the global log level 
+- Quick actions for common tasks
+- Persistent settings through browser refresh
+
 ## Retrieving Logs
 
 You can retrieve logs for analysis:
 
 ```typescript
-import { logger, LogCategory } from '../utils';
+import { logger, LogCategory, LogComponent } from '../utils';
 
 // Get all logs
 const allLogs = logger.getLogs();
 
 // Get logs for a specific category
 const performanceLogs = logger.getLogsByCategory(LogCategory.PERFORMANCE);
+
+// Get logs for a specific component
+const rubberBandLogs = logger.getLogsByComponent(LogComponent.RUBBER_BAND);
 
 // Clear all logs
 logger.clearLogs();
@@ -135,7 +226,7 @@ logger.clearLogs();
 You can extend the base Logger class to create custom loggers:
 
 ```typescript
-import { Logger, LogLevel, LogCategory } from '../utils';
+import { Logger, LogLevel, LogCategory, LogComponent } from '../utils';
 
 class MyCustomLogger extends Logger {
   private static instance: MyCustomLogger;
@@ -155,11 +246,36 @@ class MyCustomLogger extends Logger {
   
   // Custom logging methods
   public logCustomEvent(level: LogLevel, message: string, data?: any): void {
-    this.log(level, LogCategory.APP, message, data);
+    // Optionally specify a component for fine-grained control
+    this.log(level, LogCategory.APP, message, data, LogComponent.MISC);
   }
 }
 
 export const myLogger = MyCustomLogger.getInstance();
+```
+
+## Creating a Component Logger
+
+For a new component, you can create a specialized logger:
+
+```typescript
+import { 
+  LogCategory, 
+  LogComponent,
+  ComponentLogger 
+} from '../utils';
+
+// Define a new component if needed
+enum CustomComponent {
+  MY_FEATURE = 'my_feature'
+}
+
+// Create a component logger
+const myFeatureLogger = new ComponentLogger(CustomComponent.MY_FEATURE);
+
+// Use it throughout your feature
+myFeatureLogger.info(LogCategory.APP, 'Feature initialized');
+myFeatureLogger.debug(LogCategory.PERFORMANCE, 'Processing time', { duration: '5ms' });
 ```
 
 ## Environment-Based Configuration
@@ -169,22 +285,3 @@ The logger automatically adjusts its default log level based on the environment:
 - Production: `LogLevel.ERROR`
 - Test: `LogLevel.WARN`
 - Development: `LogLevel.DEBUG`
-
-## Integration with React Components
-
-For React components, you can configure logging through props:
-
-```tsx
-import { LogLevel } from '../utils';
-
-<AudioProcessor
-  // ... other props
-  loggerConfig={{
-    level: LogLevel.DEBUG,
-    enableWasm: true,
-    enableResampler: true,
-    enableWorklet: true,
-    enableProcessor: true
-  }}
-/>
-```

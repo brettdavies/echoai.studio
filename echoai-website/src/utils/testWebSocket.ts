@@ -12,6 +12,8 @@ import {
   LogCategory, 
   ConnectionState 
 } from '../services/websocket';
+import { LogComponent } from './Logger';
+import { networkLoggers } from './LoggerFactory';
 
 /**
  * Test options for WebSocket connection
@@ -125,17 +127,33 @@ export async function testWebSocketSend(options: WebSocketTestOptions): Promise<
   return sendSuccess;
 }
 
-// Add to window for easy browser console testing
-if (typeof window !== 'undefined') {
+// Add test utilities to window object for console debugging
+export function initializeGlobalTestUtilities(): void {
   (window as any).testWebSocketConnection = testWebSocketConnection;
   (window as any).testWebSocketSend = testWebSocketSend;
   (window as any).webSocketLogger = logger;
   (window as any).LogLevel = LogLevel;
   (window as any).LogCategory = LogCategory;
   
-  // Example usage instructions logged to console
-  console.log('WebSocket Test Utilities available in window:');
-  console.log('  - testWebSocketConnection({url: "wss://example.com/socket"})');
-  console.log('  - testWebSocketSend({url: "wss://example.com/socket"})');
-  console.log('  - webSocketLogger.setLogLevel(LogLevel.TRACE)');
-} 
+  // Example usage instructions logged using proper logger
+  networkLoggers.websocket.info('WebSocket Test Utilities available in window:');
+  networkLoggers.websocket.info('  - testWebSocketConnection({url: "wss://example.com/socket"})');
+  networkLoggers.websocket.info('  - testWebSocketSend({url: "wss://example.com/socket"})');
+  networkLoggers.websocket.info('  - webSocketLogger.setLogLevel(LogLevel.TRACE)');
+}
+
+// Initialize if in browser environment
+if (typeof window !== 'undefined') {
+  initializeGlobalTestUtilities();
+}
+
+// Default export object with all test utilities
+const testWebSocket = {
+  testWebSocketConnection,
+  testWebSocketSend,
+  logger,
+  LogLevel,
+  LogCategory
+};
+
+export default testWebSocket; 
