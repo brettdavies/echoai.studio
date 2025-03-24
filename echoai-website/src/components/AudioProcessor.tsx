@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { AudioProcessorProps } from './audio/types';
 import { DEFAULT_PROCESSING_OPTIONS } from './audio/constants';
 import { AudioProcessingSystem } from './audio/AudioProcessingSystem';
-import { createAudioStreaming, StreamingAudioProcessor } from '../services/websocket';
+import { 
+  createAudioStreaming, 
+  StreamingAudioProcessor
+} from '../services/websocket';
+import { audioLogger, LogLevel, LogCategory } from '../utils/Logger';
 
 /**
  * Extended props interface with streaming support
@@ -16,6 +20,15 @@ interface AudioProcessorPropsWithStreaming extends AudioProcessorProps {
   
   // Optional callback for streaming status changes
   onStreamingStatusChange?: (status: boolean, message?: string) => void;
+  
+  // Optional logging configuration
+  loggerConfig?: {
+    level?: LogLevel;
+    enableWasm?: boolean;
+    enableResampler?: boolean;
+    enableWorklet?: boolean;
+    enableProcessor?: boolean;
+  };
 }
 
 /**
@@ -32,6 +45,7 @@ const AudioProcessor = ({
   streamingUrl,
   streamingEnabled = false,
   onStreamingStatusChange,
+  loggerConfig,
 }: AudioProcessorPropsWithStreaming) => {
   // Reference to the audio processing system
   const systemRef = useRef<AudioProcessingSystem | null>(null);
@@ -45,21 +59,39 @@ const AudioProcessor = ({
   // Streaming state
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   
+  // Configure logger based on props
+  useEffect(() => {
+    if (loggerConfig) {
+      audioLogger.configure(loggerConfig);
+      audioLogger.logProcessor(LogLevel.INFO, 'Audio processor logger configured', loggerConfig);
+    }
+  }, [loggerConfig]);
+  
   // Initialize or update the audio processing system when dependencies change
   useEffect(() => {
     const initializeSystem = async () => {
       // Skip if dependencies are missing
-      if (!audioContext || !mediaElement || !sourceNode) return;
+      if (!audioContext || !mediaElement || !sourceNode) {
+        audioLogger.logProcessor(LogLevel.DEBUG, 'Missing audio dependencies, skipping initialization');
+        return;
+      }
       
       try {
         // Create a new system if it doesn't exist
         if (!systemRef.current) {
+          audioLogger.logProcessor(LogLevel.INFO, 'Creating new audio processing system');
+          
           // Check if streaming is enabled and URL is provided
           if (streamingUrl) {
+            audioLogger.logProcessor(LogLevel.INFO, 'Streaming enabled, creating streaming processor', {
+              url: streamingUrl
+            });
+            
             // Create streaming processor
             const streamingProcessor = createAudioStreaming({
               serverUrl: streamingUrl,
               processingOptions,
+              loggerOptions: loggerConfig // Pass logger options to factory
             });
             
             // Store reference
@@ -67,7 +99,10 @@ const AudioProcessor = ({
             
             // Register streaming status callback
             if (onStreamingStatusChange) {
-              streamingProcessor.onStreamingStatusChange(onStreamingStatusChange);
+              streamingProcessor.onStreamingStatusChange((status, message) => {
+                audioLogger.logProcessor(LogLevel.INFO, `Streaming status changed: ${status}`, { message });
+                onStreamingStatusChange(status, message);
+              });
             }
             
             // Enable/disable streaming based on prop
@@ -91,7 +126,11 @@ const AudioProcessor = ({
             
             // Store reference
             systemRef.current = system;
+            
+            audioLogger.logProcessor(LogLevel.INFO, 'Audio processing system with streaming initialized');
           } else {
+            audioLogger.logProcessor(LogLevel.INFO, 'Creating standard audio processor without streaming');
+            
             // Create standard audio processor system without streaming
             const system = new AudioProcessingSystem(
               audioContext,
@@ -108,18 +147,26 @@ const AudioProcessor = ({
             
             // Store reference
             systemRef.current = system;
+            
+            audioLogger.logProcessor(LogLevel.INFO, 'Standard audio processing system initialized');
           }
         } else {
           // Update existing system
+          audioLogger.logProcessor(LogLevel.DEBUG, 'Updating existing audio processing system', {
+            processingOptions
+          });
+          
           systemRef.current.updateOptions(processingOptions);
           systemRef.current.updateSourceNode(sourceNode);
           
           // Update streaming processor if it exists
           if (streamingProcessorRef.current) {
             streamingProcessorRef.current.updateOptions(processingOptions);
+            audioLogger.logProcessor(LogLevel.DEBUG, 'Updated streaming processor options');
           }
         }
       } catch (error) {
+        audioLogger.logProcessor(LogLevel.ERROR, 'Failed to initialize audio processing system', error);
         console.error('Failed to initialize audio processing system:', error);
       }
     };
@@ -129,6 +176,7 @@ const AudioProcessor = ({
     // Cleanup function
     return () => {
       if (systemRef.current) {
+        audioLogger.logProcessor(LogLevel.INFO, 'Cleaning up audio processing system');
         systemRef.current.cleanup();
         systemRef.current = null;
       }
@@ -136,7 +184,7 @@ const AudioProcessor = ({
       // Reset streaming processor
       streamingProcessorRef.current = null;
     };
-  }, [audioContext, mediaElement, sourceNode, processingOptions, streamingUrl]);
+  }, [audioContext, mediaElement, sourceNode, processingOptions, streamingUrl, onStreamingStatusChange, streamingEnabled, loggerConfig]);
   
   // Handle audio data callback
   const handleAudioData = async (audioData: Float32Array) => {
@@ -156,6 +204,7 @@ const AudioProcessor = ({
     
     // Notify the system about playback state change
     if (systemRef.current) {
+      audioLogger.logProcessor(LogLevel.DEBUG, `Setting playback state: ${isPlaying}`);
       systemRef.current.setPlaybackState(isPlaying);
     }
   }, [isPlaying]);
@@ -165,8 +214,10 @@ const AudioProcessor = ({
     if (!systemRef.current) return;
     
     if (isPlaying) {
+      audioLogger.logProcessor(LogLevel.INFO, 'Starting audio processing');
       systemRef.current.startProcessing();
     } else {
+      audioLogger.logProcessor(LogLevel.INFO, 'Stopping audio processing');
       systemRef.current.stopProcessing();
     }
   }, [isPlaying]);
@@ -174,6 +225,7 @@ const AudioProcessor = ({
   // Update streaming state when streamingEnabled prop changes
   useEffect(() => {
     if (streamingProcessorRef.current && streamingEnabled !== isStreaming) {
+      audioLogger.logProcessor(LogLevel.INFO, `Setting streaming state: ${streamingEnabled}`);
       streamingProcessorRef.current.setStreaming(streamingEnabled);
       setIsStreaming(streamingEnabled);
     }

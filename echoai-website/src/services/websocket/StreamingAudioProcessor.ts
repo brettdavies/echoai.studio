@@ -2,6 +2,7 @@ import { AudioProcessorCore } from '../../components/audio/AudioProcessorCore';
 import { ProcessingOptions } from '../../components/audio/types';
 import { AudioStreamingBridge } from './audio/AudioStreamingBridge';
 import { WebSocketService } from './WebSocketService';
+import { logger, LogCategory } from './WebSocketLogger';
 
 /**
  * StreamingAudioProcessor extends AudioProcessorCore to add WebSocket streaming capability
@@ -73,7 +74,7 @@ export class StreamingAudioProcessor extends AudioProcessorCore {
         await this.streamingBridge.processAudioChunk(latestChunk);
       }
     } catch (error) {
-      console.error('Error streaming audio data:', error);
+      logger.error(LogCategory.ERROR, 'Error streaming audio data', error);
     }
   }
   

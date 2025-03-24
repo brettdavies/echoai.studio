@@ -81,7 +81,9 @@ export type WebSocketEventType =
   | 'connecting'
   | 'reconnecting'
   | 'reconnect_failed'
-  | 'state_change';
+  | 'state_change'
+  | 'circuit_open'
+  | 'circuit_close';
 
 /**
  * Event handler function type

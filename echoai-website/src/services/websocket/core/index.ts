@@ -6,5 +6,4 @@
 export * from './types';
 export * from './EventEmitter';
 export * from './MessageQueue';
-export * from './ConnectionManager';
-export * from './Logger'; 
+export * from './ConnectionManager'; 

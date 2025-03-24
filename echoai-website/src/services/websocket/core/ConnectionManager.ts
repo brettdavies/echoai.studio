@@ -1,6 +1,6 @@
 import { ConnectionState, WebSocketOptions } from './types';
 import { EventEmitter } from './EventEmitter';
-import { logger, LogCategory } from './Logger';
+import { logger, LogCategory } from '../WebSocketLogger';
 
 /**
  * Manages the WebSocket connection lifecycle
@@ -26,7 +26,7 @@ export class ConnectionManager {
     private eventEmitter: EventEmitter
   ) {
     logger.setServiceId(this.getServiceId());
-    logger.info(LogCategory.CONNECTION, 'ConnectionManager created', { 
+    logger.info(LogCategory.WS, 'ConnectionManager created', { 
       url: this.options.url,
       autoReconnect: this.options.autoReconnect 
     });
@@ -63,7 +63,7 @@ export class ConnectionManager {
   connect(): Promise<void> {
     if (this.socket && (this.state === ConnectionState.CONNECTED || 
                         this.state === ConnectionState.CONNECTING)) {
-      logger.debug(LogCategory.CONNECTION, 'Connection already in progress or established');
+      logger.debug(LogCategory.WS, 'Connection already in progress or established');
       return Promise.resolve();
     }
     
@@ -72,7 +72,7 @@ export class ConnectionManager {
       this.resetCircuitBreaker();
     }
     
-    logger.info(LogCategory.CONNECTION, 'Attempting connection', { url: this.options.url });
+    logger.info(LogCategory.WS, 'Attempting connection', { url: this.options.url });
     
     return new Promise((resolve, reject) => {
       this.updateState(ConnectionState.CONNECTING);
@@ -83,7 +83,7 @@ export class ConnectionManager {
         this.socket = new WebSocket(this.options.url, this.options.protocols);
         this.socket.binaryType = this.options.binaryType || 'arraybuffer';
         
-        logger.debug(LogCategory.CONNECTION, 'WebSocket instance created', {
+        logger.debug(LogCategory.WS, 'WebSocket instance created', {
           binaryType: this.socket.binaryType,
           protocols: this.options.protocols
         });
@@ -91,7 +91,7 @@ export class ConnectionManager {
         // Set up connection timeout
         this.connectionTimeout = window.setTimeout(() => {
           if (this.state === ConnectionState.CONNECTING) {
-            logger.error(LogCategory.CONNECTION, 'Connection timeout', {
+            logger.error(LogCategory.WS, 'Connection timeout', {
               timeout: this.options.connectionTimeout
             });
             
@@ -105,13 +105,13 @@ export class ConnectionManager {
         
         // Set up event listeners
         this.socket.addEventListener('open', (event) => {
-          logger.info(LogCategory.CONNECTION, 'Connection established');
+          logger.info(LogCategory.WS, 'Connection established');
           this.handleOpen(event);
           resolve();
         });
         
         this.socket.addEventListener('close', (event) => {
-          logger.info(LogCategory.CONNECTION, 'Connection closed', {
+          logger.info(LogCategory.WS, 'Connection closed', {
             code: event.code,
             reason: event.reason,
             wasClean: event.wasClean
@@ -120,7 +120,7 @@ export class ConnectionManager {
           this.handleClose(event);
           if (this.state === ConnectionState.CONNECTING) {
             const error = new Error('Connection closed during initialization');
-            logger.error(LogCategory.CONNECTION, 'Connection closed during initialization', {
+            logger.error(LogCategory.WS, 'Connection closed during initialization', {
               code: event.code,
               reason: event.reason
             });
@@ -138,7 +138,7 @@ export class ConnectionManager {
         });
         
         this.socket.addEventListener('message', (event) => {
-          logger.debug(LogCategory.MESSAGE, 'Message received', {
+          logger.debug(LogCategory.WS, 'Message received', {
             size: typeof event.data === 'string' ? 
               event.data.length : 
               (event.data instanceof ArrayBuffer ? event.data.byteLength : 'unknown')
@@ -164,11 +164,11 @@ export class ConnectionManager {
   disconnect(code: number = 1000, reason: string = 'Normal closure'): void {
     if (!this.socket || this.state === ConnectionState.DISCONNECTED || 
                         this.state === ConnectionState.CLOSING) {
-      logger.debug(LogCategory.CONNECTION, 'Disconnect called but no active connection');
+      logger.debug(LogCategory.WS, 'Disconnect called but no active connection');
       return;
     }
     
-    logger.info(LogCategory.CONNECTION, 'Disconnecting', { code, reason });
+    logger.info(LogCategory.WS, 'Disconnecting', { code, reason });
     this.updateState(ConnectionState.CLOSING);
     
     // Clear all timers
@@ -189,7 +189,7 @@ export class ConnectionManager {
    * @param enable Whether to enable auto-reconnection
    */
   setAutoReconnect(enable: boolean): void {
-    logger.info(LogCategory.CONNECTION, `Auto-reconnect ${enable ? 'enabled' : 'disabled'}`);
+    logger.info(LogCategory.WS, `Auto-reconnect ${enable ? 'enabled' : 'disabled'}`);
     this.options.autoReconnect = enable;
   }
   
@@ -208,7 +208,7 @@ export class ConnectionManager {
     this.eventEmitter.emit('open', event);
     this.startHeartbeat();
     
-    logger.info(LogCategory.CONNECTION, 'Connection open handler complete');
+    logger.info(LogCategory.WS, 'Connection open handler complete');
   }
   
   /**
@@ -222,13 +222,13 @@ export class ConnectionManager {
     
     // Attempt to reconnect if needed
     if (this.shouldReconnect(event)) {
-      logger.info(LogCategory.CONNECTION, 'Will attempt reconnection', {
+      logger.info(LogCategory.WS, 'Will attempt reconnection', {
         attempt: this.reconnectAttempts + 1,
         maxAttempts: this.options.maxReconnectAttempts
       });
       this.attemptReconnect();
     } else {
-      logger.info(LogCategory.CONNECTION, 'No reconnection will be attempted', {
+      logger.info(LogCategory.WS, 'No reconnection will be attempted', {
         reason: this.getNoReconnectReason(event)
       });
     }
@@ -269,7 +269,7 @@ export class ConnectionManager {
     
     // If message is a heartbeat response, nothing more to do
     if (typeof event.data === 'string' && event.data === 'pong') {
-      logger.debug(LogCategory.MESSAGE, 'Heartbeat response received');
+      logger.debug(LogCategory.WS, 'Heartbeat response received');
       return;
     }
   }
@@ -282,7 +282,7 @@ export class ConnectionManager {
     const oldState = this.state;
     this.state = newState;
     
-    logger.info(LogCategory.STATE, `State changed: ${oldState} -> ${newState}`);
+    logger.info(LogCategory.WS, `State changed: ${oldState} -> ${newState}`);
     
     this.eventEmitter.emit('state_change', new CustomEvent('state_change', { 
       detail: { oldState, newState } 
@@ -334,7 +334,7 @@ export class ConnectionManager {
       this.options.maxReconnectDelay!
     );
     
-    logger.info(LogCategory.CONNECTION, `Reconnecting in ${delay}ms`, {
+    logger.info(LogCategory.WS, `Reconnecting in ${delay}ms`, {
       attempt: this.reconnectAttempts + 1,
       maxAttempts: this.options.maxReconnectAttempts
     });
@@ -360,13 +360,13 @@ export class ConnectionManager {
       
       // Attempt to connect
       this.connect().catch(error => {
-        logger.error(LogCategory.CONNECTION, 'Reconnection failed', error);
+        logger.error(LogCategory.WS, 'Reconnection failed', error);
         
         // Try again if we haven't exceeded max attempts
         if (this.shouldReconnect({ code: 0, reason: 'Reconnection failed', wasClean: false } as CloseEvent)) {
           this.attemptReconnect();
         } else {
-          logger.warn(LogCategory.CONNECTION, 'Max reconnection attempts reached');
+          logger.warn(LogCategory.WS, 'Max reconnection attempts reached');
           this.eventEmitter.emit('reconnect_failed', new CustomEvent('reconnect_failed'));
         }
       });
@@ -381,13 +381,13 @@ export class ConnectionManager {
       return;
     }
     
-    logger.debug(LogCategory.CONNECTION, `Starting heartbeat at ${this.options.heartbeatInterval}ms intervals`);
+    logger.debug(LogCategory.WS, `Starting heartbeat at ${this.options.heartbeatInterval}ms intervals`);
     
     this.heartbeatInterval = window.setInterval(() => {
       if (this.socket && this.state === ConnectionState.CONNECTED) {
         try {
           this.socket.send('ping');
-          logger.debug(LogCategory.MESSAGE, 'Heartbeat sent');
+          logger.debug(LogCategory.WS, 'Heartbeat sent');
         } catch (error) {
           logger.error(LogCategory.ERROR, 'Error sending heartbeat', error);
           this.cleanup();
@@ -407,7 +407,7 @@ export class ConnectionManager {
    * Clean up all timers and resources
    */
   private cleanup(): void {
-    logger.debug(LogCategory.CONNECTION, 'Cleaning up resources');
+    logger.debug(LogCategory.WS, 'Cleaning up resources');
     
     if (this.connectionTimeout !== null) {
       clearTimeout(this.connectionTimeout);
@@ -429,7 +429,7 @@ export class ConnectionManager {
    * Trip the circuit breaker to prevent further reconnection attempts
    */
   private tripCircuitBreaker(): void {
-    logger.warn(LogCategory.CONNECTION, 'Circuit breaker tripped');
+    logger.warn(LogCategory.WS, 'Circuit breaker tripped');
     
     this.circuitOpen = true;
     
@@ -445,7 +445,7 @@ export class ConnectionManager {
    * Reset the circuit breaker to allow reconnection attempts
    */
   private resetCircuitBreaker(): void {
-    logger.info(LogCategory.CONNECTION, 'Circuit breaker reset');
+    logger.info(LogCategory.WS, 'Circuit breaker reset');
     
     this.circuitOpen = false;
     

@@ -35,7 +35,7 @@ export async function testWebSocketConnection(options: WebSocketTestOptions): Pr
   logger.setLogLevel(options.debugLevel || LogLevel.TRACE);
   
   // Log test start
-  logger.info(LogCategory.CONNECTION, 'WebSocket connection test started', options);
+  logger.info(LogCategory.WS, 'WebSocket connection test started', options);
   
   // Default options
   const timeout = options.timeout || 5000;
@@ -66,11 +66,11 @@ export async function testWebSocketConnection(options: WebSocketTestOptions): Pr
     // Wait for a moment while connected
     await new Promise((resolve) => setTimeout(resolve, 1000));
   } catch (error) {
-    logger.error(LogCategory.ERROR, 'WebSocket connection test failed', error);
+    logger.error(LogCategory.WS, 'WebSocket connection test failed', error);
   } finally {
     // Always disconnect when done
     ws.disconnect();
-    logger.info(LogCategory.CONNECTION, `WebSocket connection test complete. Success: ${connectionSuccess}`);
+    logger.info(LogCategory.WS, `WebSocket connection test complete. Success: ${connectionSuccess}`);
   }
   
   return connectionSuccess;
@@ -86,7 +86,7 @@ export async function testWebSocketSend(options: WebSocketTestOptions): Promise<
   logger.setLogLevel(options.debugLevel || LogLevel.TRACE);
   
   // Log test start
-  logger.info(LogCategory.CONNECTION, 'WebSocket send test started', options);
+  logger.info(LogCategory.WS, 'WebSocket send test started', options);
   
   // Default options
   const timeout = options.timeout || 5000;
@@ -113,13 +113,13 @@ export async function testWebSocketSend(options: WebSocketTestOptions): Promise<
     }));
     
     sendSuccess = true;
-    logger.info(LogCategory.MESSAGE, 'Test message sent successfully');
+    logger.info(LogCategory.WS, 'Test message sent successfully');
   } catch (error) {
-    logger.error(LogCategory.ERROR, 'WebSocket send test failed', error);
+    logger.error(LogCategory.WS, 'WebSocket send test failed', error);
   } finally {
     // Always disconnect when done
     ws.disconnect();
-    logger.info(LogCategory.MESSAGE, `WebSocket send test complete. Success: ${sendSuccess}`);
+    logger.info(LogCategory.WS, `WebSocket send test complete. Success: ${sendSuccess}`);
   }
   
   return sendSuccess;

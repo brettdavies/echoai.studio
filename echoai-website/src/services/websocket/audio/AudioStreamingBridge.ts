@@ -22,7 +22,7 @@ import {
   createConfigMessage,
   processAudioData
 } from './MessageFormatter';
-import { logger, LogCategory } from '../core/Logger';
+import { logger, LogCategory } from '../WebSocketLogger';
 
 /**
  * Manages streaming of processed audio data over WebSocket
@@ -53,7 +53,7 @@ export class AudioStreamingBridge {
     // Set service ID for logger
     logger.setServiceId(this.serviceId);
     
-    logger.info(LogCategory.CONNECTION, 'AudioStreamingBridge created', {
+    logger.info(LogCategory.AUDIO, 'AudioStreamingBridge created', {
       sampleRate: this.currentSampleRate,
       messageFormat: this.options.messageFormat,
       maxBufferSize: this.options.maxBufferSize
@@ -72,7 +72,7 @@ export class AudioStreamingBridge {
     const stateEvent = event as unknown as WebSocketStateChangeEvent;
     const detail = stateEvent.detail || {};
     
-    logger.info(LogCategory.STATE, `WebSocket state changed: ${detail.oldState} -> ${detail.newState}`);
+    logger.info(LogCategory.WS, `WebSocket state changed: ${detail.oldState} -> ${detail.newState}`);
     
     // Notify listeners of connection state changes
     if (detail.newState === 'connected') {
@@ -92,12 +92,12 @@ export class AudioStreamingBridge {
     const wasEnabled = this.enabled;
     this.enabled = enabled;
     
-    logger.info(LogCategory.CONNECTION, `Audio streaming ${enabled ? 'enabled' : 'disabled'}`);
+    logger.info(LogCategory.WS, `Audio streaming ${enabled ? 'enabled' : 'disabled'}`);
     
     if (enabled && !wasEnabled) {
       // Enable and connect if needed
       if (!this.webSocketService.isConnected()) {
-        logger.info(LogCategory.CONNECTION, 'Starting WebSocket connection');
+        logger.info(LogCategory.WS, 'Starting WebSocket connection');
         this.webSocketService.connect().catch(error => {
           logger.error(LogCategory.ERROR, 'Failed to connect to streaming server', error);
           this.notifyStatusChange(false, `Connection failed: ${error.message}`);
@@ -105,7 +105,7 @@ export class AudioStreamingBridge {
       }
     } else if (!enabled && wasEnabled) {
       // Flush the buffer before disabling
-      logger.info(LogCategory.DATA, 'Flushing buffer before disabling');
+      logger.info(LogCategory.AUDIO, 'Flushing buffer before disabling');
       this.flushBuffer();
     }
   }
@@ -124,7 +124,7 @@ export class AudioStreamingBridge {
    */
   setSampleRate(sampleRate: number): void {
     if (this.currentSampleRate !== sampleRate) {
-      logger.info(LogCategory.DATA, `Sample rate changed: ${this.currentSampleRate} -> ${sampleRate}`);
+      logger.info(LogCategory.AUDIO, `Sample rate changed: ${this.currentSampleRate} -> ${sampleRate}`);
       this.currentSampleRate = sampleRate;
       
       // If connected, send updated config
@@ -149,7 +149,7 @@ export class AudioStreamingBridge {
     this.audioBuffer.push(audioData);
     this.accumulatedBytes += audioData.length * Float32Array.BYTES_PER_ELEMENT;
     
-    logger.debug(LogCategory.DATA, `Added audio chunk to buffer`, {
+    logger.debug(LogCategory.AUDIO, `Added audio chunk to buffer`, {
       chunkSize: audioData.length,
       bufferSize: this.audioBuffer.length,
       totalBytes: this.accumulatedBytes
@@ -159,14 +159,14 @@ export class AudioStreamingBridge {
     if (this.bufferTimer === null && this.options.bufferTimeout! > 0) {
       this.bufferTimer = window.setTimeout(() => {
         this.bufferTimer = null;
-        logger.debug(LogCategory.DATA, 'Buffer timeout reached, flushing');
+        logger.debug(LogCategory.AUDIO, 'Buffer timeout reached, flushing');
         this.flushBuffer();
       }, this.options.bufferTimeout);
     }
     
     // Flush if buffer size threshold reached
     if (this.accumulatedBytes >= this.options.maxBufferSize!) {
-      logger.debug(LogCategory.DATA, `Buffer size threshold reached (${this.accumulatedBytes} bytes), flushing`);
+      logger.debug(LogCategory.AUDIO, `Buffer size threshold reached (${this.accumulatedBytes} bytes), flushing`);
       this.flushBuffer();
     }
     
@@ -179,7 +179,7 @@ export class AudioStreamingBridge {
   flushBuffer(): void {
     // Skip if buffer is empty
     if (this.audioBuffer.length === 0) {
-      logger.debug(LogCategory.DATA, 'Buffer flush called but buffer is empty');
+      logger.debug(LogCategory.AUDIO, 'Buffer flush called but buffer is empty');
       return;
     }
     
@@ -192,7 +192,7 @@ export class AudioStreamingBridge {
     // Combine all buffered chunks into a single Float32Array
     const combinedBuffer = combineAudioChunks(this.audioBuffer);
     
-    logger.info(LogCategory.DATA, `Flushing audio buffer`, {
+    logger.info(LogCategory.AUDIO, `Flushing audio buffer`, {
       chunks: this.audioBuffer.length,
       samples: combinedBuffer.length,
       bytes: combinedBuffer.length * Float32Array.BYTES_PER_ELEMENT
@@ -212,7 +212,7 @@ export class AudioStreamingBridge {
    */
   onStatusChange(callback: StatusChangeCallback): void {
     this.statusChangeCallbacks.push(callback);
-    logger.debug(LogCategory.STATE, 'Status change callback registered');
+    logger.debug(LogCategory.WS, 'Status change callback registered');
   }
   
   /**
@@ -222,9 +222,9 @@ export class AudioStreamingBridge {
   private sendAudioData(audioData: Float32Array): void {
     if (!this.webSocketService.isConnected() || audioData.length === 0) {
       if (!this.webSocketService.isConnected()) {
-        logger.warn(LogCategory.CONNECTION, 'Cannot send audio data: WebSocket not connected');
+        logger.warn(LogCategory.WS, 'Cannot send audio data: WebSocket not connected');
       } else {
-        logger.warn(LogCategory.DATA, 'Cannot send audio data: Empty data');
+        logger.warn(LogCategory.AUDIO, 'Cannot send audio data: Empty data');
       }
       return;
     }
@@ -232,7 +232,7 @@ export class AudioStreamingBridge {
     // Increment sequence number
     this.sequenceNumber++;
     
-    logger.debug(LogCategory.DATA, `Preparing audio data for transmission`, {
+    logger.debug(LogCategory.AUDIO, `Preparing audio data for transmission`, {
       sequenceNumber: this.sequenceNumber,
       samples: audioData.length,
       sampleRate: this.currentSampleRate
@@ -247,7 +247,7 @@ export class AudioStreamingBridge {
     );
     
     // Log data that's being sent
-    logger.debug(LogCategory.DATA, `Sending audio data`, {
+    logger.debug(LogCategory.AUDIO, `Sending audio data`, {
       format: metadata.format,
       channels: metadata.channels,
       sampleRate: metadata.sampleRate,
@@ -260,7 +260,7 @@ export class AudioStreamingBridge {
       const binaryMessage = createBinaryMessage(int16Data, metadata);
       this.webSocketService.send(binaryMessage, 5, true)
         .then(() => {
-          logger.debug(LogCategory.DATA, `Binary audio data sent`, { bytes: binaryMessage.byteLength });
+          logger.debug(LogCategory.AUDIO, `Binary audio data sent`, { bytes: binaryMessage.byteLength });
         })
         .catch(error => {
           logger.error(LogCategory.ERROR, 'Error sending binary audio data', error);
@@ -270,7 +270,7 @@ export class AudioStreamingBridge {
       const jsonMessage = createJsonMessage(int16Data, metadata, !!this.options.base64Encode);
       this.webSocketService.send(jsonMessage, 5, true)
         .then(() => {
-          logger.debug(LogCategory.DATA, `JSON audio data sent`, { bytes: jsonMessage.length });
+          logger.debug(LogCategory.AUDIO, `JSON audio data sent`, { bytes: jsonMessage.length });
         })
         .catch(error => {
           logger.error(LogCategory.ERROR, 'Error sending JSON audio data', error);
@@ -284,7 +284,7 @@ export class AudioStreamingBridge {
   private sendConfigMessage(): void {
     // Skip if not connected
     if (!this.webSocketService.isConnected()) {
-      logger.warn(LogCategory.CONNECTION, 'Cannot send config message: WebSocket not connected');
+      logger.warn(LogCategory.WS, 'Cannot send config message: WebSocket not connected');
       return;
     }
     
@@ -297,7 +297,7 @@ export class AudioStreamingBridge {
       encoding: this.options.base64Encode ? 'base64' : 'json'
     };
     
-    logger.info(LogCategory.DATA, 'Sending config message', config);
+    logger.info(LogCategory.AUDIO, 'Sending config message', config);
     
     // Create and send config message
     const configMessage = createConfigMessage(config);
@@ -305,7 +305,7 @@ export class AudioStreamingBridge {
     // Send with high priority
     this.webSocketService.send(configMessage, 1, true)
       .then(() => {
-        logger.debug(LogCategory.DATA, 'Config message sent successfully');
+        logger.debug(LogCategory.AUDIO, 'Config message sent successfully');
       })
       .catch(error => {
         logger.error(LogCategory.ERROR, 'Error sending config message', error);
@@ -318,7 +318,7 @@ export class AudioStreamingBridge {
    * @param message Optional status message
    */
   private notifyStatusChange(status: boolean, message?: string): void {
-    logger.info(LogCategory.STATE, `Status change: ${status}`, { message });
+    logger.info(LogCategory.WS, `Status change: ${status}`, { message });
     
     this.statusChangeCallbacks.forEach(callback => {
       try {

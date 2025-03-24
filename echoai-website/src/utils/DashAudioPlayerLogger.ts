@@ -5,6 +5,11 @@
  * This centralizes all logging functionality from the DashAudioPlayer component
  */
 
+import { logger, LogLevel, LogCategory } from './Logger';
+
+// Create a dedicated category for the dash player
+const DASH_LOG_CATEGORY = LogCategory.AUDIO;
+
 export interface LoggingContext {
   player: dashjs.MediaPlayerInstance;
   videoElement: HTMLVideoElement;
@@ -20,9 +25,20 @@ export class DashAudioPlayerLogger {
   private segmentIdentifiers: Set<string> = new Set(); // Store unique segment identifiers
   private lastPlayingState: boolean = false;
   private lastSegmentNumber: string | null = null;
+  private logLevel: LogLevel = LogLevel.INFO;
 
   constructor(private loggingInterval: number = 2000) {
     this.logInterval = loggingInterval;
+    
+    // Set a specific service ID for this logger
+    logger.setServiceId('DashPlayer');
+  }
+
+  /**
+   * Set the log level for dash player logging
+   */
+  setLogLevel(level: LogLevel): void {
+    this.logLevel = level;
   }
 
   /**
@@ -32,7 +48,7 @@ export class DashAudioPlayerLogger {
     // Clean up any existing interval
     this.stopLogging();
     
-    console.log('Starting periodic stream data logger');
+    this.log(LogLevel.INFO, 'Starting periodic stream data logger');
     this.lastPlayingState = context.isPlaying;
     
     // Store interval ID for cleanup
@@ -41,10 +57,10 @@ export class DashAudioPlayerLogger {
       if (this.lastPlayingState !== context.isPlaying) {
         this.lastPlayingState = context.isPlaying;
         if (!context.isPlaying) {
-          console.log('Pausing logging while playback is paused');
+          this.log(LogLevel.INFO, 'Pausing logging while playback is paused');
           return; // Exit early to prevent logging when paused
         } else {
-          console.log('Resuming logging as playback has started');
+          this.log(LogLevel.INFO, 'Resuming logging as playback has started');
         }
       }
 
@@ -54,13 +70,13 @@ export class DashAudioPlayerLogger {
       }
       
       try {
-        console.group('Detailed Audio Stream Data');
+        this.log(LogLevel.DEBUG, 'Detailed Audio Stream Data');
         
         // Log basic timing information
         try {
           this.logTimingInfo(context);
         } catch (error) {
-          console.warn('Error logging timing info:', error);
+          this.log(LogLevel.WARN, 'Error logging timing info', error);
         }
         
         // Log fragment information
@@ -74,24 +90,17 @@ export class DashAudioPlayerLogger {
             onSegmentIdentified(segmentId);
           }
         } catch (error) {
-          console.warn('Error logging fragment info:', error);
+          this.log(LogLevel.WARN, 'Error logging fragment info', error);
         }
         
         // Log audio processing data
         try {
           this.logAudioProcessingData(context);
         } catch (error) {
-          console.warn('Error logging audio processing data:', error);
+          this.log(LogLevel.WARN, 'Error logging audio processing data', error);
         }
-        
-        console.groupEnd();
       } catch (error) {
-        console.warn('Error in logging cycle:', error);
-        try {
-          console.groupEnd(); // Ensure we close any open console groups
-        } catch (e) {
-          // Ignore errors from groupEnd
-        }
+        this.log(LogLevel.WARN, 'Error in logging cycle', error);
       }
     }, this.logInterval);
   }
@@ -103,7 +112,7 @@ export class DashAudioPlayerLogger {
     if (this.intervalId !== null) {
       window.clearInterval(this.intervalId);
       this.intervalId = null;
-      console.log('Stopping stream data logger');
+      this.log(LogLevel.INFO, 'Stopping stream data logger');
     }
   }
 
@@ -112,55 +121,58 @@ export class DashAudioPlayerLogger {
    */
   logStreamSpecifications(player: dashjs.MediaPlayerInstance, audioContext?: AudioContext, analyser?: AnalyserNode): void {
     try {
-      console.group('DASH Stream Technical Specifications');
+      this.log(LogLevel.INFO, 'DASH Stream Technical Specifications');
       
       // Get active audio track
       const activeAudioTrack = player.getCurrentTrackFor('audio');
       if (activeAudioTrack) {
-        console.log('Active Audio Track:', activeAudioTrack);
-        console.log('Codec:', activeAudioTrack.codec);
-        console.log('Language:', activeAudioTrack.lang || 'default');
+        this.log(LogLevel.INFO, 'Active Audio Track', activeAudioTrack);
+        this.log(LogLevel.INFO, 'Codec', { codec: activeAudioTrack.codec });
+        this.log(LogLevel.INFO, 'Language', { lang: activeAudioTrack.lang || 'default' });
         
         // Get mediaInfo which contains detailed audio specs
         const mediaInfo = activeAudioTrack.mediaInfo;
         if (mediaInfo) {
-          console.log('Sample Rate:', mediaInfo.sampleRate || 'unknown');
-          console.log('Channels:', mediaInfo.channelsCount || 'unknown');
+          this.log(LogLevel.INFO, 'Audio Specifications', {
+            sampleRate: mediaInfo.sampleRate || 'unknown',
+            channels: mediaInfo.channelsCount || 'unknown',
+            type: mediaInfo.type,
+            mimeType: mediaInfo.mimeType
+          });
           
           // Log bitrate safely - first try from mediaInfo
           try {
             if (mediaInfo.bitrateList && mediaInfo.bitrateList.length > 0) {
-              console.log('Bitrate:', mediaInfo.bitrateList.map(b => b.bandwidth || b.bitrate).join(', ') || 'unknown');
+              this.log(LogLevel.INFO, 'Bitrate', { 
+                bitrates: mediaInfo.bitrateList.map(b => b.bandwidth || b.bitrate).join(', ') || 'unknown' 
+              });
             } else {
-              console.log('Bitrate: No bitrate list available in mediaInfo');
+              this.log(LogLevel.INFO, 'Bitrate: No bitrate list available in mediaInfo');
             }
           } catch (e) {
-            console.log('Bitrate: Error accessing bitrate information', e);
+            this.log(LogLevel.WARN, 'Error accessing bitrate information', e);
           }
-          
-          // Log more detailed information about the audio track
-          console.log('Audio Type:', mediaInfo.type);
-          console.log('MIME Type:', mediaInfo.mimeType);
           
           // Log resampling requirements for WebSocket implementation
           if (mediaInfo.sampleRate) {
             const originalSampleRate = mediaInfo.sampleRate;
             const targetSampleRate = 16000; // 16kHz for our WebSocket server
-            console.log('Resampling Required:', originalSampleRate !== targetSampleRate);
-            console.log('Resampling Ratio:', targetSampleRate / originalSampleRate);
-            console.log('Estimated CPU Load for Resampling:', 
-              originalSampleRate > targetSampleRate ? 'Low (downsampling)' : 'High (upsampling)');
+            this.log(LogLevel.INFO, 'Resampling Requirements', {
+              required: originalSampleRate !== targetSampleRate,
+              ratio: targetSampleRate / originalSampleRate,
+              cpuLoad: originalSampleRate > targetSampleRate ? 'Low (downsampling)' : 'High (upsampling)'
+            });
           }
           
           // Log channel mixing requirements
           if (mediaInfo.channelsCount && mediaInfo.channelsCount > 1) {
-            console.log('Channel Mixing Required: Yes (need to convert to mono)');
+            this.log(LogLevel.INFO, 'Channel Mixing Required: Yes (need to convert to mono)');
           } else {
-            console.log('Channel Mixing Required: No (already mono)');
+            this.log(LogLevel.INFO, 'Channel Mixing Required: No (already mono)');
           }
         }
       } else {
-        console.log('No active audio track found');
+        this.log(LogLevel.INFO, 'No active audio track found');
       }
       
       // Try to get quality info safely
@@ -169,36 +181,35 @@ export class DashAudioPlayerLogger {
         if (typeof player.getBitrateInfoListFor === 'function') {
           const audioQualities = player.getBitrateInfoListFor('audio');
           if (audioQualities && audioQualities.length) {
-            console.log('Available Audio Qualities:', audioQualities);
+            this.log(LogLevel.INFO, 'Available Audio Qualities', audioQualities);
           }
         } else {
-          console.log('getBitrateInfoListFor method not available');
+          this.log(LogLevel.INFO, 'getBitrateInfoListFor method not available');
           
           // Try alternative ways to get bitrate info
           if (activeAudioTrack && activeAudioTrack.mediaInfo && activeAudioTrack.mediaInfo.bitrateList) {
-            console.log('Available Audio Qualities (from mediaInfo):', activeAudioTrack.mediaInfo.bitrateList);
+            this.log(LogLevel.INFO, 'Available Audio Qualities (from mediaInfo)', 
+              activeAudioTrack.mediaInfo.bitrateList);
           }
         }
       } catch (e) {
-        console.log('Error getting bitrate information:', e);
+        this.log(LogLevel.WARN, 'Error getting bitrate information', e);
       }
       
       // Get buffer info safely
       try {
         if (typeof player.getBufferLength === 'function') {
           const bufferLength = player.getBufferLength('audio');
-          console.log('Audio Buffer Length (sec):', bufferLength);
-          
-          // Add buffer stats for WebSocket planning
-          if (bufferLength) {
-            console.log('Recommended WebSocket Buffer Size (ms):', Math.min(bufferLength * 1000 / 3, 500));
-            console.log('Estimated Network Delay Tolerance (ms):', Math.min(bufferLength * 1000 / 2, 1000));
-          }
+          this.log(LogLevel.INFO, 'Audio Buffer Information', {
+            length: bufferLength,
+            recommendedWsBufferSize: Math.min(bufferLength * 1000 / 3, 500),
+            estimatedNetworkDelayTolerance: Math.min(bufferLength * 1000 / 2, 1000)
+          });
         } else {
-          console.log('getBufferLength method not available');
+          this.log(LogLevel.INFO, 'getBufferLength method not available');
         }
       } catch (e) {
-        console.log('Error getting buffer information:', e);
+        this.log(LogLevel.WARN, 'Error getting buffer information', e);
       }
       
       // Get stream info (if available)
@@ -212,93 +223,98 @@ export class DashAudioPlayerLogger {
               if (typeof dashMetrics.getCurrentAdaptationFor === 'function') {
                 const adaptationSet = dashMetrics.getCurrentAdaptationFor('audio');
                 if (adaptationSet) {
-                  console.log('Adaptation Set:', adaptationSet);
+                  this.log(LogLevel.INFO, 'Adaptation Set', adaptationSet);
                 }
               } else {
-                console.log('getCurrentAdaptationFor method not available');
+                this.log(LogLevel.INFO, 'getCurrentAdaptationFor method not available');
                 
                 // Method 2: Try to access via activeAudioTrack's adaptation
                 if (activeAudioTrack && activeAudioTrack.adaptation) {
-                  console.log('Adaptation Set (from track):', activeAudioTrack.adaptation);
+                  this.log(LogLevel.INFO, 'Adaptation Set (from track)', activeAudioTrack.adaptation);
                 }
                 
                 // Method 3: Try to access from mediaInfo 
                 if (activeAudioTrack && activeAudioTrack.mediaInfo && activeAudioTrack.mediaInfo.adaptation) {
-                  console.log('Adaptation Set (from mediaInfo):', activeAudioTrack.mediaInfo.adaptation);
+                  this.log(LogLevel.INFO, 'Adaptation Set (from mediaInfo)', 
+                    activeAudioTrack.mediaInfo.adaptation);
                 }
               }
             } catch (e) {
-              console.log('Error getting adaptation set:', e);
+              this.log(LogLevel.WARN, 'Error getting adaptation set', e);
             }
             
             // Log latency metrics if it's a live stream
             try {
               if (typeof player.isDynamic === 'function' && player.isDynamic()) {
-                console.log('Live Stream Detected');
+                this.log(LogLevel.INFO, 'Live Stream Detected');
                 
                 let liveLatency: number | string = 'unknown';
                 try {
                   if (typeof player.getCurrentLiveLatency === 'function') {
                     liveLatency = player.getCurrentLiveLatency();
+                    this.log(LogLevel.INFO, 'Live Latency', { value: liveLatency });
                   }
                 } catch (e) {
-                  console.log('Error getting live latency:', e);
+                  this.log(LogLevel.WARN, 'Error getting live latency', e);
                 }
-                
-                console.log('Live Latency:', liveLatency);
                 
                 try {
                   if (typeof player.getTargetLiveLatency === 'function') {
-                    console.log('Target Latency:', player.getTargetLiveLatency());
+                    const targetLatency = player.getTargetLiveLatency();
+                    this.log(LogLevel.INFO, 'Target Latency', { value: targetLatency });
                   }
                 } catch (e) {
-                  console.log('Error getting target latency:', e);
+                  this.log(LogLevel.WARN, 'Error getting target latency', e);
                 }
                 
                 // Add WebSocket relevant live stream metrics
                 if (typeof liveLatency === 'number') {
-                  console.log('WebSocket Relevant Metrics:');
-                  console.log('- Max Acceptable Additional Latency (ms):', Math.min(liveLatency * 500, 1000));
-                  console.log('- Recommended Processing Chunk Size (ms):', Math.min(liveLatency * 200, 500));
+                  this.log(LogLevel.INFO, 'WebSocket Relevant Metrics', {
+                    maxAcceptableAdditionalLatency: Math.min(liveLatency * 500, 1000),
+                    recommendedProcessingChunkSize: Math.min(liveLatency * 200, 500)
+                  });
                 }
               }
             } catch (e) {
-              console.log('Error processing live stream metrics:', e);
+              this.log(LogLevel.WARN, 'Error processing live stream metrics', e);
             }
           }
         }
       } catch (e) {
-        console.log('Error getting dash metrics:', e);
+        this.log(LogLevel.WARN, 'Error getting dash metrics', e);
       }
       
       // Get audio context information
       if (audioContext) {
-        const contextSampleRate = audioContext.sampleRate;
-        console.log('Audio Context Sample Rate:', contextSampleRate);
-        console.log('Audio Context State:', audioContext.state);
+        this.log(LogLevel.INFO, 'Audio Context Information', {
+          sampleRate: audioContext.sampleRate,
+          state: audioContext.state,
+          pcmValueType: 'Float32 (-1.0 to 1.0)',
+          conversionNeeded: 'Yes (multiply by 32767 for 16-bit PCM)'
+        });
         
-        // Additional WebSocket relevant audio context info
-        console.log('Browser Audio Processing:');
-        console.log('- Raw PCM Values Type:', 'Float32 (-1.0 to 1.0)');
-        console.log('- Conversion Needed for 16-bit PCM:', 'Yes (multiply by 32767)');
-        if (contextSampleRate) {
-          console.log('- Resampling Method Options:');
-          console.log('  * Web Audio API (limited browser support)');
-          console.log('  * JavaScript implementation (higher CPU usage)');
-          console.log('  * WebAssembly implementation (recommended)');
+        if (audioContext.sampleRate) {
+          this.log(LogLevel.INFO, 'Resampling Method Options', {
+            options: [
+              'Web Audio API (limited browser support)',
+              'JavaScript implementation (higher CPU usage)',
+              'WebAssembly implementation (recommended)'
+            ]
+          });
         }
       }
       
       // Log audio node connections if available
       if (analyser) {
-        console.log('Analyser FFT Size:', analyser.fftSize);
-        console.log('Analyser Frequency Bin Count:', analyser.frequencyBinCount);
-        console.log('Potential AudioWorklet Slot:', 
-          analyser ? 'After sourceNode, before analyser' : 'Direct connection to destination');
+        this.log(LogLevel.INFO, 'Analyser Configuration', {
+          fftSize: analyser.fftSize,
+          frequencyBinCount: analyser.frequencyBinCount,
+          potentialAudioWorkletSlot: analyser ? 
+            'After sourceNode, before analyser' : 'Direct connection to destination'
+        });
       }
       
       // Show estimation of WebSocket implementation difficulty
-      console.log('WebSocket Implementation Complexity Assessment:');
       const mediaInfo = activeAudioTrack?.mediaInfo;
       if (mediaInfo) {
         const originalSampleRate = mediaInfo.sampleRate || 0;
@@ -324,18 +340,18 @@ export class DashAudioPlayerLogger {
             complexity = 'High';
           }
         } catch (e) {
-          console.log('Error checking if stream is dynamic:', e);
+          this.log(LogLevel.WARN, 'Error checking if stream is dynamic', e);
         }
         
-        console.log('- Overall Complexity:', complexity);
-        console.log('- Potential Bottlenecks:', bottlenecks.length ? bottlenecks.join(', ') : 'None identified');
+        this.log(LogLevel.INFO, 'WebSocket Implementation Complexity Assessment', {
+          overallComplexity: complexity,
+          potentialBottlenecks: bottlenecks.length ? bottlenecks.join(', ') : 'None identified'
+        });
       } else {
-        console.log('- Unable to assess complexity (insufficient information)');
+        this.log(LogLevel.INFO, 'Unable to assess complexity (insufficient information)');
       }
-      
-      console.groupEnd();
     } catch (error) {
-      console.warn('Error logging stream specs:', error);
+      this.log(LogLevel.WARN, 'Error logging stream specs', error);
     }
   }
 
@@ -348,10 +364,11 @@ export class DashAudioPlayerLogger {
     
     const currentTime = player.time();
     
-    console.log('--- Timing Information ---');
-    console.log('Player Time (s):', currentTime);
-    console.log('Current Time (s):', videoElement.currentTime);
-    console.log('Video Timestamp:', new Date(videoElement.currentTime * 1000).toISOString().substr(11, 12));
+    this.log(LogLevel.DEBUG, 'Timing Information', {
+      playerTime: currentTime,
+      currentTime: videoElement.currentTime,
+      timestamp: new Date(videoElement.currentTime * 1000).toISOString().substr(11, 12)
+    });
   }
 
   /**
@@ -362,19 +379,19 @@ export class DashAudioPlayerLogger {
     const { player, videoElement } = context;
     if (!videoElement) return null;
     
-    console.log('--- Fragment Information ---');
+    this.log(LogLevel.DEBUG, 'Fragment Information');
     
     // Get buffer information safely
     let bufferLevel;
     try {
       if (typeof player.getBufferLength === 'function') {
         bufferLevel = player.getBufferLength('audio');
-        console.log('Buffer Level (s):', bufferLevel);
+        this.log(LogLevel.DEBUG, 'Buffer Level', { seconds: bufferLevel });
       } else {
-        console.log('getBufferLength method not available');
+        this.log(LogLevel.DEBUG, 'getBufferLength method not available');
       }
     } catch (e) {
-      console.log('Error getting buffer level:', e);
+      this.log(LogLevel.WARN, 'Error getting buffer level', e);
     }
     
     // Track a segment ID if we can find one directly
@@ -386,45 +403,47 @@ export class DashAudioPlayerLogger {
       if (typeof player.getDashMetrics === 'function') {
         dashMetrics = player.getDashMetrics();
       } else {
-        console.log('getDashMetrics method not available');
+        this.log(LogLevel.DEBUG, 'getDashMetrics method not available');
       }
     } catch (e) {
-      console.log('Error getting dash metrics:', e);
+      this.log(LogLevel.WARN, 'Error getting dash metrics', e);
     }
     
     if (dashMetrics) {
       // First try to get current buffer info and track info
       try {
-        console.log('--- Current Track Info ---');
+        this.log(LogLevel.DEBUG, 'Current Track Info');
         
         // Log active audio track
         if (typeof player.getCurrentTrackFor === 'function') {
           const activeAudioTrack = player.getCurrentTrackFor('audio');
           if (activeAudioTrack) {
-            console.log('Active Audio Track ID:', activeAudioTrack.id);
-            console.log('Active Audio Codec:', activeAudioTrack.codec);
+            this.log(LogLevel.DEBUG, 'Active Audio Track ID', activeAudioTrack.id);
+            this.log(LogLevel.DEBUG, 'Active Audio Codec', activeAudioTrack.codec);
             
             if (activeAudioTrack.mediaInfo) {
-              console.log('Audio Bitrate(s):', activeAudioTrack.mediaInfo.bitrateList?.map(b => b.bitrate || b.bandwidth).join(', '));
-              console.log('Audio Channels:', activeAudioTrack.mediaInfo.channelsCount);
-              console.log('Audio Sample Rate:', activeAudioTrack.mediaInfo.sampleRate);
+              this.log(LogLevel.DEBUG, 'Audio Bitrate(s)', { 
+                bitrates: activeAudioTrack.mediaInfo.bitrateList?.map(b => b.bitrate || b.bandwidth).join(', ') 
+              });
+              this.log(LogLevel.DEBUG, 'Audio Channels', activeAudioTrack.mediaInfo.channelsCount);
+              this.log(LogLevel.DEBUG, 'Audio Sample Rate', activeAudioTrack.mediaInfo.sampleRate);
             }
           }
         }
       } catch (e) {
-        console.log('Error getting track info:', e);
+        this.log(LogLevel.WARN, 'Error getting track info', e);
       }
       
       // Try to log HTTP trace data directly from dashjs
       try {
         this.logHttpTraceData(dashMetrics);
       } catch (e) {
-        console.log('Error logging HTTP trace data:', e);
+        this.log(LogLevel.WARN, 'Error logging HTTP trace data', e);
       }
       
       // Now focus on getting latest fragment request which contains response with URL and headers
       try {
-        console.log('--- Segment Data ---');
+        this.log(LogLevel.DEBUG, 'Segment Data');
         
         // Try dashjs v5+ API method first
         let latestFragmentRequest = null;
@@ -446,17 +465,17 @@ export class DashAudioPlayerLogger {
             }
             
             if (latestFragmentRequest) {
-              console.log('Latest Fragment Request (Raw):', latestFragmentRequest);
+              this.log(LogLevel.DEBUG, 'Latest Fragment Request (Raw)', latestFragmentRequest);
               
               // Check for response property
               if (latestFragmentRequest.response) {
                 const response = latestFragmentRequest.response;
-                console.log('Response Object Found (Raw):', response);
+                this.log(LogLevel.DEBUG, 'Response Object Found (Raw)', response);
                 
                 // Extract response headers if available
                 if (response.responseHeaders || response.headers) {
                   responseHeaders = response.responseHeaders || response.headers;
-                  console.log('Response Headers (Raw):', responseHeaders);
+                  this.log(LogLevel.DEBUG, 'Response Headers (Raw)', responseHeaders);
                   
                   // Parse and log specific important headers
                   this.logResponseHeaders(responseHeaders);
@@ -473,7 +492,7 @@ export class DashAudioPlayerLogger {
               }
             }
           } catch (e) {
-            console.log('Error getting latest fragment request:', e);
+            this.log(LogLevel.WARN, 'Error getting latest fragment request', e);
           }
         }
         
@@ -482,17 +501,17 @@ export class DashAudioPlayerLogger {
           try {
             const currentRequest = dashMetrics.getCurrentRequest('audio');
             if (currentRequest) {
-              console.log('Current Request (Raw):', currentRequest);
+              this.log(LogLevel.DEBUG, 'Current Request (Raw)', currentRequest);
               
               // Check for response property
               if (currentRequest.response) {
                 const response = currentRequest.response;
-                console.log('Response Object Found (Raw):', response);
+                this.log(LogLevel.DEBUG, 'Response Object Found (Raw)', response);
                 
                 // Extract response headers if available
                 if (response.responseHeaders || response.headers) {
                   responseHeaders = response.responseHeaders || response.headers;
-                  console.log('Response Headers (Raw):', responseHeaders);
+                  this.log(LogLevel.DEBUG, 'Response Headers (Raw)', responseHeaders);
                   
                   // Parse and log specific important headers
                   this.logResponseHeaders(responseHeaders);
@@ -509,44 +528,44 @@ export class DashAudioPlayerLogger {
               }
             }
           } catch (e) {
-            console.log('Error getting current request:', e);
+            this.log(LogLevel.WARN, 'Error getting current request', e);
           }
         }
         
         // Process the segment URL if we found one
         if (segmentUrl) {
-          console.log('Segment URL (Raw):', segmentUrl);
+          this.log(LogLevel.DEBUG, 'Segment URL (Raw)', segmentUrl);
           
           // Extract filename from URL
           const urlParts = segmentUrl.split('/');
           const filename = urlParts[urlParts.length - 1];
-          console.log('Segment Filename (Raw):', filename);
+          this.log(LogLevel.DEBUG, 'Segment Filename (Raw)', filename);
           
           // Parse BBC stream segment filename pattern
           // Example: bbc_world_service_news_internet-audio=96000-272306193.m4s
           if (filename.includes('-audio=')) {
             try {
-              console.log('--- BBC Segment Analysis ---');
+              this.log(LogLevel.DEBUG, 'BBC Segment Analysis');
               const parts = filename.split('-audio=');
               const streamName = parts[0];
-              console.log('Stream Name:', streamName);
+              this.log(LogLevel.DEBUG, 'Stream Name', streamName);
               
               // Extract bitrate and segment number
               if (parts[1]) {
                 const bitrateAndSegment = parts[1].split('-');
                 if (bitrateAndSegment.length >= 2) {
                   const bitrate = bitrateAndSegment[0];
-                  console.log('Audio Bitrate:', bitrate);
+                  this.log(LogLevel.DEBUG, 'Audio Bitrate', bitrate);
                   
                   // Extract segment ID (removing .m4s extension)
                   const segmentNumber = bitrateAndSegment[1].replace('.m4s', '');
-                  console.log('Segment Number:', segmentNumber);
+                  this.log(LogLevel.DEBUG, 'Segment Number', segmentNumber);
                   
                   // Check if this is a new segment number
                   if (this.lastSegmentNumber !== segmentNumber) {
                     if (this.lastSegmentNumber !== null) {
                       const diff = parseInt(segmentNumber) - parseInt(this.lastSegmentNumber);
-                      console.log(`Segment Increment: ${diff} (from ${this.lastSegmentNumber} to ${segmentNumber})`);
+                      this.log(LogLevel.DEBUG, 'Segment Increment', { diff: diff, from: this.lastSegmentNumber, to: segmentNumber });
                     }
                     this.lastSegmentNumber = segmentNumber;
                   }
@@ -555,39 +574,41 @@ export class DashAudioPlayerLogger {
                   segmentId = filename;
                   
                   // Additional info that might be useful
-                  console.log('File Type:', 'MPEG-4 Audio Segment (.m4s)');
-                  console.log('Is Initialization Segment:', filename.includes('.dash'));
+                  this.log(LogLevel.DEBUG, 'File Type', 'MPEG-4 Audio Segment (.m4s)');
+                  this.log(LogLevel.DEBUG, 'Is Initialization Segment', filename.includes('.dash'));
                 }
               }
             } catch (e) {
-              console.log('Error parsing BBC segment filename:', e);
+              this.log(LogLevel.WARN, 'Error parsing BBC segment filename', e);
             }
           }
         } else {
-          console.log('No segment URL found');
+          this.log(LogLevel.DEBUG, 'No segment URL found');
         }
       } catch (e) {
-        console.log('Error analyzing segment data:', e);
+        this.log(LogLevel.WARN, 'Error analyzing segment data', e);
       }
     } else {
-      console.log('No dash metrics available for segment information');
+      this.log(LogLevel.DEBUG, 'No dash metrics available for segment information');
     }
     
     // For live streams, log the available time range
     try {
       if (typeof player.isDynamic === 'function' && player.isDynamic() && 
           videoElement.buffered && videoElement.buffered.length) {
-        console.log('--- Buffered Ranges (Raw) ---');
-        for (let i = 0; i < videoElement.buffered.length; i++) {
-          console.log(`Range ${i}: ${videoElement.buffered.start(i)} - ${videoElement.buffered.end(i)}`);
-        }
+        this.log(LogLevel.DEBUG, 'Buffered Ranges (Raw)', 
+          Array.from({length: videoElement.buffered.length}, (_, i) => ({
+            start: videoElement.buffered.start(i),
+            end: videoElement.buffered.end(i)
+          }))
+        );
       }
     } catch (e) {
-      console.log('Error logging buffered ranges:', e);
+      this.log(LogLevel.WARN, 'Error logging buffered ranges', e);
     }
     
     // Log current playback time as a reference
-    console.log('Current Playback Time (Raw):', videoElement.currentTime);
+    this.log(LogLevel.DEBUG, 'Current Playback Time (Raw)', { time: videoElement.currentTime });
     
     return segmentId;
   }
@@ -597,7 +618,7 @@ export class DashAudioPlayerLogger {
    * This is to ensure we get all possible headers and network information
    */
   private logHttpTraceData(dashMetrics: dashjs.DashMetrics): void {
-    console.log('--- HTTP Trace Data ---');
+    this.log(LogLevel.DEBUG, 'HTTP Trace Data');
     
     try {
       // Try to get all HTTP request traces
@@ -610,13 +631,13 @@ export class DashAudioPlayerLogger {
       // Try different methods to access HTTP requests in dash.js
       if (typeof (dashMetrics as any).getHttpRequests === 'function') {
         httpRequests = (dashMetrics as any).getHttpRequests() || [];
-        console.log('HTTP Requests found (getHttpRequests method):', httpRequests.length);
+        this.log(LogLevel.DEBUG, 'HTTP Requests found (getHttpRequests method)', { count: httpRequests.length });
         httpRequestsFound = httpRequests.length > 0;
       } 
       // Method 2: Try httpList (older versions)
       else if ((dashMetrics as any).httpList) {
         httpRequests = (dashMetrics as any).httpList || [];
-        console.log('HTTP Requests found (httpList property):', httpRequests.length);
+        this.log(LogLevel.DEBUG, 'HTTP Requests found (httpList property)', { count: httpRequests.length });
         httpRequestsFound = httpRequests.length > 0;
       }
       
@@ -629,16 +650,16 @@ export class DashAudioPlayerLogger {
           if (internalPlayer) {
             if (internalPlayer.debug && internalPlayer.debug.metrics && internalPlayer.debug.metrics.http) {
               httpRequests = internalPlayer.debug.metrics.http.list || [];
-              console.log('HTTP Requests found (player debug metrics):', httpRequests.length);
+              this.log(LogLevel.DEBUG, 'HTTP Requests found (player debug metrics)', { count: httpRequests.length });
               httpRequestsFound = httpRequests.length > 0;
             } else if (internalPlayer.metrics && internalPlayer.metrics.http) {
               httpRequests = internalPlayer.metrics.http.list || [];
-              console.log('HTTP Requests found (player metrics):', httpRequests.length);
+              this.log(LogLevel.DEBUG, 'HTTP Requests found (player metrics)', { count: httpRequests.length });
               httpRequestsFound = httpRequests.length > 0;
             }
           }
         } catch (e) {
-          console.log('Error accessing player metrics:', e);
+          this.log(LogLevel.WARN, 'Error accessing player metrics', e);
         }
       }
       
@@ -652,12 +673,12 @@ export class DashAudioPlayerLogger {
           if (streamProcessor && streamProcessor.fragmentModel) {
             const fragmentModel = streamProcessor.fragmentModel;
             const requests = fragmentModel.getRequests() || [];
-            console.log('Requests found in fragment model:', requests.length);
+            this.log(LogLevel.DEBUG, 'Requests found in fragment model', { count: requests.length });
             httpRequests = requests;
             httpRequestsFound = requests.length > 0;
           }
         } catch (e) {
-          console.log('Error accessing fragment model:', e);
+          this.log(LogLevel.WARN, 'Error accessing fragment model', e);
         }
       }
       
@@ -667,11 +688,11 @@ export class DashAudioPlayerLogger {
           // In dash.js v3.x, metrics are accessed differently
           if (typeof (dashMetrics as any).getRequestsQueue === 'function') {
             httpRequests = (dashMetrics as any).getRequestsQueue() || [];
-            console.log('Requests found in request queue:', httpRequests.length);
+            this.log(LogLevel.DEBUG, 'Requests found in request queue', { count: httpRequests.length });
             httpRequestsFound = httpRequests.length > 0;
           }
         } catch (e) {
-          console.log('Error accessing request queue:', e);
+          this.log(LogLevel.WARN, 'Error accessing request queue', e);
         }
       }
       
@@ -679,7 +700,7 @@ export class DashAudioPlayerLogger {
       if (!httpRequestsFound) {
         try {
           // This is a last resort - manually check for recent audio segment requests
-          console.log('Trying direct observation of active network requests...');
+          this.log(LogLevel.DEBUG, 'Trying direct observation of active network requests...');
           
           // Check if Performance API is available
           if (typeof window !== 'undefined' && window.performance && window.performance.getEntries) {
@@ -688,24 +709,24 @@ export class DashAudioPlayerLogger {
             );
             
             if (resourceEntries.length > 0) {
-              console.log('Found audio segment entries via Performance API:', resourceEntries.length);
+              this.log(LogLevel.DEBUG, 'Found audio segment entries via Performance API', { count: resourceEntries.length });
               
               // Log the most recent entry
               const latestEntry = resourceEntries[resourceEntries.length - 1];
-              console.log('Latest audio segment request:', latestEntry.name);
+              this.log(LogLevel.DEBUG, 'Latest audio segment request', latestEntry.name);
               
               // Unfortunately, we can't access the headers this way
-              console.log('Network metrics (but no headers available this way):', {
+              this.log(LogLevel.DEBUG, 'Network metrics (but no headers available this way)', {
                 duration: latestEntry.duration,
                 startTime: latestEntry.startTime,
                 entryType: latestEntry.entryType
               });
             } else {
-              console.log('No audio segment entries found via Performance API');
+              this.log(LogLevel.DEBUG, 'No audio segment entries found via Performance API');
             }
           }
         } catch (e) {
-          console.log('Error using Performance API:', e);
+          this.log(LogLevel.WARN, 'Error using Performance API', e);
         }
       }
       
@@ -732,11 +753,11 @@ export class DashAudioPlayerLogger {
           });
           
         if (segmentRequests.length > 0) {
-          console.log(`Found ${segmentRequests.length} segment requests, showing most recent`);
+          this.log(LogLevel.DEBUG, `Found ${segmentRequests.length} segment requests, showing most recent`);
           
           // Log the most recent segment request (first in sorted array)
           const latestRequest = segmentRequests[0];
-          console.log('Latest Segment Request URL:', latestRequest.url);
+          this.log(LogLevel.DEBUG, 'Latest Segment Request URL', latestRequest.url);
             
           // Look for headers in various possible locations according to dash.js versions
           let requestHeaders = null;
@@ -749,10 +770,9 @@ export class DashAudioPlayerLogger {
           }
             
           if (requestHeaders) {
-            console.log('--- Request Headers (Raw) ---');
-            console.log(requestHeaders);
+            this.log(LogLevel.DEBUG, 'Request Headers (Raw)', requestHeaders);
           } else {
-            console.log('No request headers found in the request object');
+            this.log(LogLevel.DEBUG, 'No request headers found in the request object');
           }
             
           // Look for response headers in all possible locations
@@ -771,25 +791,21 @@ export class DashAudioPlayerLogger {
           }
             
           if (responseHeaders) {
-            console.log('--- Response Headers (Raw) ---');
-            console.log(responseHeaders);
+            this.log(LogLevel.DEBUG, 'Response Headers (Raw)', responseHeaders);
             
             // Parse the headers and log interesting ones
             this.logResponseHeaders(responseHeaders);
           } else {
-            console.log('No response headers found in the request object');
+            this.log(LogLevel.DEBUG, 'No response headers found in the request object');
             
             // Log other properties that might contain header information
-            console.log('Properties of the request object that might contain headers:');
-            Object.keys(latestRequest).forEach(key => {
-              if (
+            this.log(LogLevel.DEBUG, 'Properties of the request object that might contain headers', 
+              Object.keys(latestRequest).filter(key => 
                 key.toLowerCase().includes('header') || 
                 key.toLowerCase().includes('response') ||
                 key.toLowerCase().includes('http')
-              ) {
-                console.log(`- ${key}:`, latestRequest[key]);
-              }
-            });
+              ).map(key => ({ [key]: latestRequest[key] }))
+            );
           }
           
           // Try to find the ETag specifically
@@ -802,36 +818,26 @@ export class DashAudioPlayerLogger {
             );
             
             if (etag) {
-              console.log('ETag Found:', etag);
+              this.log(LogLevel.DEBUG, 'ETag Found', etag);
             }
           }
           
           // Log the trace information
-          console.log('--- Trace Metrics ---');
-          console.log('Request Type:', latestRequest.type);
-          console.log('HTTP Status:', latestRequest._status || latestRequest.status);
-          
-          // Timing metrics
-          if (latestRequest._tfinish) {
-            console.log('Finished Time:', latestRequest._tfinish);
-          }
-          if (latestRequest._trequest) {
-            console.log('Request Time:', latestRequest._trequest);
-          }
-          if (latestRequest._tresponse) {
-            console.log('Response Time:', latestRequest._tresponse);
-          }
-          if (latestRequest._tfinish && latestRequest._trequest) {
-            console.log('Total Request Duration (ms):', (latestRequest._tfinish - latestRequest._trequest) * 1000);
-          }
+          this.log(LogLevel.DEBUG, 'Trace Metrics', {
+            requestType: latestRequest.type,
+            httpStatus: latestRequest._status || latestRequest.status,
+            requestTime: latestRequest._trequest,
+            responseTime: latestRequest._tresponse,
+            totalRequestDuration: (latestRequest._tfinish - latestRequest._trequest) * 1000
+          });
         } else {
-          console.log('No segment requests found in the HTTP requests');
+          this.log(LogLevel.DEBUG, 'No segment requests found in the HTTP requests');
         }
       } else {
-        console.log('No HTTP requests found in dash metrics');
+        this.log(LogLevel.DEBUG, 'No HTTP requests found in dash metrics');
       }
     } catch (e) {
-      console.log('Error processing HTTP trace data:', e);
+      this.log(LogLevel.WARN, 'Error processing HTTP trace data', e);
     }
   }
 
@@ -839,7 +845,7 @@ export class DashAudioPlayerLogger {
    * Parse and log HTTP response headers from the segment response
    */
   private logResponseHeaders(headers: string | Record<string, string>): void {
-    console.log('--- Response Headers Analysis ---');
+    this.log(LogLevel.DEBUG, 'Response Headers Analysis');
     
     // Headers might be in different formats depending on the dash.js version
     try {
@@ -870,74 +876,79 @@ export class DashAudioPlayerLogger {
         'X-Cache'
       ];
       
-      console.log('Key Headers:');
+      const keyHeaders: Record<string, string> = {};
       importantHeaders.forEach(header => {
         const normalizedKey = Object.keys(headerMap).find(
           key => key.toLowerCase() === header.toLowerCase()
         );
         
         if (normalizedKey && headerMap[normalizedKey]) {
-          console.log(`- ${header}: ${headerMap[normalizedKey]}`);
+          keyHeaders[header] = headerMap[normalizedKey];
         }
       });
+      
+      this.log(LogLevel.DEBUG, 'Key Response Headers', keyHeaders);
       
       // Special processing for Link header which contains next segment info
       const linkHeader = this.findHeader(headerMap, 'Link');
       if (linkHeader) {
-        console.log('--- Link Header Analysis ---');
+        this.log(LogLevel.DEBUG, 'Link Header Analysis');
         try {
           // Parse Link header format: <url>; rel=relation
           const linkMatch = linkHeader.match(/<([^>]+)>\s*;\s*rel=([^,\s]+)/i);
           if (linkMatch && linkMatch.length >= 3) {
             const nextUrl = linkMatch[1];
             const relation = linkMatch[2];
-            console.log('Link Relation:', relation);
-            console.log('Next Segment URL:', nextUrl);
             
-            // Extract next segment filename
-            const nextSegmentParts = nextUrl.split('/');
-            const nextSegment = nextSegmentParts[nextSegmentParts.length - 1] || nextUrl;
-            console.log('Next Segment Filename:', nextSegment);
+            this.log(LogLevel.DEBUG, 'Link Header Details', {
+              relation,
+              nextUrl,
+              filename: nextUrl.split('/').pop() || nextUrl
+            });
             
             // If it's a BBC segment, parse the segment number
+            const nextSegment = nextUrl.split('/').pop() || '';
             if (nextSegment.includes('-audio=')) {
               const parts = nextSegment.split('-audio=');
               if (parts.length >= 2) {
                 const bitrateAndSegment = parts[1].split('-');
                 if (bitrateAndSegment.length >= 2) {
                   const nextSegmentNumber = bitrateAndSegment[1].replace('.m4s', '');
-                  console.log('Next Segment Number:', nextSegmentNumber);
+                  this.log(LogLevel.DEBUG, 'Next Segment Number', { number: nextSegmentNumber });
                 }
               }
             }
           }
         } catch (e) {
-          console.log('Error parsing Link header:', e);
+          this.log(LogLevel.WARN, 'Error parsing Link header', e);
         }
       }
       
       // Check for X-USP-Info1 header which contains timing information
       const uspInfoHeader = this.findHeader(headerMap, 'X-USP-Info1');
       if (uspInfoHeader) {
-        console.log('--- USP Info Analysis ---');
+        this.log(LogLevel.DEBUG, 'USP Info Analysis');
         try {
           // Parse X-USP-Info1 header format: t=timestamp lookahead=value
           const timeMatch = uspInfoHeader.match(/t=([^Z\s]+Z)/i);
           const lookaheadMatch = uspInfoHeader.match(/lookahead=(\d+)/i);
           
+          const info: Record<string, string> = {};
           if (timeMatch && timeMatch.length >= 2) {
-            console.log('Server Timestamp:', timeMatch[1]);
+            info.serverTimestamp = timeMatch[1];
           }
           
           if (lookaheadMatch && lookaheadMatch.length >= 2) {
-            console.log('Lookahead Value:', lookaheadMatch[1]);
+            info.lookaheadValue = lookaheadMatch[1];
           }
+          
+          this.log(LogLevel.DEBUG, 'USP Info Header Details', info);
         } catch (e) {
-          console.log('Error parsing USP Info header:', e);
+          this.log(LogLevel.WARN, 'Error parsing USP Info header', e);
         }
       }
     } catch (e) {
-      console.log('Error parsing response headers:', e);
+      this.log(LogLevel.WARN, 'Error parsing response headers', e);
     }
   }
 
@@ -982,14 +993,14 @@ export class DashAudioPlayerLogger {
     const { audioContext, analyser, dataArray } = context;
     
     if (!audioContext || !analyser) {
-      console.log('Audio processing data not available (missing AudioContext or Analyser)');
+      this.log(LogLevel.DEBUG, 'Audio processing data not available (missing AudioContext or Analyser)');
       return;
     }
     
-    console.log('--- Audio Processing Data ---');
+    this.log(LogLevel.DEBUG, 'Audio Processing Data');
     
     try {
-      console.log('Audio Context Time (s):', audioContext.currentTime);
+      this.log(LogLevel.DEBUG, 'Audio Context Time', { seconds: audioContext.currentTime });
       
       // Get current frequency data
       if (dataArray) {
@@ -1002,12 +1013,12 @@ export class DashAudioPlayerLogger {
             avg: Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length,
             firstFew: Array.from(dataArray).slice(0, 5)
           };
-          console.log('Frequency Data Summary:', frequencySummary);
+          this.log(LogLevel.DEBUG, 'Frequency Data Summary', frequencySummary);
         } catch (e) {
-          console.log('Error getting frequency data:', e);
+          this.log(LogLevel.WARN, 'Error getting frequency data', e);
         }
       } else {
-        console.log('No data array available for frequency analysis');
+        this.log(LogLevel.DEBUG, 'No data array available for frequency analysis');
       }
       
       // Get time domain data for waveform analysis
@@ -1023,17 +1034,17 @@ export class DashAudioPlayerLogger {
             zeroCrossings++;
           }
         }
-        console.log('Zero Crossing Rate:', zeroCrossings);
-        console.log('Time Domain Sample:', Array.from(timeDomainData).slice(0, 5));
         
-        // Calculate audio fingerprint for the current frame
-        const fingerprint = this.calculateAudioFingerprint(timeDomainData);
-        console.log('Audio Fingerprint:', fingerprint);
+        this.log(LogLevel.DEBUG, 'Time Domain Analysis', {
+          zeroCrossingRate: zeroCrossings,
+          firstSamples: Array.from(timeDomainData).slice(0, 5),
+          fingerprint: this.calculateAudioFingerprint(timeDomainData)
+        });
       } catch (e) {
-        console.log('Error processing time domain data:', e);
+        this.log(LogLevel.WARN, 'Error processing time domain data', e);
       }
     } catch (e) {
-      console.log('Error in audio processing data logging:', e);
+      this.log(LogLevel.WARN, 'Error in audio processing data logging', e);
     }
   }
 
@@ -1057,6 +1068,17 @@ export class DashAudioPlayerLogger {
     }
     
     return fingerprint;
+  }
+
+  /**
+   * Internal logging method that uses the shared logger
+   */
+  private log(level: LogLevel, message: string, data?: any): void {
+    // Only log if the level is appropriate
+    if (level > this.logLevel) return;
+    
+    // Log to the shared logger
+    logger.info(DASH_LOG_CATEGORY, `[DashPlayer] ${message}`, data);
   }
 }
 

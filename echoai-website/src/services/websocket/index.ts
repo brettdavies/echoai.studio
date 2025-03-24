@@ -2,11 +2,19 @@
  * WebSocket service exports
  */
 
+// Import shared logger
+import {
+  LogLevel,
+  LogCategory,
+  LogMessage,
+  AudioLogger
+} from '../../utils/Logger';
+
 // Export all classes
 export { WebSocketService } from './WebSocketService';
 export { ConnectionState, type WebSocketOptions } from './core/types';
 export { StreamingAudioProcessor } from './StreamingAudioProcessor';
-export { logger, LogLevel, LogCategory } from './core/Logger';
+export { logger, audioLogger, WebSocketLogger, LogLevel, LogCategory } from './WebSocketLogger';
 
 // Export audio streaming module - explicit exports to avoid module resolution issues
 export { AudioStreamingBridge } from './audio/AudioStreamingBridge';
@@ -38,7 +46,6 @@ import { ProcessingOptions } from '../../components/audio/types';
 import { WebSocketService } from './WebSocketService';
 import { AudioStreamingBridge } from './audio/AudioStreamingBridge';
 import { StreamingAudioProcessor } from './StreamingAudioProcessor';
-import { logger, LogLevel, LogCategory } from './core/Logger';
 
 /**
  * Configuration for creating a streaming audio implementation
@@ -58,6 +65,15 @@ export interface AudioStreamingConfig {
   
   // Debug level
   debug?: boolean;
+  
+  // Logger options
+  loggerOptions?: {
+    level?: LogLevel;
+    enableWasm?: boolean;
+    enableResampler?: boolean;
+    enableWorklet?: boolean;
+    enableProcessor?: boolean;
+  };
 }
 
 /**
@@ -66,15 +82,23 @@ export interface AudioStreamingConfig {
  * @returns A configured StreamingAudioProcessor instance
  */
 export function createAudioStreaming(config: AudioStreamingConfig): StreamingAudioProcessor {
-  const { serverUrl, processingOptions = {}, debug = false } = config;
+  const { serverUrl, processingOptions = {}, debug = false, loggerOptions } = config;
   
   // Enable debugging if requested
   if (debug) {
     logger.setLogLevel(LogLevel.TRACE);
-    logger.info(LogCategory.CONNECTION, 'Creating audio streaming processor with debugging enabled', {
+    logger.info(LogCategory.WS, 'Creating audio streaming processor with debugging enabled', {
       serverUrl,
       processingOptions
     });
+    
+    // Configure audio logger with trace level as well
+    audioLogger.setLogLevel(LogLevel.TRACE);
+  }
+  
+  // Apply specific logger configuration if provided
+  if (loggerOptions) {
+    audioLogger.configure(loggerOptions);
   }
   
   // Create the streaming processor
@@ -103,7 +127,7 @@ export async function sendAudioToServer(
   sampleRate: number, 
   serverUrl: string
 ): Promise<void> {
-  logger.info(LogCategory.CONNECTION, 'One-time audio data transmission', {
+  logger.info(LogCategory.WS, 'One-time audio data transmission', {
     serverUrl,
     sampleRate,
     dataSize: audioData.length
@@ -133,7 +157,7 @@ export async function sendAudioToServer(
       setTimeout(() => {
         // Clean up
         webSocketService.disconnect();
-        logger.info(LogCategory.CONNECTION, 'One-time transmission complete');
+        logger.info(LogCategory.WS, 'One-time transmission complete');
         resolve(undefined);
       }, 500);
     });

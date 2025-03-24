@@ -1,4 +1,5 @@
 import { QueuedMessage } from './types';
+import { logger, LogCategory } from '../WebSocketLogger';
 
 /**
  * Manages the queue of outgoing WebSocket messages
@@ -14,6 +15,7 @@ export class MessageQueue {
    */
   constructor(maxQueueSize: number = 1000) {
     this.maxQueueSize = maxQueueSize;
+    logger.debug(LogCategory.WS, 'MessageQueue created', { maxQueueSize });
   }
   
   /**
@@ -35,8 +37,22 @@ export class MessageQueue {
     
     // Limit queue size to prevent memory issues
     if (this.messageQueue.length > this.maxQueueSize) {
+      logger.warn(LogCategory.WS, 'Queue size limit reached, dropping lowest priority messages', {
+        queueSize: this.messageQueue.length,
+        maxSize: this.maxQueueSize,
+        droppedCount: this.messageQueue.length - this.maxQueueSize
+      });
       this.messageQueue = this.messageQueue.slice(0, this.maxQueueSize);
     }
+    
+    logger.debug(LogCategory.WS, 'Message enqueued', { 
+      priority, 
+      retry, 
+      queueSize: this.messageQueue.length,
+      dataType: typeof data === 'string' ? 'string' : (data instanceof ArrayBuffer ? 'ArrayBuffer' : 'Blob'),
+      dataSize: typeof data === 'string' ? data.length : 
+                 (data instanceof ArrayBuffer ? data.byteLength : 'unknown')
+    });
   }
   
   /**
@@ -45,7 +61,12 @@ export class MessageQueue {
    * @returns Array of queued messages
    */
   dequeue(batchSize: number = 50): QueuedMessage[] {
-    return this.messageQueue.splice(0, batchSize);
+    const messages = this.messageQueue.splice(0, batchSize);
+    logger.debug(LogCategory.WS, 'Messages dequeued', { 
+      count: messages.length, 
+      remaining: this.messageQueue.length 
+    });
+    return messages;
   }
   
   /**
@@ -54,13 +75,19 @@ export class MessageQueue {
    */
   requeue(message: QueuedMessage): void {
     this.messageQueue.unshift(message);
+    logger.debug(LogCategory.WS, 'Message requeued for retry', { 
+      priority: message.priority,
+      queueSize: this.messageQueue.length
+    });
   }
   
   /**
    * Clear all messages from the queue
    */
   clear(): void {
+    const count = this.messageQueue.length;
     this.messageQueue = [];
+    logger.info(LogCategory.WS, 'Message queue cleared', { droppedMessages: count });
   }
   
   /**

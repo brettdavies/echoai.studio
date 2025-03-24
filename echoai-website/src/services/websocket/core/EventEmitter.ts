@@ -1,4 +1,5 @@
 import { WebSocketEventType, WebSocketEventHandler } from './types';
+import { logger, LogCategory } from '../WebSocketLogger';
 
 /**
  * EventEmitter for WebSocket events
@@ -58,7 +59,7 @@ export class EventEmitter {
         try {
           handler(event);
         } catch (error) {
-          console.error(`Error in WebSocket ${type} event handler:`, error);
+          logger.error(LogCategory.ERROR, `Error in WebSocket ${type} event handler`, error);
         }
       });
     }

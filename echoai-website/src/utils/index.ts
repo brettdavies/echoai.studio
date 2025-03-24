@@ -13,4 +13,23 @@ if (process.env.NODE_ENV === 'development') {
   }).catch(error => {
     console.error('Failed to load WebSocket test utilities:', error);
   });
-} 
+}
+
+/**
+ * Utility module exports
+ */
+
+// Export utilities
+export { default as testWebSocket } from './testWebSocket';
+
+// Export Logger module
+export {
+  Logger,
+  AudioLogger,
+  LogLevel,
+  LogCategory,
+  logger,
+  audioLogger
+} from './Logger';
+
+export type { LogMessage } from './Logger'; 

@@ -15,6 +15,7 @@ import {
 import { EventEmitter } from './core/EventEmitter';
 import { MessageQueue } from './core/MessageQueue';
 import { ConnectionManager } from './core/ConnectionManager';
+import { logger, LogCategory } from './WebSocketLogger';
 
 /**
  * WebSocketService handles all WebSocket communication with automatic
@@ -181,7 +182,7 @@ export class WebSocketService {
       try {
         socket?.send(message.data);
       } catch (error) {
-        console.error('Error sending queued message:', error);
+        logger.error(LogCategory.ERROR, 'Error sending queued message', error);
         
         // If retry is enabled, add back to queue
         if (message.retry) {
