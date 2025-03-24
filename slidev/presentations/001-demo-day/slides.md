@@ -149,7 +149,7 @@ class: text-white
 
 ## Conferences & Events
 
-- $Y billion market 
+- $Y billion market
 - Live captioning for accessibility compliance
 - Multilingual capabilities expand reach
 - ADA/FCC regulations increasingly enforced
@@ -246,7 +246,7 @@ class: text-white
   <div class="flex gap-4">
     <img src="/images/headshot_brett.jpg" alt="Brett" class="rounded-circle w-24 h-24" />
     <div>
-      <h3 class="mb-1">Brett (Founder)</h3>
+      <h3 class="mb-1">Brett &mdash; Founder</h3>
       <ul class="text-sm">
         <li>Early Uber Operations leader (5+ years)</li>
         <li>Built global driver systems from scratch</li>
@@ -265,7 +265,7 @@ class: text-white
   <div class="flex gap-4">
     <img src="/images/headshot_will.jpg" alt="Will" class="rounded-circle w-24 h-24" />
     <div>
-      <h3 class="mb-1">Will (Founding Engineer)</h3>
+      <h3 class="mb-1">Will &mdash; Founding Engineer</h3>
       <ul class="text-sm">
         <li>Rising engineering talent</li>
         <li>Top performer at GauntletAI</li>
@@ -286,15 +286,16 @@ class: text-white
   <h3 class="mb-2">Strategic Advisors</h3>
   <div class="grid grid-cols-3 gap-2">
     <div>
-      <p class="font-bold text-sm mb-0">VP Digital Growth at NBA</p>
+      <p class="font-bold text-sm mb-0">Jessica Doyle</p>
       <ul class="text-sm">
-        <li>Digital fan engagement expert</li>
+        <li>Digital Growth & Marketing Advisor</li>
+        <li>Former VP NBA, Twitch, Cameo </li>
       </ul>
     </div>
     <div>
-      <p class="font-bold text-sm mb-0">VP TV & Streaming at NBCUniversal</p>
+      <p class="font-bold text-sm mb-0">Media strategy & M&A advisory</p>
       <ul class="text-sm">
-        <li>Media strategy & M&A advisory</li>
+        <li>VP TV & Streaming at NBCUniversal</li>
       </ul>
     </div>
     <div>
