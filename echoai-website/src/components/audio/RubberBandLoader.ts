@@ -10,6 +10,37 @@ let rubberBandPromise: Promise<any> | null = null;
 let globalRubberBandModule: any = null;
 
 /**
+ * Safely sends a message to the processor port, ensuring JSON compatibility
+ * @param port The MessagePort to send to
+ * @param message The message data to send
+ */
+const safelySendMessage = (port: MessagePort, message: any): void => {
+  try {
+    // Check if message is already a string
+    if (typeof message === 'string') {
+      port.postMessage(message);
+      return;
+    }
+    
+    // If it's an array, ensure it's JSON-compatible
+    if (Array.isArray(message)) {
+      // Convert objects to JSON-safe format
+      const safeArray = message.map(item => 
+        typeof item === 'object' && item !== null ? JSON.stringify(item) : item
+      );
+      port.postMessage(safeArray);
+      return;
+    }
+    
+    // For objects, send directly - don't stringify the whole object
+    // This avoids the processor trying to parse an already-parsed object
+    port.postMessage(message);
+  } catch (error) {
+    audioLoggers.resampler.error('Error sending message to processor:', error);
+  }
+};
+
+/**
  * Loads the RubberBand WebAssembly module
  * @returns A promise that resolves to the loaded module
  */
@@ -87,6 +118,12 @@ export const createRubberBandNode = async (
     // Add debug message handler to check communication
     node.port.onmessage = (event: MessageEvent) => {
       audioLoggers.resampler.debug(`Message from processor:`, event.data);
+    };
+    
+    // Extend node with safe message sending
+    const originalPostMessage = node.port.postMessage.bind(node.port);
+    node.port.postMessage = (message: any) => {
+      safelySendMessage(node.port, message);
     };
     
     // Force immediate message to test communication

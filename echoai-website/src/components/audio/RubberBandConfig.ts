@@ -100,14 +100,22 @@ export const configureRubberBandNode = (node: any, options: ProcessingOptions): 
   
   // Send the configuration event to the processor
   try {
-    node.port.postMessage({
+    // Create configuration object
+    const configMessage = {
       command: 'configure',
       options: {
         highQuality: true,
         pitch: options.pitchShift ? Math.pow(2, options.pitchShift / 12) : 1.0,
         tempo: options.timeStretch ? 1.0 / options.timeStretch : 1.0
       }
-    });
+    };
+    
+    // Log the configuration being sent
+    audioLoggers.resampler.debug('Sending configuration to processor:', JSON.stringify(configMessage));
+    
+    // Use the node's post message method which should now be using our safe sender
+    node.port.postMessage(configMessage);
+    
     audioLoggers.resampler.info('Configuration message sent to processor');
   } catch (error) {
     audioLoggers.resampler.error('Failed to send configuration message:', error);
