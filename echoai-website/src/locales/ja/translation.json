@@ -97,14 +97,18 @@
     "seconds": "秒",
     "untilLaunch": "開始まで - 2025年3月25日 午後12時 (CT)"
   },
+  "audioPlayer": {
+    "title": "",
+    "play": "",
+    "pause": "",
+    "volume": "",
+    "loading": "",
+    "live": "",
+    "streaming": ""
+  },
   "footer": {
     "brandName": "echoAI",
     "allRightsReserved": "全著作権所有。"
-  },
-  "format": {
-    "date": "今日は {date, date, full} です",
-    "currency": "価格: {amount, number, currency}",
-    "number": "値: {value, number}"
   },
   "processingSteps": {
     "title": "Echo Core 処理パイプライン",

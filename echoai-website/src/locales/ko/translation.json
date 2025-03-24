@@ -97,14 +97,18 @@
     "seconds": "초",
     "untilLaunch": "출시까지 - 2025년 3월 25일 오후 12시 CT"
   },
+  "audioPlayer": {
+    "title": "",
+    "play": "",
+    "pause": "",
+    "volume": "",
+    "loading": "",
+    "live": "",
+    "streaming": ""
+  },
   "footer": {
     "brandName": "echoAI",
     "allRightsReserved": "모든 권리 보유."
-  },
-  "format": {
-    "date": "오늘은 {date, date, full}입니다",
-    "currency": "가격: {amount, number, currency}",
-    "number": "값: {value, number}"
   },
   "processingSteps": {
     "title": "Echo Core 처리 파이프라인",

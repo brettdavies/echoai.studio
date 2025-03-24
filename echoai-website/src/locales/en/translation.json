@@ -110,11 +110,6 @@
     "brandName": "echoAI",
     "allRightsReserved": "All rights reserved."
   },
-  "format": {
-    "date": "Today is {date, date, full}",
-    "currency": "Price: {amount, number, currency}",
-    "number": "Value: {value, number}"
-  },
   "processingSteps": {
     "title": "Echo Core Processing Pipeline",
     "inputStream": "Input Stream",

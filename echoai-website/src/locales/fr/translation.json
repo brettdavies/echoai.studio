@@ -97,14 +97,18 @@
     "seconds": "Secondes",
     "untilLaunch": "Jusqu'au lancement - 25 mars 2025 à 12h CT"
   },
+  "audioPlayer": {
+    "title": "",
+    "play": "",
+    "pause": "",
+    "volume": "",
+    "loading": "",
+    "live": "",
+    "streaming": ""
+  },
   "footer": {
     "brandName": "echoAI",
     "allRightsReserved": "Tous droits réservés."
-  },
-  "format": {
-    "date": "Aujourd'hui c'est le {date, date, full}",
-    "currency": "Prix: {amount, number, currency}",
-    "number": "Valeur: {value, number}"
   },
   "processingSteps": {
     "title": "Pipeline de Traitement Echo Core",
