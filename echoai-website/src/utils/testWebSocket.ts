@@ -127,10 +127,44 @@ export async function testWebSocketSend(options: WebSocketTestOptions): Promise<
   return sendSuccess;
 }
 
+/**
+ * Simple direct WebSocket connection test with custom logger
+ * Use this to debug connection failures when the server is down
+ * @param url WebSocket server URL
+ */
+export function debugWebSocketFailure(url: string): void {
+  logger.info(LogCategory.WS, `Attempting direct WebSocket connection to ${url}`);
+  
+  try {
+    const socket = new WebSocket(url);
+    
+    socket.addEventListener('open', () => {
+      logger.info(LogCategory.WS, `WebSocket connected successfully to ${url}`);
+      setTimeout(() => socket.close(1000, "Debug test complete"), 1000);
+    });
+    
+    socket.addEventListener('error', (event) => {
+      logger.error(LogCategory.ERROR, `WebSocket connection error to ${url}`, event);
+    });
+    
+    socket.addEventListener('close', (event) => {
+      logger.info(
+        LogCategory.WS, 
+        `WebSocket connection closed: code=${event.code}, reason=${event.reason}, wasClean=${event.wasClean}`
+      );
+    });
+    
+    logger.debug(LogCategory.WS, `WebSocket object created, waiting for connection events...`);
+  } catch (error) {
+    logger.error(LogCategory.ERROR, `Error creating WebSocket:`, error);
+  }
+}
+
 // Add test utilities to window object for console debugging
 export function initializeGlobalTestUtilities(): void {
   (window as any).testWebSocketConnection = testWebSocketConnection;
   (window as any).testWebSocketSend = testWebSocketSend;
+  (window as any).debugWebSocketFailure = debugWebSocketFailure;
   (window as any).webSocketLogger = logger;
   (window as any).LogLevel = LogLevel;
   (window as any).LogCategory = LogCategory;
@@ -139,7 +173,13 @@ export function initializeGlobalTestUtilities(): void {
   networkLoggers.websocket.info('WebSocket Test Utilities available in window:');
   networkLoggers.websocket.info('  - testWebSocketConnection({url: "wss://example.com/socket"})');
   networkLoggers.websocket.info('  - testWebSocketSend({url: "wss://example.com/socket"})');
+  networkLoggers.websocket.info('  - debugWebSocketFailure("wss://example.com/socket")');
   networkLoggers.websocket.info('  - webSocketLogger.setLogLevel(LogLevel.TRACE)');
+  
+  // Use logger instead of direct console logs
+  networkLoggers.websocket.info('WebSocket Debug Tools available in console');
+  networkLoggers.websocket.info('  - debugWebSocketFailure("wss://your-server.com/socket")');
+  networkLoggers.websocket.info('  - testWebSocketConnection({url: "wss://your-server.com/socket"})');
 }
 
 // Initialize if in browser environment

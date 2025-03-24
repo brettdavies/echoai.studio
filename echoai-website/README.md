@@ -77,4 +77,4 @@ Before submitting changes, please:
 1. Run `npm run build` to ensure there are no TypeScript or build errors
 2. Run `npm run lint` to check for code quality issues
 3. Test the site on multiple screen sizes
-4. Verify that all interactive elements work correctly 
+4. Verify that all interactive elements work correctly

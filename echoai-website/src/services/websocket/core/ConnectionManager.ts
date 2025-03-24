@@ -1,6 +1,7 @@
 import { ConnectionState, WebSocketOptions } from './types';
 import { EventEmitter } from './EventEmitter';
 import { logger, LogCategory } from '../WebSocketLogger';
+import { WebSocketService } from '../WebSocketService';
 
 /**
  * Manages the WebSocket connection lifecycle
@@ -279,14 +280,21 @@ export class ConnectionManager {
    * @param newState The new state to set
    */
   private updateState(newState: ConnectionState): void {
+    if (this.state === newState) return;
+    
     const oldState = this.state;
     this.state = newState;
     
     logger.info(LogCategory.WS, `State changed: ${oldState} -> ${newState}`);
     
-    this.eventEmitter.emit('state_change', new CustomEvent('state_change', { 
-      detail: { oldState, newState } 
-    }));
+    // Emit state change event
+    const event = new CustomEvent('state_change', {
+      detail: { oldState, newState }
+    });
+    this.eventEmitter.emit('state_change', event);
+    
+    // Notify global listeners (new code)
+    WebSocketService.notifyGlobalStateChange(event);
   }
   
   /**

@@ -196,4 +196,132 @@ export class WebSocketService {
       setTimeout(() => this.processQueue(), 0);
     }
   }
+
+  /**
+   * Static method to directly test a WebSocket connection
+   * @param url WebSocket URL to test
+   * @param timeout Connection timeout in milliseconds
+   * @returns Promise resolving to connection test result
+   */
+  static async testConnection(url: string, timeout: number = 5000): Promise<{
+    success: boolean;
+    error?: string;
+    details?: Record<string, any>;
+  }> {
+    logger.info(LogCategory.WS, `Testing direct connection to ${url}`);
+    
+    return new Promise((resolve) => {
+      let timeoutId: number | null = null;
+      
+      try {
+        // Create WebSocket
+        const socket = new WebSocket(url);
+        
+        // Set connection timeout
+        timeoutId = window.setTimeout(() => {
+          logger.error(LogCategory.ERROR, `Connection timeout after ${timeout}ms`);
+          socket.close();
+          resolve({
+            success: false, 
+            error: 'Connection timeout',
+            details: { url, timeout }
+          });
+        }, timeout);
+        
+        // Handle successful connection
+        socket.addEventListener('open', () => {
+          if (timeoutId !== null) clearTimeout(timeoutId);
+          logger.info(LogCategory.WS, `Connection successful to ${url}`);
+          
+          // Close after success
+          setTimeout(() => {
+            socket.close(1000, 'Test successful');
+          }, 100);
+          
+          resolve({
+            success: true,
+            details: { url }
+          });
+        });
+        
+        // Handle connection error
+        socket.addEventListener('error', (event) => {
+          if (timeoutId !== null) clearTimeout(timeoutId);
+          logger.error(LogCategory.ERROR, `Connection error to ${url}`, event);
+          
+          resolve({
+            success: false,
+            error: 'Connection error',
+            details: { url, event }
+          });
+        });
+        
+        // Handle connection close
+        socket.addEventListener('close', (event) => {
+          if (timeoutId !== null) clearTimeout(timeoutId);
+          
+          // Only resolve here if not already resolved (error or open)
+          if (!event.wasClean && socket.readyState !== WebSocket.OPEN) {
+            logger.info(LogCategory.WS, `Connection closed: code=${event.code}, reason=${event.reason || 'unknown'}`);
+            
+            resolve({
+              success: false,
+              error: `Connection closed: ${event.reason || 'Server unreachable'}`,
+              details: { 
+                url, 
+                code: event.code, 
+                reason: event.reason, 
+                wasClean: event.wasClean 
+              }
+            });
+          }
+        });
+      } catch (error) {
+        if (timeoutId !== null) clearTimeout(timeoutId);
+        logger.error(LogCategory.ERROR, `Error creating WebSocket:`, error);
+        
+        resolve({
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+          details: { url, error }
+        });
+      }
+    });
+  }
+
+  /**
+   * Global state change listeners for monitoring all WebSocket connections
+   * This is useful for UI components that need to track connection status
+   */
+  private static globalStateChangeListeners: Set<(event: any) => void> = new Set();
+
+  /**
+   * Add a global state change listener
+   * @param listener The listener function
+   */
+  static addGlobalStateChangeListener(listener: (event: any) => void): void {
+    WebSocketService.globalStateChangeListeners.add(listener);
+  }
+
+  /**
+   * Remove a global state change listener
+   * @param listener The listener function to remove
+   */
+  static removeGlobalStateChangeListener(listener: (event: any) => void): void {
+    WebSocketService.globalStateChangeListeners.delete(listener);
+  }
+
+  /**
+   * Notify global listeners of a state change
+   * @param event The state change event
+   */
+  static notifyGlobalStateChange(event: any): void {
+    WebSocketService.globalStateChangeListeners.forEach(listener => {
+      try {
+        listener(event);
+      } catch (error) {
+        logger.error(LogCategory.ERROR, 'Error in global state change listener', error);
+      }
+    });
+  }
 } 

@@ -93,6 +93,9 @@ export interface LogMessage {
   component?: LogComponent;
 }
 
+// Define the LogHandler type
+export type LogHandler = (level: LogLevel, category: LogCategory, message: string, data?: any, component?: LogComponent) => void;
+
 /**
  * Base Logger class
  */
@@ -110,6 +113,9 @@ export class Logger {
   private componentFilters: Map<LogComponent, boolean> = new Map(
     Object.values(LogComponent).map(component => [component, true])
   );
+  
+  // Add a private property for logHandlers to Logger class 
+  private logHandlers: Set<LogHandler> = new Set();
   
   /**
    * Gets the singleton logger instance
@@ -277,6 +283,40 @@ export class Logger {
   }
   
   /**
+   * Get the appropriate console method for a log level
+   * @param level The log level
+   * @returns The console method name
+   */
+  private getConsoleMethod(level: LogLevel): 'log' | 'info' | 'warn' | 'error' | 'debug' {
+    switch (level) {
+      case LogLevel.ERROR:
+        return 'error';
+      case LogLevel.WARN:
+        return 'warn';
+      case LogLevel.INFO:
+        return 'info';
+      case LogLevel.DEBUG:
+        return 'debug';
+      case LogLevel.TRACE:
+      default:
+        return 'log';
+    }
+  }
+  
+  /**
+   * Format a log message for console output
+   * @param logMessage The log message to format
+   * @returns Formatted message string
+   */
+  private formatLogMessage(logMessage: LogMessage): string {
+    const prefix = this.serviceId ? `[${this.serviceId}]` : '[App]';
+    const timestamp = new Date(logMessage.timestamp).toISOString();
+    const levelName = LogLevel[logMessage.level];
+    const componentStr = logMessage.component ? `[${logMessage.component}]` : '';
+    return `${prefix} ${timestamp} [${levelName}] [${logMessage.category}]${componentStr}: ${logMessage.message}`;
+  }
+  
+  /**
    * Log a trace message (most verbose)
    * @param category Log category
    * @param message The message to log
@@ -365,6 +405,22 @@ export class Logger {
   }
   
   /**
+   * Add a custom log handler to receive all log messages
+   * @param handler Function that will be called for each log message
+   */
+  public addLogHandler(handler: LogHandler): void {
+    this.logHandlers.add(handler);
+  }
+  
+  /**
+   * Remove a previously added log handler
+   * @param handler The handler function to remove
+   */
+  public removeLogHandler(handler: LogHandler): void {
+    this.logHandlers.delete(handler);
+  }
+  
+  /**
    * Internal log method
    * @param level Log level
    * @param category Log category
@@ -373,51 +429,60 @@ export class Logger {
    * @param component Optional component identifier
    */
   protected log(level: LogLevel, category: LogCategory, message: string, data?: any, component?: LogComponent): void {
-    // Skip if log level is too verbose or category is disabled
-    if (level > this.logLevel || !this.isCategoryEnabled(category)) return;
+    // Skip logging if level is too verbose for current settings
+    if (level > this.logLevel) {
+      return;
+    }
     
-    // Skip if component is disabled
-    if (!this.isComponentEnabled(component)) return;
+    // Skip logging if category is filtered out
+    if (!this.isCategoryEnabled(category)) {
+      return;
+    }
     
+    // Skip logging if component is filtered out
+    if (component && !this.isComponentEnabled(component)) {
+      return;
+    }
+    
+    // Create log message object
     const logMessage: LogMessage = {
       category,
       level,
       message,
-      timestamp: Date.now(),
       data,
+      timestamp: Date.now(),
       component
     };
     
-    // Add to in-memory logs with size limit
-    this.logs.push(logMessage);
+    // Add to internal log storage
+    this.logs.unshift(logMessage);
+    
+    // Trim logs if exceeding max size
     if (this.logs.length > this.maxLogSize) {
-      this.logs.shift();
+      this.logs = this.logs.slice(0, this.maxLogSize);
     }
     
-    // Format for console output
-    const prefix = this.serviceId ? `[${this.serviceId}]` : '[App]';
-    const timestamp = new Date(logMessage.timestamp).toISOString();
-    const levelName = LogLevel[level];
-    const componentStr = component ? `[${component}]` : '';
-    const formattedMessage = `${prefix} ${timestamp} [${levelName}] [${category}]${componentStr}: ${message}`;
+    // Map log level to console method
+    const logMethod = this.getConsoleMethod(level);
     
-    // Log to console with appropriate level
-    switch (level) {
-      case LogLevel.ERROR:
-        console.error(formattedMessage, data || '');
-        break;
-      case LogLevel.WARN:
-        console.warn(formattedMessage, data || '');
-        break;
-      case LogLevel.INFO:
-        console.info(formattedMessage, data || '');
-        break;
-      case LogLevel.DEBUG:
-      case LogLevel.TRACE:
-      default:
-        console.log(formattedMessage, data || '');
-        break;
+    // Format the log message
+    const formattedMessage = this.formatLogMessage(logMessage);
+    
+    // Output to console
+    if (data !== undefined) {
+      console[logMethod](formattedMessage, data);
+    } else {
+      console[logMethod](formattedMessage);
     }
+    
+    // Call all registered handlers
+    this.logHandlers.forEach(handler => {
+      try {
+        handler(level, category, message, data, component);
+      } catch (error) {
+        console.error('Error in log handler:', error);
+      }
+    });
   }
 }
 
