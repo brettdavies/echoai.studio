@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { uiLoggers } from '../utils/LoggerFactory';
 
@@ -23,17 +23,41 @@ mermaid.initialize({
  */
 const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   const mermaidRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [hasRendered, setHasRendered] = useState(false);
   
+  // Set up intersection observer to detect when diagram is visible
   useEffect(() => {
-    if (!chart) return;
+    if (!mermaidRef.current) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 } // Trigger when 10% of the element is visible
+    );
+    
+    observer.observe(mermaidRef.current);
+    
+    return () => {
+      if (mermaidRef.current) {
+        observer.unobserve(mermaidRef.current);
+      }
+    };
+  }, []);
+  
+  // Render chart when it becomes visible
+  useEffect(() => {
+    if (!chart || !isVisible || hasRendered) return;
     
     // Wait for the DOM to settle before rendering
     const timer = setTimeout(() => {
       renderChart();
+      setHasRendered(true);
     }, 50);
     
     return () => clearTimeout(timer);
-  }, [chart]);
+  }, [chart, isVisible, hasRendered]);
   
   const renderChart = async () => {
     if (mermaidRef.current) {
