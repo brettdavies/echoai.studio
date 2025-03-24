@@ -14,7 +14,6 @@ interface DashAudioPlayerProps {
   className?: string;
   onPlaybackStarted?: () => void;
   onPlaybackStateChange?: (isPlaying: boolean) => void;
-  onSegmentIdentified?: (segmentId: string) => void;
 }
 
 const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({ 
@@ -22,7 +21,6 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
   className = '',
   onPlaybackStarted,
   onPlaybackStateChange,
-  onSegmentIdentified,
 }) => {
   const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -283,7 +281,7 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
               //   analyser: analyserRef.current || undefined,
               //   dataArray: dataArrayRef.current || undefined,
               //   isPlaying: true
-              // }, onSegmentIdentified);
+              // });
             } catch (error) {
               console.error('Error starting stream logging:', error);
             }

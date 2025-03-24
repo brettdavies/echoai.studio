@@ -42,7 +42,6 @@ export class AudioFileManager {
       // Check if we have any processors
       if (processors.length === 0) {
         console.log('No processing modules active, only raw audio saved');
-        alert('Raw audio file saved. Check your downloads folder.');
         return;
       }
       
@@ -108,12 +107,10 @@ export class AudioFileManager {
       // Wait for all files to be saved
       await Promise.all(savePromises);
       
-      // Show confirmation alert
       const filesSaved = 1 + savePromises.length; // 1 raw + processed files
-      alert(`${filesSaved} audio files saved: raw and processed versions. Check your downloads folder.`);
+      console.log(`${filesSaved} audio files saved: raw and processed versions.`);
     } catch (error) {
       console.error('Error saving audio files:', error);
-      alert('Error saving audio files. Check console for details.');
     }
   }
   

@@ -67,16 +67,45 @@ export const createRubberBandNode = async (
   // Ensure module is loaded
   const module = await loadRubberBandModule();
   
-  // Create the node
-  const node = await module.createRubberBandNode(
-    context,
-    processorPath,
-    options
-  );
+  // Debug audio context details
+  console.log(`[RubberBand] Creating node with context: ${context.constructor.name}, sampleRate: ${context.sampleRate}`);
   
-  if (!node) {
-    throw new Error('Could not create RubberBand node');
+  try {
+    // Create the node
+    const node = await module.createRubberBandNode(
+      context,
+      processorPath,
+      options
+    );
+    
+    if (!node) {
+      throw new Error('Could not create RubberBand node');
+    }
+    
+    // Add debug message handler to check communication
+    node.port.onmessage = (event: MessageEvent) => {
+      console.log(`[RubberBand] Message from processor:`, event.data);
+    };
+    
+    // Force immediate message to test communication
+    node.port.postMessage({ 
+      command: 'debug', 
+      value: 'Testing worklet communication'
+    });
+    
+    // Verify required methods are available
+    const requiredMethods = ['setPitch', 'setTempo', 'setHighQuality'];
+    const missingMethods = requiredMethods.filter(method => typeof node[method] !== 'function');
+    
+    if (missingMethods.length > 0) {
+      console.warn(`[RubberBand] Node missing expected methods: ${missingMethods.join(', ')}`);
+    } else {
+      console.log('[RubberBand] Node created with all required methods');
+    }
+    
+    return node;
+  } catch (error) {
+    console.error('[RubberBand] Error creating RubberBand node:', error);
+    throw error;
   }
-  
-  return node;
 }; 

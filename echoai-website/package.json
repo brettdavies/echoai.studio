@@ -29,6 +29,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^15.4.1",
+    "rubberband-web": "^0.2.1",
     "tailwind-merge": "^1.14.0",
     "wavefile": "^11.0.0",
     "ws": "^8.18.1"

@@ -160,9 +160,8 @@ export class AudioProcessorCore {
     // Check if we need audio processing
     if (needsProcessing(this.processingOptions)) {
       // Add RubberBand module with options
-      // COMMENTED OUT: No RubberBand processing, only save original file
-      // modules.push(createRubberBandModule(this.processingOptions));
-      console.log('RubberBand processing disabled - only saving original file');
+      modules.push(createRubberBandModule(this.processingOptions));
+      console.log('RubberBand processing enabled - processing and saving audio files');
     }
     
     this.processorModules = modules;

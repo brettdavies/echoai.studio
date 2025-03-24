@@ -36,19 +36,23 @@ export const createRubberBandOptions = (
   numberOfOutputs: number;
   processorOptions: any;
 } => {
+  const processorOptions = {
+    sampleRate,
+    numChannels: config.numberOfChannels,
+    options: {
+      formantPreserved: options.formantPreservation ?? true,
+      transientMode: config.transientMode,
+      phaseIndependent: false,
+      threadPoolSize: config.threadPoolSize,
+    }
+  };
+  
+  console.log('[RubberBand] Creating processor with options:', JSON.stringify(processorOptions, null, 2));
+  
   return {
     numberOfInputs: 1,
     numberOfOutputs: 1,
-    processorOptions: {
-      sampleRate,
-      numChannels: config.numberOfChannels,
-      options: {
-        formantPreserved: options.formantPreservation,
-        transientMode: config.transientMode,
-        phaseIndependent: false,
-        threadPoolSize: config.threadPoolSize,
-      }
-    }
+    processorOptions
   };
 };
 
@@ -58,33 +62,53 @@ export const createRubberBandOptions = (
  * @param options Processing options
  */
 export const configureRubberBandNode = (node: any, options: ProcessingOptions): void => {
-  // Set time stretching if needed
+  // Set pitch and tempo configuration in a consistent order
+  
+  // First, always set high quality
+  if (typeof node.setHighQuality === 'function') {
+    // Set this first as it can change the processing mode
+    node.setHighQuality(true);
+    console.log('[RubberBand] Set high quality mode');
+  } else {
+    console.warn('[RubberBand] setHighQuality method not available');
+  }
+  
+  // Then set time stretching if needed
   if (options.timeStretch !== undefined && options.timeStretch !== 1.0) {
     if (typeof node.setTempo === 'function') {
       const tempo = 1.0 / options.timeStretch;  // Convert time stretch to tempo
       node.setTempo(tempo);
-      console.log(`Set tempo to ${tempo} (1.0/timeStretch: ${options.timeStretch})`);
+      console.log(`[RubberBand] Set tempo to ${tempo} (1.0/timeStretch: ${options.timeStretch})`);
     } else {
-      console.warn('setTempo method not available on RubberBand node');
+      console.warn('[RubberBand] setTempo method not available');
     }
   }
   
-  // Set pitch shifting if needed
+  // Then set pitch shifting if needed
   if (options.pitchShift !== undefined && options.pitchShift !== 0.0) {
     // Convert semitones to ratio (2^(n/12))
     const pitchScale = Math.pow(2, options.pitchShift / 12);
     
     if (typeof node.setPitch === 'function') {
       node.setPitch(pitchScale);
-      console.log(`Set pitch scale to ${pitchScale} (from semitones: ${options.pitchShift})`);
+      console.log(`[RubberBand] Set pitch scale to ${pitchScale} (from semitones: ${options.pitchShift})`);
     } else {
-      console.warn('setPitch method not available on RubberBand node');
+      console.warn('[RubberBand] setPitch method not available');
     }
   }
   
-  // Set quality if the method is available
-  if (typeof node.setHighQuality === 'function') {
-    node.setHighQuality(true);
-    console.log('Set high quality mode');
+  // Send the configuration event to the processor
+  try {
+    node.port.postMessage({
+      command: 'configure',
+      options: {
+        highQuality: true,
+        pitch: options.pitchShift ? Math.pow(2, options.pitchShift / 12) : 1.0,
+        tempo: options.timeStretch ? 1.0 / options.timeStretch : 1.0
+      }
+    });
+    console.log('[RubberBand] Configuration message sent to processor');
+  } catch (error) {
+    console.error('[RubberBand] Failed to send configuration message:', error);
   }
 }; 
