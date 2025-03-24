@@ -23,6 +23,7 @@ import {
   processAudioData
 } from './MessageFormatter';
 import { logger, LogCategory } from '../WebSocketLogger';
+import { generateAudioTestMessageString } from '../../../utils/AudioTestUtils';
 
 /**
  * Manages streaming of processed audio data over WebSocket
@@ -76,8 +77,8 @@ export class AudioStreamingBridge {
     
     // Notify listeners of connection state changes
     if (detail.newState === 'connected') {
-      // Send initial config message when connected
-      this.sendConfigMessage();
+      // Server doesn't currently support config messages
+      // this.sendConfigMessage();
       this.notifyStatusChange(true, 'Connected to server');
     } else if (detail.oldState === 'connected') {
       this.notifyStatusChange(false, `Disconnected: ${detail.newState}`);
@@ -102,6 +103,10 @@ export class AudioStreamingBridge {
           logger.error(LogCategory.ERROR, 'Failed to connect to streaming server', error);
           this.notifyStatusChange(false, `Connection failed: ${error.message}`);
         });
+      } else {
+        // Ensure we send config even if already connected
+        logger.info(LogCategory.WS, 'WebSocket already connected, sending config');
+        this.sendConfigMessage();
       }
     } else if (!enabled && wasEnabled) {
       // Flush the buffer before disabling
@@ -127,10 +132,10 @@ export class AudioStreamingBridge {
       logger.info(LogCategory.AUDIO, `Sample rate changed: ${this.currentSampleRate} -> ${sampleRate}`);
       this.currentSampleRate = sampleRate;
       
-      // If connected, send updated config
-      if (this.webSocketService.isConnected()) {
-        this.sendConfigMessage();
-      }
+      // Server doesn't currently support config messages
+      // if (this.webSocketService.isConnected()) {
+      //   this.sendConfigMessage();
+      // }
     }
   }
   
@@ -145,6 +150,13 @@ export class AudioStreamingBridge {
       return Promise.resolve();
     }
     
+    logger.debug(LogCategory.AUDIO, `Processing audio chunk: ${audioData.length} samples, enabled: ${this.enabled}, connected: ${this.webSocketService.isConnected()}`);
+    
+    // Periodically check connection status (every ~10 chunks)
+    if (this.sequenceNumber % 10 === 0) {
+      await this.checkAndEnsureConnection();
+    }
+    
     // Add to buffer
     this.audioBuffer.push(audioData);
     this.accumulatedBytes += audioData.length * Float32Array.BYTES_PER_ELEMENT;
@@ -152,7 +164,8 @@ export class AudioStreamingBridge {
     logger.debug(LogCategory.AUDIO, `Added audio chunk to buffer`, {
       chunkSize: audioData.length,
       bufferSize: this.audioBuffer.length,
-      totalBytes: this.accumulatedBytes
+      totalBytes: this.accumulatedBytes,
+      isServiceConnected: this.webSocketService.isConnected()
     });
     
     // Start buffer timer if not already running
@@ -176,7 +189,7 @@ export class AudioStreamingBridge {
   /**
    * Flush the audio buffer and send to server
    */
-  flushBuffer(): void {
+  async flushBuffer(): Promise<void> {
     // Skip if buffer is empty
     if (this.audioBuffer.length === 0) {
       logger.debug(LogCategory.AUDIO, 'Buffer flush called but buffer is empty');
@@ -192,15 +205,25 @@ export class AudioStreamingBridge {
     // Combine all buffered chunks into a single Float32Array
     const combinedBuffer = combineAudioChunks(this.audioBuffer);
     
+    console.log(`[BRIDGE DEBUG] Flushing buffer with ${this.audioBuffer.length} chunks, combined into ${combinedBuffer.length} samples`);
+    
     logger.info(LogCategory.AUDIO, `Flushing audio buffer`, {
       chunks: this.audioBuffer.length,
       samples: combinedBuffer.length,
-      bytes: combinedBuffer.length * Float32Array.BYTES_PER_ELEMENT
+      bytes: combinedBuffer.length * Float32Array.BYTES_PER_ELEMENT,
+      isServiceConnected: this.webSocketService.isConnected()
     });
     
     // Clear buffer immediately to allow new data to be added
     this.audioBuffer = [];
     this.accumulatedBytes = 0;
+    
+    // Ensure connection before sending
+    const isConnected = await this.checkAndEnsureConnection();
+    if (!isConnected) {
+      logger.warn(LogCategory.WS, 'Cannot send audio: Failed to establish WebSocket connection');
+      return;
+    }
     
     // Send the combined buffer
     this.sendAudioData(combinedBuffer);
@@ -222,7 +245,11 @@ export class AudioStreamingBridge {
   private sendAudioData(audioData: Float32Array): void {
     if (!this.webSocketService.isConnected() || audioData.length === 0) {
       if (!this.webSocketService.isConnected()) {
-        logger.warn(LogCategory.WS, 'Cannot send audio data: WebSocket not connected');
+        logger.warn(LogCategory.WS, 'Cannot send audio data: WebSocket not connected', {
+          state: this.webSocketService.getState(),
+          enabled: this.enabled,
+          serviceId: this.serviceId
+        });
       } else {
         logger.warn(LogCategory.AUDIO, 'Cannot send audio data: Empty data');
       }
@@ -238,78 +265,59 @@ export class AudioStreamingBridge {
       sampleRate: this.currentSampleRate
     });
     
-    // Process the audio data
-    const { int16Data, metadata } = processAudioData(
-      audioData, 
-      this.currentSampleRate,
-      this.options.addSequenceNumber ? this.sequenceNumber : 0,
-      !!this.options.addTimestamp
-    );
-    
-    // Log data that's being sent
-    logger.debug(LogCategory.AUDIO, `Sending audio data`, {
-      format: metadata.format,
-      channels: metadata.channels,
-      sampleRate: metadata.sampleRate,
-      messageFormat: this.options.messageFormat,
-      bytes: int16Data.byteLength
-    });
-    
-    if (this.options.messageFormat === 'binary') {
-      // Send as binary message
-      const binaryMessage = createBinaryMessage(int16Data, metadata);
-      this.webSocketService.send(binaryMessage, 5, true)
-        .then(() => {
-          logger.debug(LogCategory.AUDIO, `Binary audio data sent`, { bytes: binaryMessage.byteLength });
-        })
-        .catch(error => {
-          logger.error(LogCategory.ERROR, 'Error sending binary audio data', error);
-        });
-    } else {
-      // Send as JSON message
-      const jsonMessage = createJsonMessage(int16Data, metadata, !!this.options.base64Encode);
-      this.webSocketService.send(jsonMessage, 5, true)
-        .then(() => {
-          logger.debug(LogCategory.AUDIO, `JSON audio data sent`, { bytes: jsonMessage.length });
-        })
-        .catch(error => {
-          logger.error(LogCategory.ERROR, 'Error sending JSON audio data', error);
-        });
-    }
-  }
-  
-  /**
-   * Send configuration message to server
-   */
-  private sendConfigMessage(): void {
-    // Skip if not connected
-    if (!this.webSocketService.isConnected()) {
-      logger.warn(LogCategory.WS, 'Cannot send config message: WebSocket not connected');
-      return;
-    }
-    
-    // Create config
-    const config: AudioConfig = {
-      sampleRate: this.currentSampleRate,
-      channels: 1,
-      format: 'int16',
-      messageFormat: this.options.messageFormat,
-      encoding: this.options.base64Encode ? 'base64' : 'json'
-    };
-    
-    logger.info(LogCategory.AUDIO, 'Sending config message', config);
-    
-    // Create and send config message
-    const configMessage = createConfigMessage(config);
-    
-    // Send with high priority
-    this.webSocketService.send(configMessage, 1, true)
-      .then(() => {
-        logger.debug(LogCategory.AUDIO, 'Config message sent successfully');
-      })
-      .catch(error => {
-        logger.error(LogCategory.ERROR, 'Error sending config message', error);
+    try {
+      // Process the audio data
+      const { int16Data, metadata } = processAudioData(
+        audioData, 
+        this.currentSampleRate,
+        this.options.addSequenceNumber ? this.sequenceNumber : 0,
+        !!this.options.addTimestamp
+      );
+      
+      // Log data that's being sent
+      logger.debug(LogCategory.AUDIO, `Audio data processed for sending`, {
+        format: metadata.format,
+        channels: metadata.channels,
+        sampleRate: metadata.sampleRate,
+        messageFormat: this.options.messageFormat,
+        bytes: int16Data.byteLength,
+        firstFewSamples: Array.from(new Int16Array(int16Data.slice(0, 10)))
       });
+      
+      if (this.options.messageFormat === 'binary') {
+        // Send as binary message
+        const binaryMessage = createBinaryMessage(int16Data, metadata);
+        logger.debug(LogCategory.AUDIO, `Created binary message with size ${binaryMessage.byteLength} bytes`);
+        
+        this.webSocketService.send(binaryMessage, 5, true)
+          .then(() => {
+            logger.debug(LogCategory.AUDIO, `Binary audio data sent successfully`, { 
+              bytes: binaryMessage.byteLength,
+              sequence: this.sequenceNumber
+            });
+          })
+          .catch(error => {
+            logger.error(LogCategory.ERROR, 'Error sending binary audio data', error);
+          });
+      } else {
+        // Send as JSON message
+        const jsonMessage = createJsonMessage(int16Data, metadata, !!this.options.base64Encode);
+        logger.debug(LogCategory.AUDIO, `Created JSON message with size ${jsonMessage.length} characters`);
+        
+        this.webSocketService.send(jsonMessage, 5, true)
+          .then(() => {
+            logger.debug(LogCategory.AUDIO, `JSON audio data sent successfully`, { 
+              bytes: jsonMessage.length,
+              sequence: this.sequenceNumber
+            });
+          })
+          .catch(error => {
+            logger.error(LogCategory.ERROR, 'Error sending JSON audio data', error);
+          });
+      }
+    } catch (error) {
+      logger.error(LogCategory.ERROR, 'Failed to prepare or send audio data', error);
+    }
   }
   
   /**
@@ -335,5 +343,69 @@ export class AudioStreamingBridge {
    */
   private generateServiceId(): string {
     return `audio-bridge-${Math.floor(Math.random() * 1000)}`;
+  }
+
+  /**
+   * Send configuration message to server
+   * Note: Currently not used as the server doesn't support config messages
+   * @private
+   */
+  private sendConfigMessage(): void {
+    // Implementation removed as server doesn't support config messages
+    logger.info(LogCategory.WS, 'Config messages not supported by current server');
+  }
+
+  /**
+   * Checks and ensures an active WebSocket connection
+   * @returns Promise that resolves when connection is verified
+   */
+  async checkAndEnsureConnection(): Promise<boolean> {
+    // If already connected, return true
+    if (this.webSocketService.isConnected()) {
+      logger.debug(LogCategory.WS, 'WebSocket connection verified');
+      return true;
+    }
+    
+    // Get current state
+    const state = this.webSocketService.getState();
+    
+    logger.info(LogCategory.WS, `WebSocket connection check: current state ${state}`);
+    
+    // If already connecting/reconnecting, wait a bit
+    if (state === 'connecting' || state === 'reconnecting') {
+      logger.info(LogCategory.WS, 'Connection in progress, waiting...');
+      
+      // Wait for connection to establish
+      return new Promise<boolean>((resolve) => {
+        const checkInterval = window.setInterval(() => {
+          if (this.webSocketService.isConnected()) {
+            clearInterval(checkInterval);
+            logger.info(LogCategory.WS, 'Connection established while waiting');
+            resolve(true);
+          }
+        }, 100);
+        
+        // Timeout after 5 seconds
+        window.setTimeout(() => {
+          clearInterval(checkInterval);
+          logger.warn(LogCategory.WS, 'Timed out waiting for connection');
+          resolve(false);
+        }, 5000);
+      });
+    }
+    
+    // Try to connect
+    try {
+      logger.info(LogCategory.WS, 'Attempting to establish connection');
+      await this.webSocketService.connect();
+      
+      // Server doesn't currently support config messages
+      // this.sendConfigMessage();
+      
+      return true;
+    } catch (error) {
+      logger.error(LogCategory.ERROR, 'Failed to establish connection', error);
+      return false;
+    }
   }
 } 

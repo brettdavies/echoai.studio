@@ -16,6 +16,10 @@ import { EventEmitter } from './core/EventEmitter';
 import { MessageQueue } from './core/MessageQueue';
 import { ConnectionManager } from './core/ConnectionManager';
 import { logger, LogCategory } from './WebSocketLogger';
+import { 
+  validateOutgoingAudioSchema, 
+  validateOutgoingTargetLanguageSchema
+} from './WebSocketSchemas';
 
 /**
  * WebSocketService handles all WebSocket communication with automatic
@@ -75,12 +79,51 @@ export class WebSocketService {
    * @returns Promise that resolves when sent or queued
    */
   send(data: string | ArrayBuffer | Blob, priority: number = 10, retry: boolean = true): Promise<void> {
-    // If circuit breaker is open, queue the message and return
+    // Log message details
+    const messageType = typeof data === 'string' ? 'string' : (data instanceof ArrayBuffer ? 'ArrayBuffer' : 'Blob');
+    const messageSize = typeof data === 'string' ? data.length : (data instanceof ArrayBuffer ? data.byteLength : data.size);
+    const messageStart = typeof data === 'string' ? data.substring(0, 50) + '...' : '[binary data]';
+    logger.debug(LogCategory.WS, `Attempting to send ${messageType} message: size=${messageSize}, connected=${this.isConnected()}, start=${messageStart}`);
+    
+    // Debug extra socket details
+    const socket = this.connectionManager.getSocket();
+    logger.debug(LogCategory.WS, `Socket details: exists=${!!socket}, readyState=${socket?.readyState}`);
+    
+    // Validate string messages (JSON format)
+    if (typeof data === 'string') {
+      try {
+        const message = JSON.parse(data);
+        
+        // Check message type and validate against schema
+        if (message.type === 'audio') {
+          if (!validateOutgoingAudioSchema(message)) {
+            logger.error(LogCategory.ERROR, `Invalid audio message format: message doesn't match schema`);
+            logger.debug(LogCategory.ERROR, `Message content: ${data}`);
+            return Promise.reject(new Error('Invalid audio message format: message doesn\'t match schema'));
+          }
+        } else if (message.type === 'target_language') {
+          if (!validateOutgoingTargetLanguageSchema(message)) {
+            logger.error(LogCategory.ERROR, `Invalid target language message format`);
+            return Promise.reject(new Error('Invalid target language message format'));
+          }
+        }
+      } catch (e) {
+        // Not JSON or validation failed
+        logger.warn(LogCategory.WS, `Message validation skipped: not a valid JSON message`);
+      }
+    }
+    
+    logger.debug(LogCategory.WS, `Sending message: type=${messageType}, size=${messageSize}, connected=${this.isConnected()}`);
+
+    // If not connected, queue the message and return
     if (!this.connectionManager.isConnected()) {
+      logger.debug(LogCategory.WS, `Not connected, queuing message (state: ${this.connectionManager.getState()})`);
       return new Promise<void>((resolve, reject) => {
         this.messageQueue.enqueue(data, priority, retry);
+        logger.debug(LogCategory.WS, `Message queued: connection state is ${this.connectionManager.getState()}`);
         
         if (this.connectionManager.getState() === ConnectionState.DISCONNECTED) {
+          logger.debug(LogCategory.WS, `Attempting to connect before sending`);
           this.connect().catch(reject);
         }
         
@@ -93,14 +136,36 @@ export class WebSocketService {
       try {
         const socket = this.connectionManager.getSocket();
         if (socket) {
-          socket.send(data);
+          logger.debug(LogCategory.WS, `Socket ready, sending message directly`);
+          
+          // Extra validation before sending
+          if (socket.readyState !== WebSocket.OPEN) {
+            logger.error(LogCategory.ERROR, `Socket is not in OPEN state, current state: ${socket.readyState}`);
+            throw new Error(`Socket is not in OPEN state (${socket.readyState})`);
+          }
+          
+          try {
+            socket.send(data);
+            logger.debug(LogCategory.WS, `Message sent successfully to server`);
+          } catch (sendError) {
+            logger.error(LogCategory.ERROR, `Direct socket.send() failed:`, sendError);
+            throw sendError;
+          }
+          
+          logger.debug(LogCategory.WS, `Message sent directly: size=${messageSize}`);
           resolve();
         } else {
-          throw new Error('WebSocket not available');
+          const error = new Error('WebSocket not available despite connected state');
+          logger.error(LogCategory.ERROR, `Error: ${error.message}`);
+          throw error;
         }
       } catch (error) {
+        logger.error(LogCategory.ERROR, `Error sending message:`, error);
+        logger.error(LogCategory.ERROR, `Error sending message: ${error instanceof Error ? error.message : String(error)}`);
         if (retry) {
+          logger.debug(LogCategory.WS, `Queuing message after send error`);
           this.messageQueue.enqueue(data, priority, retry);
+          logger.debug(LogCategory.WS, `Message queued after send error`);
           resolve();
         } else {
           reject(error);
@@ -141,6 +206,14 @@ export class WebSocketService {
    */
   isConnected(): boolean {
     return this.connectionManager.isConnected();
+  }
+  
+  /**
+   * Get the underlying WebSocket instance
+   * @returns The WebSocket instance or null if not connected
+   */
+  getSocket(): WebSocket | null {
+    return this.connectionManager.getSocket();
   }
   
   /**
@@ -323,5 +396,56 @@ export class WebSocketService {
         logger.error(LogCategory.ERROR, 'Error in global state change listener', error);
       }
     });
+  }
+
+  /**
+   * Check if the WebSocket connection is healthy and return diagnostics
+   * @returns An object with connection health information
+   */
+  getConnectionHealth(): {
+    connected: boolean;
+    state: ConnectionState;
+    socketState: number | null;
+    queueLength: number;
+    info: string;
+  } {
+    const connected = this.isConnected();
+    const state = this.connectionManager.getState();
+    const socket = this.connectionManager.getSocket();
+    const socketState = socket ? socket.readyState : null;
+    const queueLength = this.messageQueue.getLength();
+    
+    let info = connected ? 'Connection is healthy' : 'Connection is not established';
+    
+    if (state === ConnectionState.CONNECTING) {
+      info = 'Connection is being established';
+    } else if (state === ConnectionState.RECONNECTING) {
+      info = 'Attempting to reconnect';
+    } else if (state === ConnectionState.ERROR) {
+      info = 'Connection encountered an error';
+    } else if (state === ConnectionState.CLOSING) {
+      info = 'Connection is closing';
+    } else if (state !== ConnectionState.CONNECTED && socketState === WebSocket.OPEN) {
+      info = 'Inconsistent state: socket is open but connection state does not match';
+    }
+    
+    if (queueLength > 0) {
+      info += `, ${queueLength} messages in queue`;
+    }
+    
+    logger.info(LogCategory.WS, 'Connection health check', {
+      connected,
+      state,
+      socketState,
+      queueLength
+    });
+    
+    return {
+      connected,
+      state,
+      socketState,
+      queueLength,
+      info
+    };
   }
 } 

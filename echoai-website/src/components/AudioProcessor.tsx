@@ -7,6 +7,8 @@ import {
   StreamingAudioProcessor
 } from '../services/websocket';
 import { audioLogger, LogLevel } from '../utils/Logger';
+import { useWebSocket } from '../contexts/WebSocketContext';
+import { DEFAULT_WS_URL } from '../config';
 
 /**
  * Extended props interface with streaming support
@@ -42,7 +44,7 @@ const AudioProcessor = ({
   sourceNode,
   isPlaying,
   processingOptions = DEFAULT_PROCESSING_OPTIONS,
-  streamingUrl,
+  streamingUrl = DEFAULT_WS_URL,
   streamingEnabled = false,
   onStreamingStatusChange,
   loggerConfig,
@@ -58,6 +60,9 @@ const AudioProcessor = ({
   
   // Streaming state
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  
+  // Get the global WebSocket service
+  const { webSocketService, connect, isConnected } = useWebSocket();
   
   // Configure logger based on props
   useEffect(() => {
@@ -84,14 +89,26 @@ const AudioProcessor = ({
           // Check if streaming is enabled and URL is provided
           if (streamingUrl) {
             audioLogger.logProcessor(LogLevel.INFO, 'Streaming enabled, creating streaming processor', {
-              url: streamingUrl
+              url: streamingUrl,
+              usingGlobalWebSocket: !!webSocketService
             });
+            
+            // Ensure WebSocket is connected if specified
+            if (streamingUrl && !isConnected() && webSocketService) {
+              try {
+                audioLogger.logProcessor(LogLevel.INFO, 'Connecting to WebSocket server:', streamingUrl);
+                await connect(streamingUrl);
+              } catch (error) {
+                audioLogger.logProcessor(LogLevel.ERROR, 'Failed to connect to WebSocket server', error);
+              }
+            }
             
             // Create streaming processor
             const streamingProcessor = createAudioStreaming({
               serverUrl: streamingUrl,
               processingOptions,
-              loggerOptions: loggerConfig // Pass logger options to factory
+              loggerOptions: loggerConfig, // Pass logger options to factory
+              ...(webSocketService ? { webSocketService } : {}) // Only include if not null
             });
             
             // Store reference
@@ -183,17 +200,25 @@ const AudioProcessor = ({
       // Reset streaming processor
       streamingProcessorRef.current = null;
     };
-  }, [audioContext, mediaElement, sourceNode, processingOptions, streamingUrl, onStreamingStatusChange, streamingEnabled, loggerConfig]);
+  }, [audioContext, mediaElement, sourceNode, processingOptions, streamingUrl, onStreamingStatusChange, streamingEnabled, loggerConfig, webSocketService, connect, isConnected]);
   
   // Handle audio data callback
   const handleAudioData = async (audioData: Float32Array) => {
     if (!isPlayingRef.current || !systemRef.current) return;
+    
+    // Debug if we're receiving audio data
+    audioLogger.logProcessor(LogLevel.DEBUG, `Received audio chunk: ${audioData.length} samples, is playing: ${isPlayingRef.current}`);
     
     // Get the processor core using the getter method
     const processorCore = systemRef.current.getProcessorCore();
     if (processorCore) {
       processorCore.setOriginalSampleRate(audioContext.sampleRate);
       await processorCore.processAudioChunk(audioData);
+      
+      // Debug successful processing
+      audioLogger.logProcessor(LogLevel.DEBUG, `Processed audio chunk with sample rate ${audioContext.sampleRate}`);
+    } else {
+      audioLogger.logProcessor(LogLevel.WARN, `No processor core available to process audio`);
     }
   };
   

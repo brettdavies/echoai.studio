@@ -8,6 +8,7 @@ import './lib/i18n' // Import i18n configuration
 import { LogComponent, logger } from './utils/Logger'
 import { appLogger } from './utils/LoggerFactory'
 import { isDevelopmentMode } from './utils/environment'
+import { WebSocketProvider } from './contexts/WebSocketContext'
 // Disable RubberBand logs by default - users can enable via UI if needed
 logger.disableComponents(LogComponent.RESAMPLER)
 
@@ -20,11 +21,13 @@ if (isDevelopmentMode()) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        {isDevelopmentMode() && <Route path="/websockettest" element={<WebSocketTestPage />} />}
-      </Routes>
-    </BrowserRouter>
+    <WebSocketProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<App />} />
+          {isDevelopmentMode() && <Route path="/websockettest" element={<WebSocketTestPage />} />}
+        </Routes>
+      </BrowserRouter>
+    </WebSocketProvider>
   </StrictMode>,
 )

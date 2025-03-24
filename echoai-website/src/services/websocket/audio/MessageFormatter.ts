@@ -6,6 +6,7 @@
 
 import { AudioMetadata, AudioMessageType, AudioMessage, AudioConfig } from './types';
 import { arrayBufferToBase64, convertToInt16 } from './AudioUtils';
+import { OutgoingAudioMessageSchema, validateOutgoingAudioSchema } from '../WebSocketSchemas';
 
 /**
  * Creates a binary message containing audio data and metadata
@@ -50,7 +51,7 @@ export function createBinaryMessage(audioData: Int16Array, metadata: AudioMetada
  * @param base64Encode Whether to use base64 encoding
  * @returns JSON message as string
  */
-export function createJsonMessage(
+export function createFormattedJsonMessage(
   audioData: Int16Array, 
   metadata: AudioMetadata, 
   base64Encode: boolean
@@ -120,4 +121,37 @@ export function processAudioData(
   };
   
   return { int16Data, metadata };
+}
+
+/**
+ * Create a JSON message with audio data
+ * @param audioData The audio data as an ArrayBuffer
+ * @param metadata The audio metadata
+ * @param base64Encode Whether to base64 encode the data
+ * @returns A JSON string message
+ */
+export function createJsonMessage(
+  audioData: ArrayBuffer, 
+  metadata: AudioMetadata,
+  base64Encode: boolean
+): string {
+  // Create message following the required schema
+  const message: OutgoingAudioMessageSchema = {
+    type: "audio",
+    value: arrayBufferToBase64(audioData),
+    sampleRate: metadata.sampleRate
+  };
+  
+  // Validate schema to ensure compliance
+  if (!validateOutgoingAudioSchema(message)) {
+    console.error('[MESSAGE ERROR] Audio message does not match required schema!', message);
+  }
+  
+  console.log(`[MESSAGE DEBUG] Creating JSON message with base64 data, length: ${message.value.length} chars`);
+  
+  // Stringify the message
+  const jsonString = JSON.stringify(message);
+  console.log(`[MESSAGE DEBUG] Final JSON message size: ${jsonString.length} bytes`);
+  
+  return jsonString;
 } 

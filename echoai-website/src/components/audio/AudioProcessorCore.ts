@@ -58,6 +58,10 @@ export class AudioProcessorCore {
    * @param audioChunk The audio chunk to process
    */
   async processAudioChunk(audioChunk: Float32Array): Promise<void> {
+    // Debug - track original audio data
+    console.log(`[AUDIO DEBUG] Processing chunk with ${audioChunk.length} samples, first few values:`, 
+      Array.from(audioChunk.slice(0, 5)));
+    
     // Store original chunk
     this.originalChunks.push(audioChunk);
     
@@ -67,11 +71,17 @@ export class AudioProcessorCore {
         // Get the storage array for this processor
         const processedChunks = this.processedData.get(module.name) || [];
         
+        // Debug before processing
+        console.log(`[AUDIO DEBUG] Processing through module ${module.name}`);
+        
         // Process the chunk
         const processedChunk = await module.processChunk(
           audioChunk,
           this.originalSampleRate
         );
+        
+        // Debug after processing
+        console.log(`[AUDIO DEBUG] Module ${module.name} produced chunk with ${processedChunk.length} samples`);
         
         // Store the processed chunk
         processedChunks.push(processedChunk);

@@ -2,6 +2,7 @@ import { AudioProcessorCore } from '../../components/audio/AudioProcessorCore';
 import { ProcessingOptions } from '../../components/audio/types';
 import { AudioStreamingBridge } from './audio/AudioStreamingBridge';
 import { WebSocketService } from './WebSocketService';
+import { WebSocketManager } from './WebSocketManager';
 import { logger, LogCategory } from './WebSocketLogger';
 
 /**
@@ -18,11 +19,15 @@ export class StreamingAudioProcessor extends AudioProcessorCore {
    * Creates a new StreamingAudioProcessor
    * @param processingOptions Audio processing options
    * @param websocketUrl WebSocket server URL
+   * @param existingWebSocketService Optional existing WebSocketService instance
    */
   constructor(
     processingOptions: ProcessingOptions,
-    websocketUrl: string
+    websocketUrl: string,
+    existingWebSocketService?: WebSocketService
   ) {
+    console.log("[STREAMING DEBUG] StreamingAudioProcessor constructor called");
+    
     // Initialize the parent class with processing options
     super(processingOptions);
     
@@ -31,17 +36,25 @@ export class StreamingAudioProcessor extends AudioProcessorCore {
       this.targetSampleRate = processingOptions.targetSampleRate;
     }
     
-    // Create the WebSocket service
-    const webSocketService = new WebSocketService({
-      url: websocketUrl,
-      autoReconnect: true,
-      maxReconnectAttempts: 5
-    });
+    // Use existing WebSocketService or get one from the WebSocketManager
+    let webSocketService: WebSocketService;
+    if (existingWebSocketService) {
+      logger.info(LogCategory.WS, 'Using provided WebSocketService instance');
+      webSocketService = existingWebSocketService;
+    } else {
+      // Get service from WebSocketManager
+      logger.info(LogCategory.WS, 'Getting WebSocketService from WebSocketManager', { url: websocketUrl });
+      webSocketService = WebSocketManager.getInstance().getService(websocketUrl, {
+        autoReconnect: true,
+        maxReconnectAttempts: 5
+      });
+    }
     
     // Create the streaming bridge
     this.streamingBridge = new AudioStreamingBridge(webSocketService, {
-      messageFormat: 'binary',
-      maxBufferSize: this.targetSampleRate / 4 // Buffer about 1/4 second of audio
+      messageFormat: 'json',
+      maxBufferSize: this.targetSampleRate / 4,
+      base64Encode: true
     });
     
     // Initialize the streaming bridge with the target sample rate
@@ -53,26 +66,52 @@ export class StreamingAudioProcessor extends AudioProcessorCore {
    * @param audioChunk The audio chunk to process
    */
   async processAudioChunk(audioChunk: Float32Array): Promise<void> {
+    console.log(`[STREAMING DEBUG] StreamingAudioProcessor received chunk with ${audioChunk.length} samples`);
+    
     // Process with the parent class first
     await super.processAudioChunk(audioChunk);
     
     // Skip streaming if not enabled
     if (!this.streaming) {
+      logger.debug(LogCategory.AUDIO, `Streaming processor received chunk but streaming is disabled`);
       return;
     }
     
     try {
+      // Ensure the WebSocket connection is active
+      const isStreamingReady = this.streamingBridge.isEnabled();
+      if (!isStreamingReady) {
+        logger.info(LogCategory.WS, 'Enabling streaming bridge for audio processing');
+        this.streamingBridge.setEnabled(true);
+      }
+      
       // Get the processed audio from the RubberBand processor
       // This is the single touch point where we forward audio to the WebSocket
       const processedChunks = this.getProcessedChunks('rubberband');
       
+      logger.debug(LogCategory.AUDIO, `StreamingAudioProcessor: processed chunks available: ${processedChunks ? processedChunks.length : 0}`);
+      
+      let chunkToSend: Float32Array;
+      
       if (processedChunks && processedChunks.length > 0) {
         // Get the latest processed chunk
-        const latestChunk = processedChunks[processedChunks.length - 1];
+        chunkToSend = processedChunks[processedChunks.length - 1];
         
-        // Send the processed chunk to the streaming bridge
-        await this.streamingBridge.processAudioChunk(latestChunk);
+        console.log(`[STREAMING DEBUG] Got processed chunk for streaming, length: ${chunkToSend.length}, first values:`, 
+          Array.from(chunkToSend.slice(0, 5)));
+        
+        logger.debug(LogCategory.AUDIO, `StreamingAudioProcessor: forwarding processed chunk to bridge: ${chunkToSend.length} samples`);
+      } else {
+        console.log(`[STREAMING DEBUG] No processed chunks available, using original audio data`);
+        
+        // ALWAYS send audio data - use original if no processed chunks
+        chunkToSend = audioChunk;
+        
+        logger.debug(LogCategory.AUDIO, `StreamingAudioProcessor: forwarding original chunk to bridge: ${chunkToSend.length} samples`);
       }
+      
+      // Send audio data to the bridge
+      await this.streamingBridge.processAudioChunk(chunkToSend);
     } catch (error) {
       logger.error(LogCategory.ERROR, 'Error streaming audio data', error);
     }
@@ -80,11 +119,12 @@ export class StreamingAudioProcessor extends AudioProcessorCore {
   
   /**
    * Enable or disable streaming
-   * @param enable Whether to enable streaming
+   * @param enabled Whether to enable streaming
    */
-  setStreaming(enable: boolean): void {
-    this.streaming = enable;
-    this.streamingBridge.setEnabled(enable);
+  setStreaming(enabled: boolean): void {
+    console.log(`[STREAMING DEBUG] Setting streaming to ${enabled}`);
+    this.streaming = enabled;
+    this.streamingBridge.setEnabled(enabled);
   }
   
   /**
@@ -127,6 +167,16 @@ export class StreamingAudioProcessor extends AudioProcessorCore {
     // Access the private processedData map using a runtime property access
     // This is a workaround since the parent class doesn't expose this directly
     const processedData = (this as any).processedData as Map<string, Float32Array[]>;
-    return processedData.get(processorName) || null;
+    const chunks = processedData?.get(processorName) || null;
+    
+    console.log(`[STREAMING DEBUG] getProcessedChunks for '${processorName}': ${chunks ? 'found ' + chunks.length + ' chunks' : 'no chunks found'}`);
+    
+    // Debug available processor names if chunks not found
+    if (!chunks) {
+      console.log(`[STREAMING DEBUG] Available processors:`, 
+        Array.from(processedData?.keys() || []));
+    }
+    
+    return chunks;
   }
 } 

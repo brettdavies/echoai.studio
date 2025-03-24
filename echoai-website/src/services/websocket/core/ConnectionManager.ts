@@ -2,6 +2,7 @@ import { ConnectionState, WebSocketOptions } from './types';
 import { EventEmitter } from './EventEmitter';
 import { logger, LogCategory } from '../WebSocketLogger';
 import { WebSocketService } from '../WebSocketService';
+import { OutgoingHeartbeatMessageSchema, IncomingHeartbeatResponseSchema } from '../WebSocketSchemas';
 
 /**
  * Manages the WebSocket connection lifecycle
@@ -46,7 +47,23 @@ export class ConnectionManager {
    * @returns True if connected, false otherwise
    */
   isConnected(): boolean {
-    return this.state === ConnectionState.CONNECTED;
+    // Check both state and socket readyState to ensure true connection
+    const stateConnected = this.state === ConnectionState.CONNECTED;
+    const socketConnected = !!this.socket && this.socket.readyState === WebSocket.OPEN;
+    
+    // Log any inconsistency
+    if (stateConnected && !socketConnected) {
+      logger.warn(LogCategory.WS, `Connection state inconsistency detected: state=${this.state}, socket=${this.socket?.readyState}`);
+      
+      // Update state to match reality if needed
+      if (this.socket && this.socket.readyState !== WebSocket.CONNECTING) {
+        this.updateState(ConnectionState.ERROR);
+      }
+      
+      return false;
+    }
+    
+    return stateConnected && socketConnected;
   }
   
   /**
@@ -54,6 +71,22 @@ export class ConnectionManager {
    * @returns The WebSocket instance or null if not connected
    */
   getSocket(): WebSocket | null {
+    // Verify socket is still valid before returning
+    if (this.socket && this.socket.readyState !== WebSocket.OPEN) {
+      logger.warn(LogCategory.WS, `Socket requested but not in OPEN state: ${this.socket.readyState}`);
+      
+      // If closing/closed but state says connected, fix the inconsistency
+      if (this.state === ConnectionState.CONNECTED) {
+        logger.error(LogCategory.ERROR, `Socket state inconsistency detected: socket=${this.socket.readyState}, state=${this.state}`);
+        
+        // Force update state to match reality
+        this.updateState(ConnectionState.ERROR);
+        
+        // Return null to prevent using invalid socket
+        return null;
+      }
+    }
+    
     return this.socket;
   }
   
@@ -266,13 +299,42 @@ export class ConnectionManager {
    * @param event The message event
    */
   private handleMessage(event: MessageEvent): void {
-    this.eventEmitter.emit('message', event);
-    
-    // If message is a heartbeat response, nothing more to do
-    if (typeof event.data === 'string' && event.data === 'pong') {
-      logger.debug(LogCategory.WS, 'Heartbeat response received');
-      return;
+    // First check if it's a heartbeat response
+    if (typeof event.data === 'string') {
+      try {
+        const message = JSON.parse(event.data);
+        if (message && message.type === 'heartbeat_response') {
+          // This is a heartbeat response
+          const heartbeatResponse = message as IncomingHeartbeatResponseSchema;
+          const latency = heartbeatResponse.client_timestamp ? 
+            (Date.now() - heartbeatResponse.client_timestamp) : 'unknown';
+            
+          logger.info(LogCategory.WS, 'Heartbeat response received', { 
+            latency,
+            serverTimestamp: heartbeatResponse.server_timestamp,
+            clientTimestamp: heartbeatResponse.client_timestamp,
+            connectionState: this.state,
+            socketState: this.socket?.readyState
+          });
+          
+          // Emit a heartbeat event that can be listened to for diagnostics
+          this.eventEmitter.emit('heartbeat', new CustomEvent('heartbeat', {
+            detail: { 
+              latency, 
+              serverTimestamp: heartbeatResponse.server_timestamp,
+              clientTimestamp: heartbeatResponse.client_timestamp
+            }
+          }));
+          
+          return; // Don't forward heartbeat responses to application code
+        }
+      } catch (e) {
+        // Not JSON or not a heartbeat, continue normal processing
+      }
     }
+    
+    // Normal message handling
+    this.eventEmitter.emit('message', event);
   }
   
   /**
@@ -389,15 +451,29 @@ export class ConnectionManager {
       return;
     }
     
-    logger.debug(LogCategory.WS, `Starting heartbeat at ${this.options.heartbeatInterval}ms intervals`);
+    logger.info(LogCategory.WS, `Starting heartbeat mechanism at ${this.options.heartbeatInterval}ms intervals`);
     
     this.heartbeatInterval = window.setInterval(() => {
       if (this.socket && this.state === ConnectionState.CONNECTED) {
         try {
-          this.socket.send('ping');
-          logger.debug(LogCategory.WS, 'Heartbeat sent');
+          // Create a proper heartbeat message
+          const heartbeatMessage: OutgoingHeartbeatMessageSchema = {
+            type: "heartbeat",
+            timestamp: Date.now()
+          };
+          
+          const messageText = JSON.stringify(heartbeatMessage);
+          this.socket.send(messageText);
+          
+          logger.debug(LogCategory.WS, 'Heartbeat sent', { 
+            timestamp: heartbeatMessage.timestamp,
+            messageSize: messageText.length,
+            connectionState: this.state,
+            socketState: this.socket.readyState
+          });
         } catch (error) {
           logger.error(LogCategory.ERROR, 'Error sending heartbeat', error);
+          logger.info(LogCategory.WS, 'Connection appears to be broken, attempting to reconnect');
           this.cleanup();
           
           // Connection is likely dead, attempt to reconnect
@@ -406,6 +482,11 @@ export class ConnectionManager {
           }
         }
       } else {
+        logger.warn(LogCategory.WS, 'Heartbeat skipped - socket not ready', {
+          socketExists: !!this.socket,
+          connectionState: this.state,
+          socketState: this.socket ? this.socket.readyState : 'null'
+        });
         this.cleanup();
       }
     }, this.options.heartbeatInterval);

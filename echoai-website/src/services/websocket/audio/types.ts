@@ -46,6 +46,7 @@ export const DEFAULT_AUDIO_OPTIONS: AudioStreamingOptions = {
  * Message types for the streaming protocol
  */
 export enum AudioMessageType {
+  AUDIO = 'audio',
   AUDIO_DATA = 'audio_data',
   CONFIG = 'config',
   CONTROL = 'control',
@@ -73,11 +74,19 @@ export type StatusChangeCallback = (status: boolean, message?: string) => void;
  * Audio message format for JSON serialization
  */
 export interface AudioMessage {
-  type: AudioMessageType;
+  type: AudioMessageType | string; // Allow string type for 'audio'
   metadata?: AudioMetadata;
-  data?: string;
+  data?: string | number[]; // Allow array of numbers
   encoding?: 'base64' | 'json';
   config?: AudioConfig;
+  
+  // Direct fields for simpler format
+  format?: string;
+  channels?: number;
+  sampleRate?: number;
+  timestamp?: number;
+  sequenceNumber?: number;
+  value?: string; // For base64 encoded audio data
 }
 
 /**

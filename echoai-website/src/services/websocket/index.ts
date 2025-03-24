@@ -10,14 +10,32 @@ import {
   AudioLogger
 } from '../../utils/Logger';
 
+// Import the logger and audioLogger from WebSocketLogger
+import { logger, audioLogger, WebSocketLogger } from './WebSocketLogger';
+
 // Export all classes
 export { WebSocketService } from './WebSocketService';
-export { ConnectionState, type WebSocketOptions } from './core/types';
+export { WebSocketManager } from './WebSocketManager';
 export { StreamingAudioProcessor } from './StreamingAudioProcessor';
-export { logger, audioLogger, WebSocketLogger, LogLevel, LogCategory } from './WebSocketLogger';
+export { AudioStreamingBridge } from './audio/AudioStreamingBridge';
+
+// Export types
+export { 
+  ConnectionState, 
+  DEFAULT_OPTIONS
+} from './core/types';
+
+export type { 
+  WebSocketOptions, 
+  WebSocketEventType,
+  WebSocketEventHandler,
+  QueuedMessage
+} from './core/types';
+
+// Export loggers
+export { logger, audioLogger, WebSocketLogger, LogLevel, LogCategory };
 
 // Export audio streaming module - explicit exports to avoid module resolution issues
-export { AudioStreamingBridge } from './audio/AudioStreamingBridge';
 export { DEFAULT_AUDIO_OPTIONS, AudioMessageType } from './audio/types';
 export type { 
   AudioStreamingOptions,
@@ -44,8 +62,12 @@ import { ProcessingOptions } from '../../components/audio/types';
 
 // Import classes for the factory function
 import { WebSocketService } from './WebSocketService';
+import { WebSocketManager } from './WebSocketManager';
 import { AudioStreamingBridge } from './audio/AudioStreamingBridge';
 import { StreamingAudioProcessor } from './StreamingAudioProcessor';
+
+// Export schemas for external use
+export * from './WebSocketSchemas';
 
 /**
  * Configuration for creating a streaming audio implementation
@@ -74,6 +96,9 @@ export interface AudioStreamingConfig {
     enableWorklet?: boolean;
     enableProcessor?: boolean;
   };
+  
+  // Existing WebSocketService instance
+  webSocketService?: WebSocketService;
 }
 
 /**
@@ -82,7 +107,14 @@ export interface AudioStreamingConfig {
  * @returns A configured StreamingAudioProcessor instance
  */
 export function createAudioStreaming(config: AudioStreamingConfig): StreamingAudioProcessor {
-  const { serverUrl, processingOptions = {}, debug = false, loggerOptions } = config;
+  const { 
+    serverUrl, 
+    processingOptions = {}, 
+    debug = false, 
+    loggerOptions,
+    webSocketService: explicitService, // Renamed for clarity
+    webSocketOptions = {}
+  } = config;
   
   // Enable debugging if requested
   if (debug) {
@@ -101,10 +133,20 @@ export function createAudioStreaming(config: AudioStreamingConfig): StreamingAud
     audioLogger.configure(loggerOptions);
   }
   
+  // Get WebSocketService from the WebSocketManager or use the explicit one if provided
+  const webSocketService = explicitService || 
+    WebSocketManager.getInstance().getService(serverUrl, webSocketOptions);
+  
+  logger.info(LogCategory.WS, 'Creating StreamingAudioProcessor', {
+    usingSharedConnection: !explicitService,
+    serverUrl
+  });
+  
   // Create the streaming processor
   const streamingProcessor = new StreamingAudioProcessor(
     processingOptions,
-    serverUrl
+    serverUrl,
+    webSocketService
   );
   
   // Enable streaming by default
@@ -133,8 +175,8 @@ export async function sendAudioToServer(
     dataSize: audioData.length
   });
 
-  // Create a one-time use WebSocket service
-  const webSocketService = new WebSocketService({ url: serverUrl });
+  // Get the WebSocketService from the WebSocketManager singleton
+  const webSocketService = WebSocketManager.getInstance().getService(serverUrl);
   
   // Create a one-time use streaming bridge
   const streamingBridge = new AudioStreamingBridge(webSocketService);
@@ -146,24 +188,26 @@ export async function sendAudioToServer(
   streamingBridge.setEnabled(true);
   
   try {
+    // Make sure we're connected before processing
+    if (!webSocketService.isConnected()) {
+      await webSocketService.connect();
+    }
+    
     // Process the audio chunk
     await streamingBridge.processAudioChunk(audioData);
     
     // Flush the buffer to ensure data is sent
     streamingBridge.flushBuffer();
     
-    // Wait a short time for the data to be sent
+    // Wait a short time for the data to be sent but don't disconnect
     await new Promise((resolve) => {
       setTimeout(() => {
-        // Clean up
-        webSocketService.disconnect();
         logger.info(LogCategory.WS, 'One-time transmission complete');
         resolve(undefined);
       }, 500);
     });
   } catch (error) {
     logger.error(LogCategory.ERROR, 'Error in one-time audio transmission', error);
-    webSocketService.disconnect();
     throw error;
   }
 } 

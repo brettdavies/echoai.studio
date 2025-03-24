@@ -8,6 +8,7 @@ import { Volume2, VolumeX } from 'lucide-react';
 import DashAudioPlayerLogger from '../utils/DashAudioPlayerLogger';
 import AudioProcessor from './AudioProcessor';
 import { audioLoggers } from '../utils/LoggerFactory';
+import { LogLevel } from '../utils/Logger';
 /// <reference path="../types/dashjs.d.ts" />
 
 /**
@@ -772,39 +773,53 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
         className="hidden"
         playsInline
         onPlay={() => {
+          console.log("[PLAYER DEBUG] Video element started playing");
           setIsPlaying(true);
           if (onPlaybackStateChange) {
             onPlaybackStateChange(true);
           }
         }}
         onPause={() => {
+          console.log("[PLAYER DEBUG] Video element paused");
           setIsPlaying(false);
           if (onPlaybackStateChange) {
             onPlaybackStateChange(false);
           }
         }}
         onEnded={() => {
+          console.log("[PLAYER DEBUG] Video element playback ended");
           setIsPlaying(false);
           if (onPlaybackStateChange) {
             onPlaybackStateChange(false);
           }
         }}
         onError={(e) => {
+          console.log("[PLAYER DEBUG] Video element error", e);
           audioLoggers.dashPlayer.error('Video element error:', e);
           setError('Media playback error. Please try again.');
         }}
       />
       
       {/* Audio processor component */}
-      {audioContextRef.current && videoRef.current && sourceNodeRef.current && (
-        <AudioProcessor 
+      {showCanvas && audioContextRef.current && videoRef.current && sourceNodeRef.current && (
+        <AudioProcessor
           audioContext={audioContextRef.current}
           mediaElement={videoRef.current}
           sourceNode={sourceNodeRef.current}
           isPlaying={isPlaying}
+          processingOptions={{
+            resample: true,
+            targetSampleRate: 16000,
+            timeStretch: 1.0
+          }}
           streamingUrl={streamingUrl}
           streamingEnabled={streamingEnabled}
           onStreamingStatusChange={onStreamingStatusChange}
+          loggerConfig={{
+            level: LogLevel.DEBUG,
+            enableProcessor: true,
+            enableWasm: true
+          }}
         />
       )}
       

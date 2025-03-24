@@ -124,6 +124,8 @@ export class AudioProcessingSystem {
    * Starts audio processing
    */
   async startProcessing(): Promise<void> {
+    console.log("[SYSTEM DEBUG] AudioProcessingSystem.startProcessing called");
+    
     if (!this.sessionManager) {
       audioLoggers.processor.error('Cannot start processing: session manager not initialized');
       return;

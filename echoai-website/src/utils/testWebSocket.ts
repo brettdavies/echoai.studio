@@ -10,7 +10,8 @@ import {
   logger, 
   LogLevel, 
   LogCategory, 
-  ConnectionState 
+  ConnectionState,
+  createAudioMessage
 } from '../services/websocket';
 import { LogComponent } from './Logger';
 import { networkLoggers } from './LoggerFactory';
@@ -107,12 +108,14 @@ export async function testWebSocketSend(options: WebSocketTestOptions): Promise<
     // Connect first
     await ws.connect();
     
-    // Try to send a message
-    await ws.send(JSON.stringify({
+    // Send a proper test message
+    const testMessage = {
       type: 'test',
       timestamp: Date.now(),
       message: 'This is a test message'
-    }));
+    };
+    
+    await ws.send(JSON.stringify(testMessage));
     
     sendSuccess = true;
     logger.info(LogCategory.WS, 'Test message sent successfully');
@@ -160,6 +163,103 @@ export function debugWebSocketFailure(url: string): void {
   }
 }
 
+/**
+ * Tests sending a known working message to the server
+ * @param url The WebSocket URL to test
+ * @returns Promise with result
+ */
+export async function testExactServerMessage(url: string): Promise<{
+  success: boolean;
+  message: string;
+  details?: any;
+}> {
+  return new Promise((resolve) => {
+    try {
+      const socket = new WebSocket(url);
+      let testSuccessful = false;
+      let timeoutId: number | null = null;
+      
+      // Set timeout to force resolve
+      timeoutId = window.setTimeout(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.close();
+        }
+        resolve({
+          success: testSuccessful,
+          message: testSuccessful ? 'Test successful' : 'Test timed out without receiving response',
+          details: { testSuccessful }
+        });
+      }, 5000);
+      
+      socket.onopen = () => {
+        // Create a test message with the helper function to ensure correct format
+        const testMessage = createAudioMessage("AAAAAAAAAAAAAAAAAAAAAA==", 16000);
+        
+        // Send the message
+        socket.send(JSON.stringify(testMessage));
+        
+        // Log the send
+        networkLoggers.websocket.info('Test message sent to server:', testMessage);
+      };
+      
+      socket.onmessage = (event) => {
+        testSuccessful = true;
+        networkLoggers.websocket.info('Received server response to test message:', event.data);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        socket.close();
+        resolve({
+          success: true,
+          message: 'Server responded to test message',
+          details: { response: event.data }
+        });
+      };
+      
+      socket.onerror = (error) => {
+        networkLoggers.websocket.error('Error during server test:', error);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = null;
+        }
+        socket.close();
+        resolve({
+          success: false,
+          message: 'Error connecting to server',
+          details: { error }
+        });
+      };
+      
+      socket.onclose = (event) => {
+        if (!testSuccessful) {
+          networkLoggers.websocket.warn('Connection closed without receiving response:', event);
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+          }
+          resolve({
+            success: false,
+            message: 'Connection closed without receiving response',
+            details: { 
+              code: event.code,
+              reason: event.reason,
+              wasClean: event.wasClean
+            }
+          });
+        }
+      };
+    } catch (error) {
+      networkLoggers.websocket.error('Error creating test WebSocket:', error);
+      resolve({
+        success: false,
+        message: 'Error creating test connection',
+        details: { error }
+      });
+    }
+  });
+}
+
 // Add test utilities to window object for console debugging
 export function initializeGlobalTestUtilities(): void {
   (window as any).testWebSocketConnection = testWebSocketConnection;
@@ -185,6 +285,17 @@ export function initializeGlobalTestUtilities(): void {
 // Initialize if in browser environment
 if (typeof window !== 'undefined') {
   initializeGlobalTestUtilities();
+  
+  (window as any).testWebSocket = {
+    testConnection: testWebSocketConnection,
+    directTest: debugWebSocketFailure,
+    testExactMessage: testExactServerMessage
+  };
+  
+  networkLoggers.websocket.info('WebSocket Test Utilities available in window:');
+  networkLoggers.websocket.info('  - testWebSocket.testConnection({url: "wss://example.com/socket"})');
+  networkLoggers.websocket.info('  - testWebSocket.directTest("wss://example.com/socket")');
+  networkLoggers.websocket.info('  - testWebSocket.testExactMessage("wss://example.com/socket")');
 }
 
 // Default export object with all test utilities

@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  WebSocketService, 
   ConnectionState,
   LogLevel,
   LogCategory,
   logger
 } from '../../services/websocket';
 import { networkLoggers } from '../../utils/LoggerFactory';
-import { debugWebSocketFailure, testWebSocketConnection } from '../../utils/testWebSocket';
+import { 
+  debugWebSocketFailure, 
+  testWebSocketConnection,
+  testExactServerMessage 
+} from '../../utils/testWebSocket';
+import { useWebSocket } from '../../contexts/WebSocketContext';
+import { generateAudioTestMessage, generateAudioTestMessageString } from '../../utils/AudioTestUtils';
+import { 
+  validateOutgoingAudioSchema, 
+  createAudioMessage,
+  OutgoingAudioMessageSchema
+} from '../../services/websocket/WebSocketSchemas';
+import { DEFAULT_WS_URL } from '../../config';
 
 // Enhanced LogEntry interface with message type
 interface LogEntry {
@@ -23,25 +34,37 @@ interface WebSocketDebuggerProps {
   initialUrl?: string;
 }
 
-export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({ initialUrl = 'ws://localhost:8080' }) => {
+export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({ 
+  initialUrl = DEFAULT_WS_URL
+}) => {
   const [url, setUrl] = useState<string>(initialUrl);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.DISCONNECTED);
   const originalLogLevel = useRef<LogLevel>(LogLevel.INFO);
-  const webSocketServiceRef = useRef<WebSocketService | null>(null);
   const directSocketRef = useRef<WebSocket | null>(null);
-  const [testMessage, setTestMessage] = useState<string>(JSON.stringify({
-    type: "audio",
-    value: "UkVNT1ZFAA==", // Base64 encoded placeholder data
-    sample_rate: 16000
-  }, null, 2));
+  
+  // Create a test message using the helper function to ensure correct schema
+  const defaultMessage = createAudioMessage("UkVNT1ZFAA==", 16000);
+  const [testMessage, setTestMessage] = useState<string>(JSON.stringify(defaultMessage, null, 2));
+  
   const [lastStatusChange, setLastStatusChange] = useState<string>('');
   
+  // Get WebSocket from context
+  const { webSocketService, connectionState, connect, isConnected } = useWebSocket();
+  
   // Update status state with timestamp
-  const updateConnectionState = (state: ConnectionState) => {
-    setConnectionState(state);
+  const updateStatusChange = () => {
     setLastStatusChange(new Date().toLocaleTimeString());
   };
+
+  // Track connection state changes
+  useEffect(() => {
+    updateStatusChange();
+  }, [connectionState]);
+
+  // Monitor webSocketService changes
+  useEffect(() => {
+    networkLoggers.websocket.debug(`WebSocketService changed: ${!!webSocketService}`);
+  }, [webSocketService]);
 
   // Add a log entry
   const addLog = (message: string, isError: boolean = false, options?: { isMessage?: boolean; direction?: 'sent' | 'received'; data?: any }) => {
@@ -118,27 +141,19 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({ initialUrl
     };
   }, []);
 
-  // Add this effect to listen for state changes from all test methods
+  // Set initial URL when it changes from props
   useEffect(() => {
-    // Set up state change listener
-    const handleStateChange = (event: any) => {
-      if (event.detail && event.detail.newState) {
-        updateConnectionState(event.detail.newState);
-        
-        // Log the state change
-        const stateMessage = `Connection state changed to: ${event.detail.newState}`;
-        networkLoggers.websocket.info(stateMessage);
-      }
-    };
+    setUrl(initialUrl);
     
-    // Add the event listener to the global WebSocketService instance
-    WebSocketService.addGlobalStateChangeListener(handleStateChange);
+    // Reset connection status
+    networkLoggers.websocket.debug(`WebSocketDebugger: initialUrl changed to ${initialUrl}`);
+    updateStatusChange();
     
-    // Clean up the listener on unmount
-    return () => {
-      WebSocketService.removeGlobalStateChangeListener(handleStateChange);
-    };
-  }, []);
+    // Add log about current context connection state
+    const connectionInfo = `Current WebSocket context state: ${connectionState}, service available: ${!!webSocketService}`;
+    networkLoggers.websocket.debug(connectionInfo);
+    addLog(connectionInfo);
+  }, [initialUrl, connectionState, webSocketService]);
 
   // Modify runDirectTest to update connection state
   const runDirectTest = () => {
@@ -158,16 +173,16 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({ initialUrl
       directSocketRef.current = socket;
       
       socket.addEventListener('open', () => {
-        updateConnectionState(ConnectionState.CONNECTED);
+        updateStatusChange();
       });
       
       socket.addEventListener('error', () => {
-        updateConnectionState(ConnectionState.ERROR);
+        updateStatusChange();
       });
       
       socket.addEventListener('close', (event) => {
         // Ensure status is updated when the connection is closed
-        updateConnectionState(ConnectionState.DISCONNECTED);
+        updateStatusChange();
         directSocketRef.current = null;
         networkLoggers.websocket.info(`WebSocket connection closed: code=${event.code}, reason=${event.reason || 'No reason provided'}, wasClean=${event.wasClean}`);
       });
@@ -204,378 +219,246 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({ initialUrl
         }
       });
     } catch (error) {
-      updateConnectionState(ConnectionState.ERROR);
-    }
-  };
-
-  // Run test with WebSocketService
-  const runServiceTest = async () => {
-    networkLoggers.websocket.info(`Starting WebSocketService test to ${url}`);
-    
-    // Create a temporary service to track state directly
-    const service = new WebSocketService({
-      url,
-      autoReconnect: false,
-      maxReconnectAttempts: 2
-    });
-    
-    // Store service reference
-    webSocketServiceRef.current = service;
-    
-    // Set up direct state tracking
-    service.on('state_change', (event: any) => {
-      const customEvent = event as CustomEvent;
-      if (customEvent.detail?.newState) {
-        updateConnectionState(customEvent.detail.newState);
-      }
-    });
-    
-    // Set up message tracking
-    service.on('message', (event) => {
-      try {
-        // Cast event to MessageEvent to access data property
-        const messageEvent = event as MessageEvent;
-        // Try to parse message as JSON
-        let data;
-        let displayData;
-        if (typeof messageEvent.data === 'string') {
-          try {
-            data = JSON.parse(messageEvent.data);
-            displayData = JSON.stringify(data, null, 2);
-          } catch (e) {
-            displayData = messageEvent.data;
-            data = messageEvent.data;
-          }
-        } else if (messageEvent.data instanceof ArrayBuffer) {
-          displayData = `Binary data (${messageEvent.data.byteLength} bytes)`;
-          data = `<ArrayBuffer: ${messageEvent.data.byteLength} bytes>`;
-        } else if (messageEvent.data instanceof Blob) {
-          displayData = `Blob data (${messageEvent.data.size} bytes)`;
-          data = `<Blob: ${messageEvent.data.size} bytes>`;
-        } else {
-          displayData = "Unknown data format";
-          data = messageEvent.data;
-        }
-        
-        addLog(`Received message: ${displayData}`, false, { 
-          isMessage: true, 
-          direction: 'received',
-          data 
-        });
-      } catch (error) {
-        addLog(`Error handling received message: ${error instanceof Error ? error.message : String(error)}`, true);
-      }
-    });
-    
-    // Handle close events
-    service.on('close', (event) => {
-      // Make sure state is updated when connection is closed
-      updateConnectionState(ConnectionState.DISCONNECTED);
-      
-      // Log close details
-      const closeEvent = event as CloseEvent;
-      networkLoggers.websocket.info(`WebSocket connection closed: code=${closeEvent.code}, reason=${closeEvent.reason || 'No reason provided'}, wasClean=${closeEvent.wasClean}`);
-    });
-    
-    try {
-      // Try to connect
-      await service.connect();
-      
-      // Wait a moment
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Don't disconnect automatically - keep the connection open for testing
-    } catch (error) {
-      networkLoggers.websocket.error(`WebSocketService test failed: ${error instanceof Error ? error.message : String(error)}`);
-      service.disconnect();
-      webSocketServiceRef.current = null;
-    }
-  };
-
-  // Add a new test method using the static WebSocketService method
-  const runStaticTest = async () => {
-    networkLoggers.websocket.info(`Starting static WebSocketService test to ${url}`);
-    
-    // Set connecting state
-    updateConnectionState(ConnectionState.CONNECTING);
-    
-    try {
-      const result = await WebSocketService.testConnection(url);
-      
-      if (result.success) {
-        networkLoggers.websocket.info(`Static test SUCCESS: Connected to ${url}`, result.details);
-        updateConnectionState(ConnectionState.CONNECTED);
-        
-        // Set back to disconnected after a short delay
-        setTimeout(() => {
-          networkLoggers.websocket.info('Static test completed: marking connection as disconnected');
-          updateConnectionState(ConnectionState.DISCONNECTED);
-        }, 2000);
-      } else {
-        networkLoggers.websocket.error(`Static test FAILED: ${result.error}`, result.details);
-        updateConnectionState(ConnectionState.ERROR);
-        
-        // Set back to disconnected after a short delay
-        setTimeout(() => {
-          networkLoggers.websocket.info('Static test error state cleared: marking connection as disconnected');
-          updateConnectionState(ConnectionState.DISCONNECTED);
-        }, 2000);
-      }
-    } catch (error) {
-      networkLoggers.websocket.error(`Static test FAILED with exception: ${error instanceof Error ? error.message : String(error)}`);
-      updateConnectionState(ConnectionState.ERROR);
-      
-      // Set back to disconnected after a short delay
-      setTimeout(() => {
-        updateConnectionState(ConnectionState.DISCONNECTED);
-      }, 2000);
+      updateStatusChange();
     }
   };
   
-  // Send a test message using the current WebSocketService
+  // Run direct server test with a known-good message format
+  const runDirectServerTest = async () => {
+    addLog('Running direct server test with minimal message...');
+    networkLoggers.websocket.info(`Starting direct server test to ${url}`);
+    
+    const result = await testExactServerMessage(url);
+    
+    if (result.success) {
+      addLog(`Server test SUCCEEDED: ${result.message}`, false);
+    } else {
+      addLog(`Server test FAILED: ${result.message}`, true);
+    }
+    
+    networkLoggers.websocket.info('Direct server test completed:', result);
+  };
+  
+  // Run test with WebSocketService
+  const runServiceTest = async () => {
+    try {
+      networkLoggers.websocket.info(`Starting WebSocketService test to ${url}`);
+      
+      // Connect using the global context
+      await connect(url);
+      
+      addLog(`Connected to WebSocket server at ${url}`);
+      updateStatusChange();
+    } catch (error) {
+      addLog(`Error connecting to WebSocket server: ${error}`, true);
+    }
+  };
+
+  // Send test message through WebSocketService
   const sendTestMessage = async () => {
-    if (!webSocketServiceRef.current || !webSocketServiceRef.current.isConnected()) {
-      addLog('Cannot send message: No active WebSocket connection. Run Service Test first.', true);
+    // Add debug log to check webSocketService
+    networkLoggers.websocket.debug(`WebSocketDebugger.sendTestMessage: webSocketService=${!!webSocketService}, isConnected=${isConnected()}`);
+    
+    // Make sure we have a service
+    if (!webSocketService) {
+      addLog('No WebSocketService instance available. Run a connection test first.', true);
       return;
     }
     
+    // Parse and validate the message from the textarea
+    let messageToSend;
     try {
-      // Try to validate JSON
-      let messageData: string;
-      try {
-        const parsed = JSON.parse(testMessage);
-        messageData = JSON.stringify(parsed);
-      } catch (e) {
-        // If not valid JSON, send as plain text
-        messageData = testMessage;
+      // Parse the message from the textarea
+      const parsedMessage = JSON.parse(testMessage);
+      
+      // Validate the message against our schema
+      if (validateOutgoingAudioSchema(parsedMessage)) {
+        messageToSend = parsedMessage;
+        addLog('Message validated successfully against schema');
+      } else {
+        // If it's not valid, use the generator to create a valid one
+        addLog('Message does not match required schema. Using generated message instead.', true);
+        messageToSend = generateAudioTestMessage();
+        // Update textarea with the correct message
+        setTestMessage(JSON.stringify(messageToSend, null, 2));
+      }
+    } catch (parseError) {
+      addLog(`Error parsing message JSON: ${parseError}. Using generated message.`, true);
+      messageToSend = generateAudioTestMessage();
+      // Update textarea with the correct message
+      setTestMessage(JSON.stringify(messageToSend, null, 2));
+    }
+    
+    try {
+      addLog('Preparing to send message...');
+      networkLoggers.websocket.info('Sending test message in exact server-compatible format');
+            
+      // Ensure connection is established
+      if (!isConnected()) {
+        addLog('WebSocket not connected, attempting to connect...');
+        networkLoggers.websocket.info('WebSocket not connected, attempting to connect');
+        
+        try {
+          await connect(url);
+          addLog('Connection established successfully');
+          
+          // Wait a moment to ensure the connection is fully ready
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (connErr) {
+          addLog(`Failed to establish connection: ${connErr}`, true);
+          return;
+        }
       }
       
-      // Send the message
-      await webSocketServiceRef.current.send(messageData, 2, true);
-      addLog(`Sent message: ${messageData}`, false, { 
-        isMessage: true, 
+      // Extra check before sending
+      if (!isConnected()) {
+        addLog('Still not connected after connection attempt. Cannot send message.', true);
+        return;
+      }
+      
+      // Debug log right before sending
+      networkLoggers.websocket.debug(`About to send message, webSocketService=${!!webSocketService}, socket=${!!webSocketService?.getSocket()}`);
+      
+      // Stringify the message right before sending
+      const messageString = JSON.stringify(messageToSend);
+      
+      // Send the message with custom timeout to prevent hanging
+      addLog('Sending message now...');
+      const sendPromise = webSocketService.send(messageString);
+      
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Send operation timed out after 5 seconds')), 5000);
+      });
+      
+      await Promise.race([sendPromise, timeoutPromise]);
+      
+      // Log the sent message
+      addLog(`Message sent successfully: ${JSON.stringify(messageToSend, null, 2)}`, false, {
+        isMessage: true,
         direction: 'sent',
-        data: messageData
+        data: messageToSend
       });
     } catch (error) {
-      addLog(`Error sending message: ${error instanceof Error ? error.message : String(error)}`, true);
+      addLog(`Error sending message: ${error}`, true);
+      networkLoggers.websocket.error('Error in sendTestMessage:', error);
     }
   };
 
-  // Clear logs
-  const clearLogs = () => {
-    setLogs([]);
-    networkLoggers.websocket.info('Logs cleared');
-  };
-  
-  // Disconnect the current WebSocketService
-  const disconnect = () => {
-    let disconnected = false;
-    
-    // Close WebSocketService if active
-    if (webSocketServiceRef.current) {
-      webSocketServiceRef.current.disconnect();
-      webSocketServiceRef.current = null;
-      disconnected = true;
-      addLog('WebSocketService connection closed manually', false);
-    }
-    
-    // Close direct WebSocket if active
-    if (directSocketRef.current) {
-      directSocketRef.current.close();
-      directSocketRef.current = null;
-      disconnected = true;
-      addLog('Direct WebSocket connection closed manually', false);
-    }
-    
-    if (disconnected) {
-      updateConnectionState(ConnectionState.DISCONNECTED);
-    } else {
-      addLog('No active connections to disconnect', false);
-    }
-  };
-
-  // Generate a new audio data sample
+  // Generate a new random audio sample
   const generateAudioSample = () => {
-    // Create a small array of random PCM samples (16-bit integers between -32768 and 32767)
-    const sampleLength = 32;
-    const audioArray = new Int16Array(sampleLength);
+    // Use the shared utility function
+    const message = generateAudioTestMessage();
     
-    // Fill with random values
-    for (let i = 0; i < sampleLength; i++) {
-      audioArray[i] = Math.floor(Math.random() * 65536 - 32768);
-    }
+    // Log the exact format
+    networkLoggers.websocket.info('Generated test audio message with exact server-compatible format', message);
     
-    // Convert to base64
-    const buffer = audioArray.buffer;
-    const base64Data = btoa(
-      new Uint8Array(buffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-    
-    // Create a new message with the proper schema
-    const newMessage = {
-      type: 'audio',
-      value: base64Data,
-      sample_rate: 16000
-    };
-    
-    // Set as the new test message
-    setTestMessage(JSON.stringify(newMessage, null, 2));
-    addLog('Generated new base64-encoded audio sample (16kHz PCM)', false);
+    setTestMessage(JSON.stringify(message, null, 2));
   };
 
-  // Update URL when initialUrl prop changes
+  // Add handler for server responses
   useEffect(() => {
-    setUrl(initialUrl);
-  }, [initialUrl]);
+    if (webSocketService) {
+      const messageHandler = (event: Event) => {
+        const msgEvent = event as MessageEvent;
+        networkLoggers.websocket.info('Received server response:', { 
+          type: typeof msgEvent.data,
+          data: msgEvent.data
+        });
+      };
+      
+      webSocketService.on('message', messageHandler);
+      
+      return () => {
+        webSocketService.off('message', messageHandler);
+      };
+    }
+  }, [webSocketService]);
 
   return (
-    <section className="container mx-auto mt-6 mb-10">
-      <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-        <div className="bg-gray-700 px-4 py-3 border-b border-gray-600">
-          <h2 className="text-xl font-semibold text-white">WebSocket Debugger</h2>
+    <div className="bg-gray-800 rounded-lg shadow-lg p-4">
+      <h2 className="text-lg font-semibold text-white mb-4">WebSocket Debugger</h2>
+      
+      {/* Connection Status */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <div className={`w-3 h-3 rounded-full ${connectionState === 'connected' ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span className="text-white font-medium">Status: {connectionState}</span>
+          <span className="text-xs text-gray-400">(Last changed: {lastStatusChange})</span>
         </div>
-        
-        <div className="p-4">
-          {/* Connection form */}
-          <div className="mb-4 flex flex-wrap gap-2">
-            <input 
-              type="text" 
-              value={url} 
-              onChange={(e) => setUrl(e.target.value)}
-              className="flex-grow p-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="WebSocket URL (ws://audio-streaming.echoai.studio/stream)"
-            />
-            <div className="flex flex-wrap gap-2">
-              <button 
-                onClick={runDirectTest}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                title="Tests WebSocket connection using native browser WebSocket API directly, without any wrappers or service layers"
-              >
-                Direct Test
-              </button>
-              <button 
-                onClick={runServiceTest}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-                title="Tests WebSocket connection using our WebSocketService implementation with proper connection management"
-              >
-                Service Test
-              </button>
-              <button 
-                onClick={runStaticTest}
-                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-                title="Tests connection using WebSocketService.testConnection() static method with automatic cleanup"
-              >
-                Static Test
-              </button>
-              <button 
-                onClick={disconnect}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                title="Disconnect any active WebSocket connection"
-              >
-                Disconnect
-              </button>
-              <button 
-                onClick={clearLogs}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors"
-                title="Clear all log entries from the display"
-              >
-                Clear Logs
-              </button>
-            </div>
-          </div>
-          
-          {/* Test message input */}
-          <div className="mb-4 flex flex-wrap gap-2">
-            <textarea 
-              value={testMessage}
-              onChange={(e) => setTestMessage(e.target.value)}
-              className="flex-grow p-2 rounded bg-gray-700 border border-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter audio data message (JSON format)"
-              rows={3}
-            />
-            <div className="flex flex-col gap-2">
-              <button 
-                onClick={sendTestMessage}
-                disabled={!webSocketServiceRef.current || !webSocketServiceRef.current.isConnected()}
-                className={`px-4 py-2 text-white rounded transition-colors ${
-                  webSocketServiceRef.current && webSocketServiceRef.current.isConnected() 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-gray-500 cursor-not-allowed'
-                }`}
-                title="Send this message to the connected WebSocket server"
-              >
-                Send Message
-              </button>
-              <button 
-                onClick={generateAudioSample}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                title="Generate a new random audio sample"
-              >
-                Generate Sample
-              </button>
-            </div>
-          </div>
-          
-          {/* Status indicator */}
-          <div className="mb-4 flex items-center gap-2 text-white">
-            <div className={`w-3 h-3 rounded-full ${
-              connectionState === ConnectionState.CONNECTED ? 'bg-green-500 animate-pulse' :
-              connectionState === ConnectionState.CONNECTING ? 'bg-yellow-500 animate-pulse' :
-              connectionState === ConnectionState.RECONNECTING ? 'bg-yellow-500 animate-pulse' :
-              connectionState === ConnectionState.ERROR ? 'bg-red-500 animate-pulse' :
-              'bg-red-500'
-            }`}></div>
-            <span className="font-semibold">
-              Status: <span className={
-                connectionState === ConnectionState.CONNECTED ? 'text-green-400' : 
-                connectionState === ConnectionState.CONNECTING || connectionState === ConnectionState.RECONNECTING ? 'text-yellow-400' :
-                'text-red-400'
-              }>{connectionState}</span>
-              {lastStatusChange && (
-                <span className="ml-2 text-xs text-gray-400">
-                  (updated at {lastStatusChange})
-                </span>
-              )}
-            </span>
-          </div>
-          
-          {/* Log display */}
-          <div className="border border-gray-600 rounded bg-black text-white p-2 h-80 overflow-y-auto font-mono text-sm">
-            {logs.length === 0 ? (
-              <div className="text-gray-500 p-2">No logs yet. Run a test to see results.</div>
-            ) : (
-              logs.map((log, index) => (
-                <div 
-                  key={index} 
-                  className={`${
-                    log.isMessage 
-                      ? log.direction === 'sent' ? 'text-blue-400 bg-blue-900/20' : 'text-green-400 bg-green-900/20'
-                      : log.isError ? 'text-red-400' : 'text-gray-300'
-                  } mb-1 px-2 py-1 ${index % 2 === 0 ? 'bg-opacity-10 bg-white' : ''}`}
-                >
-                  <span className="text-gray-400">[{log.timestamp}]</span> {log.message}
-                  {log.isMessage && log.data && typeof log.data === 'object' && (
-                    <pre className="ml-4 mt-1 text-xs overflow-x-auto">
-                      {JSON.stringify(log.data, null, 2)}
-                    </pre>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-          
-          <div className="mt-4 text-sm text-gray-400">
-            <p>
-              <strong>Note:</strong> The WebSocket Debugger now shows WebSocket messages in different colors:
-              <span className="inline-block ml-2 px-2 bg-blue-900/20 text-blue-400">Sent messages</span>
-              <span className="inline-block ml-2 px-2 bg-green-900/20 text-green-400">Received messages</span>
-            </p>
-          </div>
+        <div className="text-xs text-gray-400 mt-1">
+          Using URL: <span className="text-blue-400 font-mono">{url}</span>
         </div>
       </div>
-    </section>
+      
+      {/* Remove the WebSocket URL input and keep only the Connection Controls */}
+      <div className="grid grid-cols-2 gap-2 mb-4">
+        <button 
+          onClick={runServiceTest}
+          className="p-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Connect Using Service
+        </button>
+        <button 
+          onClick={runDirectTest}
+          className="p-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+        >
+          Test Direct WebSocket
+        </button>
+      </div>
+
+      <button 
+        onClick={runDirectServerTest}
+        className="w-full p-2 mb-4 bg-green-600 text-white text-sm rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+      >
+        Test Server Message Handler
+      </button>
+      
+      {/* Message Testing */}
+      <div className="mb-4">
+        <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-1">
+          Test Message (JSON)
+        </label>
+        <textarea 
+          id="message"
+          value={testMessage}
+          onChange={(e) => setTestMessage(e.target.value)}
+          rows={6}
+          className="w-full p-2 rounded bg-gray-700 border border-gray-600 text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <div className="flex gap-2 mt-2">
+          <button 
+            onClick={sendTestMessage}
+            className="p-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+          >
+            Send Message
+          </button>
+          <button 
+            onClick={generateAudioSample}
+            className="p-2 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+          >
+            Generate Audio Sample
+          </button>
+        </div>
+      </div>
+      
+      {/* Log Display */}
+      <div>
+        <h3 className="text-sm font-medium text-gray-300 mb-1">WebSocket Logs</h3>
+        <div className="bg-gray-900 rounded border border-gray-700 h-64 overflow-y-auto p-2 font-mono text-xs">
+          {logs.map((log, index) => (
+            <div 
+              key={index} 
+              className={`mb-1 ${log.isError ? 'text-red-400' : log.isMessage ? (log.direction === 'sent' ? 'text-blue-400' : 'text-green-400') : 'text-gray-300'}`}
+            >
+              <span className="text-gray-500">[{log.timestamp}]</span> {log.message}
+            </div>
+          ))}
+          {logs.length === 0 && (
+            <div className="text-gray-500 italic">No logs yet. Try connecting to a WebSocket server.</div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
