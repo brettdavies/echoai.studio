@@ -36,7 +36,7 @@ h2, h3 {
 }
 
 strong {
-  @apply text-[hsl(var(--primary))] font-semibold;
+  @apply font-semibold underline;
 }
 
 .rounded-circle {
@@ -58,6 +58,38 @@ strong {
 .mermaid-diagram {
   @apply w-full overflow-visible flex justify-center;
 }
+
+.market-funnel {
+  @apply relative w-full flex items-center justify-center gap-4 mt-8;
+}
+
+.funnel-section {
+  @apply relative p-4 text-center text-white font-semibold rounded-lg transform transition-all duration-300;
+  height: 100px;
+}
+
+.tam {
+  @apply bg-[#4B0082];
+  width: 40%;
+}
+
+.sam {
+  @apply bg-[#0057B7];
+  width: 30%;
+}
+
+.som {
+  @apply bg-[#2b9348];
+  width: 20%;
+}
+
+.market-value {
+  @apply text-3xl font-bold mb-1;
+}
+
+.market-label {
+  @apply text-lg opacity-90;
+}
 </style>
 
 # echoAI
@@ -66,16 +98,16 @@ strong {
 
 <p>&nbsp;</p>
 
-<div class="grid-layout mt-4">
+<div class="grid-layout mt-4 text-xl">
 <div>
 <v-click>
 
 ## Problem
 
-- Live captioning has 15-20+ second delays
 - Fans miss critical moments
-- Accuracy suffers with domain terminology
-- ADA requirements unmet
+- Live captioning has 15-20+ second delay
+- Accuracy **-13pp** lower domain terminology
+- ADA / FCC regulations unmet
 
 </v-click>
 </div>
@@ -86,8 +118,8 @@ strong {
 ## Solution
 
 - **750ms latency** - 20x faster than industry
-- High accuracy at unprecedented speed
-- Native pro audio/video integration
+- Industry-leading accuracy
+- Native pro audio/video workflow integration
 - Extensible plugin architecture
 
 </v-click>
@@ -105,25 +137,26 @@ class: text-white
 
 # Market Validation
 
-<div class="mb-4">
-In just 2 weeks:
+<div class="mb-4 text-xl">
+In just 2 weeks:<br/><br/>
+Conversations with stakeholders representing 100s of millions of consumers:
 </div>
 
-<div class="grid gap-4">
+<div class="grid gap-4 text-xl">
 <div>
-  
-- **NBA**: Massive alignment, excited about partnership
 
-- **Twitch**: Exploring integration for creators
+- **NBA**: Translation in multi-languages
 
-- **Assist**: Pending partnership for livestreaming creators
+- **Twitch**: Zero-effort value add for creators
+
+- **Assist**: Zero-effort value add for viewers
 
 - **MLBAM**: Best-in-class sports tech (upcoming conversation)
 
 </div>
 </div>
 
-<div class="mt-4">
+<div class="mt-4 text-xl">
 Each conversation generates 2+ additional leads and investor introductions
 </div>
 
@@ -134,25 +167,38 @@ class: text-white
 
 # Market Opportunity
 
-<div class="grid-layout mt-8">
+<div class="market-funnel">
+  <div class="funnel-section tam">
+    <div class="market-value">$80B</div>
+    <div class="market-label">TAM</div>
+  </div>
+  <div class="funnel-section sam">
+    <div class="market-value">$30B</div>
+    <div class="market-label">SAM</div>
+  </div>
+  <div class="funnel-section som">
+    <div class="market-value">$10B</div>
+    <div class="market-label">SOM</div>
+  </div>
+</div>
+
+<div class="grid-layout mt-8 text-xl">
 <div>
 
-## Sports Entertainment
+## Media & Broadcasting
 
-- $X billion market
-- All major leagues seeking improved fan experience
-- Long tail of smaller leagues = massive market
-- First mover advantage in high-value segment
+- Live captioning & translation for global audiences
+- Enhanced viewer engagement & compliance
+- **\~$25B** market potential
 
 </div>
 <div>
 
-## Conferences & Events
+## Enterprise & Education
 
-- $Y billion market
-- Live captioning for accessibility compliance
-- Multilingual capabilities expand reach
-- ADA/FCC regulations increasingly enforced
+- Accessibility for multilingual teams & students
+- On-demand analysis & training content
+- **\~$5B** market potential
 
 </div>
 </div>
@@ -164,31 +210,29 @@ class: text-white
 
 # Technical Differentiation
 
-<div class="mb-4">
-High-frequency trading inspired architecture creates **defensible technical moat**
+<div class="mb-4 text-xl">
+AI-powered throughout the pipeline combined with AI-first team = <strong>insurmountable moat</strong>
 </div>
 
-<div class="grid-layout mb-10">
+<div class="grid-layout mb-10 text-xl">
 <div>
 
 - **Speed**: 750ms vs industry 15-20+ seconds
-- **Accuracy**: Context-aware AI for domain terms
-- **Redundancy**: Parallel processing with multiple providers
+- **Accuracy**: Context-aware for domain terms
+- **Redundancy**: Multiple providers
 - **Flexibility**: Dynamic plugins without restart
 
 </div>
 <div>
 
-- EOY target: 750ms for end-to-end captioning
-- Native integration with professional workflows
-- Technical barriers to entry create defensible moat
+- EOY target 750ms for e2e captioning
+- Native integration with pro workflows
+- Technical barriers create defensible moat
 - Legacy vendors can't adapt quickly enough
 
 </div>
 </div>
 
-<!-- @note PRACTICE REQUIRED 
-conenction betwen HFT and Transcription needs to be more clear -->
 <div class="mt-6">
 
 ```mermaid
@@ -211,26 +255,25 @@ graph LR
     VS2 --> FA[Frame Analysis]
 
     C --> PO[Production Output]
-    FA --> PO
+    FA --> C[Caption Processing]
 
     linkStyle default stroke-width:2px
-    linkStyle 1,4,8 stroke-width:2px,stroke-dasharray:10
+    linkStyle 1,3,4,8 stroke-width:2px,stroke-dasharray:10
 
-    style IS fill:#9b5de5,stroke:#333,color:white,stroke-width:2px
+    style IS fill:#4B0082,stroke:#333,color:white,stroke-width:2px
     style AS fill:#4B0082,stroke:#333,color:white,stroke-width:2px
     style VS2 fill:#4B0082,stroke:#333,color:white,stroke-width:2px
     style T1 fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style T2 fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style T3 fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style TE fill:#0057B7,stroke:#333,color:white,stroke-width:2px
-    style TL fill:#4B0082,stroke:#333,color:white,stroke-width:2px
+    style TL fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style C fill:#2b9348,stroke:#333,color:white,stroke-width:2px
-    style FA fill:#2b9348,stroke:#333,color:white,stroke-width:2px
+    style FA fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style PO fill:#d00000,stroke:#333,color:white,stroke-width:2px
 ```
 
 </div>
-
 
 ---
 layout: default
@@ -246,13 +289,13 @@ class: text-white
   <div class="flex gap-4">
     <img src="/images/headshot_brett.jpg" alt="Brett" class="rounded-circle w-24 h-24" />
     <div>
-      <h3 class="mb-1">Brett &mdash; Founder</h3>
-      <ul class="text-sm">
-        <li>Early Uber Operations leader (5+ years)</li>
-        <li>Built global driver systems from scratch</li>
-        <li>Senior roles at Lime, Cornershop, GoPuff</li>
-        <li>Co-founded Ukraine Defense Fund ($77M year 1)</li>
-        <li>Reliable logistics network - Activated & deployed Elon's donated Starlinks</li>
+      <h2 class="mb-1">Brett &mdash; Founder</h2>
+      <strong>brett@echoai.studio</strong>
+      <ul class="text-base">
+        <li>Early Uber leader (pre-uberX, 5 years)</li>
+        <li>Built global driver systems:<br/>Onboarding, Quality, Engagement</li>
+        <li>Senior at Lime, Cornershop, GoPuff</li>
+        <li>Co-founded Ukraine NP ($77M year 1)</li>
       </ul>
     </div>
   </div>
@@ -265,13 +308,13 @@ class: text-white
   <div class="flex gap-4">
     <img src="/images/headshot_will.jpg" alt="Will" class="rounded-circle w-24 h-24" />
     <div>
-      <h3 class="mb-1">Will &mdash; Founding Engineer</h3>
-      <ul class="text-sm">
-        <li>Rising engineering talent</li>
+      <h2 class="mb-1">Will &mdash; Founding Engineer</h2>
+      <strong>will@echoai.studio</strong>
+      <ul class="text-base">
         <li>Top performer at GauntletAI</li>
-        <li>Technical lead on parallel processing systems</li>
-        <li>Expertise in high-performance message buses</li>
         <li>Trajectory to become Top 1% engineer</li>
+        <li>Technical lead on parallel systems</li>
+        <li>Expertise in high-performance systems</li>
       </ul>
     </div>
   </div>
@@ -286,22 +329,24 @@ class: text-white
   <h3 class="mb-2">Strategic Advisors</h3>
   <div class="grid grid-cols-3 gap-2">
     <div>
-      <p class="font-bold text-sm mb-0">Jessica Doyle</p>
+      <p class="font-bold text-sm mb-0 text-xl">Jessica Doyle</p>
       <ul class="text-sm">
         <li>Digital Growth & Marketing Advisor</li>
         <li>Former VP NBA, Twitch, Cameo </li>
       </ul>
     </div>
     <div>
-      <p class="font-bold text-sm mb-0">Media strategy & M&A advisory</p>
+      <p class="font-bold text-sm mb-0 text-xl">Unannounced</p>
       <ul class="text-sm">
+        <li>Media strategy & M&A advisory</li>
         <li>VP TV & Streaming at NBCUniversal</li>
       </ul>
     </div>
     <div>
-      <p class="font-bold text-sm mb-0">Seasoned Live Event Executive</p>
+      <p class="font-bold text-sm mb-0 text-xl">Unannounced</p>
       <ul class="text-sm">
-        <li>Retired EVP at Pac-12, CBS, ABC (Disney/ESPN)</li>
+        <li>Seasoned Live Event Executive</li>
+        <li>Retired EVP at Pac-12, CBS, Disney, ESPN</li>
       </ul>
     </div>
   </div>
@@ -324,17 +369,19 @@ Raising seed round for minimal team expansion, marketing, customer acquisition
 ## Revenue Streams
 
 - Enterprise captioning & translation
-- Plugin marketplace licensing fees
-- Data analytics & insights platform
+- Licensing fees from plugin marketplace
+- Subscription-Based Analytics
+- Data brokering
 
 </div>
 <div>
 
 ## Unit Economics
 
-- UE positive from day 1
-- Near-negligible COGS
-- Higher margins than typical SaaS
+- UE positive from day one
+- Superior Gross Margins
+- Optimized Cost Structure
+- Scalable Cash Flow Engine
 
 </div>
 </div>
