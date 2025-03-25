@@ -1,19 +1,30 @@
 {
   "common": {
     "getStarted": "Get Started",
-    "siteTitle": "echoAI - Trusted AI Support Platform"
+    "siteTitle": "echoAI – Trusted AI Support Platform"
   },
   "navigation": {
     "home": "Home"
   },
   "heroSection": {
-    "title": "The complete platform for trusted AI support",
-    "description": "Real-time, low-latency, accurate transcription of live audio that unlocks unlimited applications to engage consumers with multi-modal interactions."
+    "title": "The Complete Platform for Real-Time AI-Driven Transcription",
+    "description": "Seamless, ultra-low-latency captioning and translation for live audio and video that unlocks new dimensions of accessibility, fan engagement, and data-driven insights."
   },
   "features": {
-    "feature1": {
-      "title": "Real-time Transcription",
-      "description": "Industry-leading sub-750ms latency from speech to text"
+    "title": "Real-Time Transcription",
+    "fasterThanAnyone": {
+      "title": "Faster Than Anyone Else",
+      "points": [
+        "Achieve end-to-end transcription in under 750ms, up to 20x faster than traditional solutions",
+        "Ensure fans never miss critical moments and keep audiences fully engaged"
+      ]
+    },
+    "industryLeading": {
+      "title": "Industry-Leading Accuracy",
+      "points": [
+        "Context-aware NLP automatically detects domain-specific terminology",
+        "Maintain high precision across diverse verticals – sports, events, media, enterprise, and beyond"
+      ]
     },
     "feature2": {
       "title": "Multi-modal Integration",
@@ -30,28 +41,31 @@
     "code": "// Initialize echoAI transcription\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'en-US',\n    latency: 'ultra-low',\n  }\n});\n\n// Start listening to audio stream\necho.listen(audioStream);\n\n// Real-time transcription events\necho.on('transcription', (result) => {\n  console.log('Live transcription:', result.text);\n});"
   },
   "metrics": {
-    "title": "Next-gen quality and efficiency",
+    "title": "Next-Gen Quality and Efficiency",
+    "subtitle": "Enterprise-Grade Performance",
     "description": "Our platform delivers unmatched accuracy, reliability, and performance with ultra-low latency that enhances real-time applications.",
     "metric1": {
-      "value": "89%",
+      "value": "94%",
       "label": "Transcription Accuracy"
     },
     "metric2": {
-      "value": "24/7",
-      "label": "Availability"
+      "value": "99%",
+      "label": "Time Saved"
     },
     "metric3": {
-      "value": ">4.4 CSAT",
-      "label": "Customer Satisfaction"
-    },
-    "metric4": {
-      "value": "50%+",
-      "label": "Time Saved"
+      "value": "24/7",
+      "label": "Availability"
     }
   },
   "workflow": {
-    "title": "Rethink work with the best AI workflow canvas",
-    "description": "Our flexible system enables seamless integration with your existing workflows, making it easy to build custom applications."
+    "title": "The AI Workflow Canvas",
+    "subtitle": "Rethink Work with an API-First Approach",
+    "description": "Our flexible pipeline connects input streams, audio and video, to advanced modules such as transcription, translation, and frame analysis.",
+    "points": [
+      "Customize each step – routing data through providers, enrichment layers, and plugin-defined endpoints",
+      "Spin up new capabilities – like keyword detection or specialized domain models – by simply installing a plugin",
+      "Swap or upgrade modules with zero downtime"
+    ]
   },
   "deployment": {
     "title": "Lightning fast deployment and results",
@@ -60,7 +74,7 @@
       "step1": {
         "title": "Setup",
         "features": [
-          "Quick installation via NPM or CDN",
+          "Painless integration",
           "Simple API key authentication",
           "Comprehensive documentation"
         ]
@@ -78,24 +92,24 @@
         "features": [
           "Pre-built integrations with popular platforms",
           "Custom webhook support",
-          "Open-source plugins and extensions"
+          "Open-source plugin templates"
         ]
       }
     }
   },
   "bestResults": {
     "title": "The best results happen when AI + human judgment come together",
-    "description": "Our platform enhances human capabilities rather than replacing them, creating a powerful synergy that delivers superior outcomes."
+    "description": "Our platform removes humans from the loop, allowing your teams to focus on what matters most."
   },
   "automateWork": {
-    "title": "Automate Work"
+    "title": "Automate Work, Elevate Engagement"
   },
   "countdown": {
     "days": "Days",
     "hours": "Hours",
     "minutes": "Minutes",
     "seconds": "Seconds",
-    "untilLaunch": "Until Launch - March 25th, 2025 at 9AM CT"
+    "untilLaunch": "Until Launch – April 2nd, 2025 at 9AM CT"
   },
   "audioPlayer": {
     "title": "Experience our voice technology",
@@ -123,5 +137,22 @@
     "captionProcessing": "Caption Processing",
     "frameAnalysis": "Frame Analysis",
     "productionOutput": "Production Output"
+  },
+  "multiModal": {
+    "title": "Multi-Modal Integration",
+    "beyondBasic": {
+      "title": "Beyond Basic Audio",
+      "points": [
+        "Effortlessly merge real-time video analysis, entity retrieval, and caption processing",
+        "Add overlays, triggers, or custom workflows with a simple API call"
+      ]
+    },
+    "pluginEcosystem": {
+      "title": "Plugin Ecosystem",
+      "points": [
+        "Extend core functionality with a growing library of plugins",
+        "Integrate seamlessly into pro audio/video workflows - no restarts needed"
+      ]
+    }
   }
 }

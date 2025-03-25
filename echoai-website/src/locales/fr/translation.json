@@ -1,66 +1,80 @@
 {
   "common": {
     "getStarted": "Commencer",
-    "siteTitle": "echoAI - Plateforme d'assistance IA de confiance"
+    "siteTitle": "echoAI – Plateforme de Support IA de Confiance"
   },
   "navigation": {
     "home": "Accueil"
   },
   "heroSection": {
-    "title": "La plateforme complète pour une assistance IA de confiance",
-    "description": "Transcription précise en temps réel de l'audio en direct à faible latence qui ouvre des possibilités illimitées pour engager les consommateurs avec des interactions multimodales."
+    "title": "La Plateforme Complète pour la Transcription en Temps Réel Pilotée par l'IA",
+    "description": "Sous-titrage et traduction ultra-rapides et fluides pour l'audio et la vidéo en direct qui débloquent de nouvelles dimensions d'accessibilité, d'engagement des fans et d'insights basés sur les données."
   },
   "features": {
-    "feature1": {
-      "title": "Transcription en temps réel",
-      "description": "Latence de moins de 750 ms de la parole au texte, leader du secteur"
+    "title": "Transcription en Temps Réel",
+    "fasterThanAnyone": {
+      "title": "Plus Rapide que Quiconque",
+      "points": [
+        "Réalisez une transcription de bout en bout en moins de 750ms, jusqu'à 20 fois plus rapide que les solutions traditionnelles",
+        "Assurez-vous que les fans ne manquent jamais les moments critiques et maintenez l'audience pleinement engagée"
+      ]
+    },
+    "industryLeading": {
+      "title": "Précision Leader de l'Industrie",
+      "points": [
+        "Le NLP contextuel détecte automatiquement la terminologie spécifique au domaine",
+        "Maintient une haute précision à travers divers secteurs – sports, événements, médias, entreprise et au-delà"
+      ]
     },
     "feature2": {
-      "title": "Intégration multimodale",
-      "description": "Connectez facilement l'audio à des expériences interactives"
+      "title": "Intégration Multimodale",
+      "description": "Connectez l'audio à des expériences interactives en toute transparence"
     },
     "feature3": {
-      "title": "Écosystème de plugins",
+      "title": "Écosystème de Plugins",
       "description": "Étendez les fonctionnalités avec notre bibliothèque croissante de plugins"
     }
   },
   "codeExample": {
-    "title": "Assistance exceptionnellement rapide sur tous les canaux",
-    "description": "Découvrez une transcription ultra-rapide avec notre plateforme de pointe qui traite l'audio en temps réel.",
+    "title": "Support exceptionnellement rapide sur tous les canaux",
+    "description": "Expérimentez la transcription ultra-rapide avec notre plateforme de pointe qui traite l'audio en temps réel.",
     "code": "// Initialiser la transcription echoAI\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'fr-FR',\n    latency: 'ultra-low',\n  }\n});\n\n// Commencer à écouter le flux audio\necho.listen(audioStream);\n\n// Événements de transcription en temps réel\necho.on('transcription', (result) => {\n  console.log('Transcription en direct:', result.text);\n});"
   },
   "metrics": {
-    "title": "Qualité et efficacité de nouvelle génération",
+    "title": "Qualité et Efficacité de Nouvelle Génération",
+    "subtitle": "Performance de Niveau Entreprise",
     "description": "Notre plateforme offre une précision, une fiabilité et des performances inégalées avec une latence ultra-faible qui améliore les applications en temps réel.",
     "metric1": {
-      "value": "89%",
-      "label": "Précision de transcription"
+      "value": "94%",
+      "label": "Précision de Transcription"
     },
     "metric2": {
-      "value": "24/7",
-      "label": "Disponibilité"
+      "value": "99%",
+      "label": "Temps Économisé"
     },
     "metric3": {
-      "value": ">4.4 CSAT",
-      "label": "Satisfaction client"
-    },
-    "metric4": {
-      "value": "50%+",
-      "label": "Temps économisé"
+      "value": "24/7",
+      "label": "Disponibilité"
     }
   },
   "workflow": {
-    "title": "Repensez le travail avec le meilleur canevas de flux de travail IA",
-    "description": "Notre système flexible permet une intégration transparente avec vos flux de travail existants, facilitant la création d'applications personnalisées."
+    "title": "Le Canevas de Flux de Travail IA",
+    "subtitle": "Repenser le Travail avec une Approche API-First",
+    "description": "Notre pipeline flexible connecte les flux d'entrée, audio et vidéo, à des modules avancés tels que la transcription, la traduction et l'analyse d'images.",
+    "points": [
+      "Personnalisez chaque étape – routage des données à travers les fournisseurs, les couches d'enrichissement et les points de terminaison définis par les plugins",
+      "Activez de nouvelles capacités – comme la détection de mots-clés ou les modèles de domaine spécialisés – simplement en installant un plugin",
+      "Échangez ou mettez à niveau les modules sans temps d'arrêt"
+    ]
   },
   "deployment": {
     "title": "Déploiement et résultats ultra-rapides",
-    "description": "Soyez opérationnel en quelques minutes, pas en semaines. Notre plateforme est conçue pour une intégration facile et une valeur immédiate.",
+    "description": "Démarrez en minutes, pas en semaines. Notre plateforme est conçue pour une intégration transparente et une valeur immédiate.",
     "steps": {
       "step1": {
         "title": "Configuration",
         "features": [
-          "Installation rapide via NPM ou CDN",
+          "Intégration sans effort",
           "Authentification simple par clé API",
           "Documentation complète"
         ]
@@ -70,41 +84,41 @@
         "features": [
           "APIs RESTful et WebSocket",
           "Traitement en streaming et par lots",
-          "SDKs disponibles sur plusieurs plateformes"
+          "SDKs multiplateforme disponibles"
         ]
       },
       "step3": {
         "title": "Intégration",
         "features": [
-          "Intégrations prédéfinies avec des plateformes populaires",
+          "Intégrations préconstruites avec les plateformes populaires",
           "Support de webhooks personnalisés",
-          "Plugins et extensions open-source"
+          "Modèles de plugins open source"
         ]
       }
     }
   },
   "bestResults": {
-    "title": "Les meilleurs résultats se produisent quand l'IA et le jugement humain travaillent ensemble",
-    "description": "Notre plateforme améliore les capacités humaines plutôt que de les remplacer, créant une synergie puissante qui offre des résultats supérieurs."
+    "title": "Les meilleurs résultats surviennent quand l'IA et le jugement humain s'unissent",
+    "description": "Notre plateforme retire les humains de la boucle, permettant à vos équipes de se concentrer sur ce qui compte le plus."
   },
   "automateWork": {
-    "title": "Automatiser le travail"
+    "title": "Automatisez le Travail, Élevez l'Engagement"
   },
   "countdown": {
     "days": "Jours",
     "hours": "Heures",
     "minutes": "Minutes",
     "seconds": "Secondes",
-    "untilLaunch": "Jusqu'au lancement - 25 mars 2025 à 12h CT"
+    "untilLaunch": "Jusqu'au Lancement – 2 avril 2025 à 9h CT"
   },
   "audioPlayer": {
-    "title": "",
-    "play": "",
-    "pause": "",
-    "volume": "",
-    "loading": "",
-    "live": "",
-    "streaming": ""
+    "title": "Expérimentez notre technologie vocale",
+    "play": "Lecture",
+    "pause": "Pause",
+    "volume": "Vol",
+    "loading": "Chargement audio...",
+    "live": "EN DIRECT",
+    "streaming": "BBC World Service En Direct"
   },
   "footer": {
     "brandName": "echoAI",
@@ -120,8 +134,25 @@
     "providerC": "Fournisseur C",
     "transcriptEnrichment": "Enrichissement de Transcription",
     "translation": "Traduction",
-    "captionProcessing": "Traitement de Sous-titres",
+    "captionProcessing": "Traitement des Sous-titres",
     "frameAnalysis": "Analyse d'Images",
     "productionOutput": "Sortie de Production"
+  },
+  "multiModal": {
+    "title": "Intégration Multimodale",
+    "beyondBasic": {
+      "title": "Au-delà de l'Audio Basique",
+      "points": [
+        "Fusionnez sans effort l'analyse vidéo en temps réel, la récupération d'entités et le traitement des sous-titres",
+        "Ajoutez des superpositions, des déclencheurs ou des flux de travail personnalisés avec un simple appel API"
+      ]
+    },
+    "pluginEcosystem": {
+      "title": "Écosystème de Plugins",
+      "points": [
+        "Étendez les fonctionnalités de base avec une bibliothèque croissante de plugins",
+        "Intégrez-vous parfaitement dans les flux de travail audio/vidéo professionnels - sans redémarrage nécessaire"
+      ]
+    }
   }
 }

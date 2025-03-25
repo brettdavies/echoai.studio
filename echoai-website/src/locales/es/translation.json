@@ -1,67 +1,81 @@
 {
   "common": {
     "getStarted": "Comenzar",
-    "siteTitle": "echoAI - Plataforma de Soporte IA Confiable"
+    "siteTitle": "echoAI – Plataforma de Soporte de IA Confiable"
   },
   "navigation": {
     "home": "Inicio"
   },
   "heroSection": {
-    "title": "La plataforma completa para soporte de IA confiable",
-    "description": "Transcripción precisa, en tiempo real y de baja latencia de audio en vivo que desbloquea aplicaciones ilimitadas para interactuar con los consumidores mediante interacciones multimodales."
+    "title": "La Plataforma Completa para Transcripción Impulsada por IA en Tiempo Real",
+    "description": "Subtitulado y traducción ultrarrápidos y fluidos para audio y video en vivo que desbloquean nuevas dimensiones de accesibilidad, participación de fans y conocimientos basados en datos."
   },
   "features": {
-    "feature1": {
-      "title": "Transcripción en tiempo real",
-      "description": "Latencia líder en la industria de menos de 750 ms del habla al texto"
+    "title": "Transcripción en Tiempo Real",
+    "fasterThanAnyone": {
+      "title": "Más Rápido que Cualquiera",
+      "points": [
+        "Logre transcripción de extremo a extremo en menos de 750ms, hasta 20 veces más rápido que las soluciones tradicionales",
+        "Asegure que los fans nunca se pierdan momentos críticos y mantenga a las audiencias completamente comprometidas"
+      ]
+    },
+    "industryLeading": {
+      "title": "Precisión Líder en la Industria",
+      "points": [
+        "NLP consciente del contexto detecta automáticamente terminología específica del dominio",
+        "Mantiene alta precisión en diversos sectores – deportes, eventos, medios, empresas y más"
+      ]
     },
     "feature2": {
-      "title": "Integración multimodal",
-      "description": "Conecte sin problemas el audio a experiencias interactivas"
+      "title": "Integración Multimodal",
+      "description": "Conecte audio a experiencias interactivas sin problemas"
     },
     "feature3": {
-      "title": "Ecosistema de plugins",
-      "description": "Amplíe la funcionalidad con nuestra creciente biblioteca de plugins"
+      "title": "Ecosistema de Plugins",
+      "description": "Extienda la funcionalidad con nuestra creciente biblioteca de plugins"
     }
   },
   "codeExample": {
     "title": "Soporte excepcionalmente rápido en todos los canales",
-    "description": "Experimente una transcripción ultrarrápida con nuestra plataforma de vanguardia que procesa audio en tiempo real.",
-    "code": "// Inicializar la transcripción de echoAI\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'es-ES',\n    latency: 'ultra-low',\n  }\n});\n\n// Empezar a escuchar el flujo de audio\necho.listen(audioStream);\n\n// Eventos de transcripción en tiempo real\necho.on('transcription', (result) => {\n  console.log('Transcripción en vivo:', result.text);\n});"
+    "description": "Experimente la transcripción ultrarrápida con nuestra plataforma de última generación que procesa audio en tiempo real.",
+    "code": "// Inicializar transcripción echoAI\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'es-ES',\n    latency: 'ultra-low',\n  }\n});\n\n// Comenzar a escuchar el stream de audio\necho.listen(audioStream);\n\n// Eventos de transcripción en tiempo real\necho.on('transcription', (result) => {\n  console.log('Transcripción en vivo:', result.text);\n});"
   },
   "metrics": {
-    "title": "Calidad y eficiencia de próxima generación",
-    "description": "Nuestra plataforma ofrece una precisión, fiabilidad y rendimiento inigualables con una latencia ultrabaja que mejora las aplicaciones en tiempo real.",
+    "title": "Calidad y Eficiencia de Próxima Generación",
+    "subtitle": "Rendimiento de Nivel Empresarial",
+    "description": "Nuestra plataforma ofrece precisión, confiabilidad y rendimiento inigualables con latencia ultrarrápida que mejora las aplicaciones en tiempo real.",
     "metric1": {
-      "value": "89%",
+      "value": "94%",
       "label": "Precisión de Transcripción"
     },
     "metric2": {
-      "value": "24/7",
-      "label": "Disponibilidad"
+      "value": "99%",
+      "label": "Tiempo Ahorrado"
     },
     "metric3": {
-      "value": ">4.4 CSAT",
-      "label": "Satisfacción del Cliente"
-    },
-    "metric4": {
-      "value": "50%+",
-      "label": "Tiempo Ahorrado"
+      "value": "24/7",
+      "label": "Disponibilidad"
     }
   },
   "workflow": {
-    "title": "Repiensa el trabajo con el mejor canvas de flujo de trabajo de IA",
-    "description": "Nuestro sistema flexible permite una integración perfecta con sus flujos de trabajo existentes, lo que facilita la creación de aplicaciones personalizadas."
+    "title": "El Lienzo de Flujo de Trabajo de IA",
+    "subtitle": "Repensar el Trabajo con un Enfoque API-First",
+    "description": "Nuestro pipeline flexible conecta streams de entrada, audio y video, a módulos avanzados como transcripción, traducción y análisis de frames.",
+    "points": [
+      "Personalice cada paso – enrutando datos a través de proveedores, capas de enriquecimiento y puntos de conexión definidos por plugins",
+      "Active nuevas capacidades – como detección de palabras clave o modelos de dominio especializados – simplemente instalando un plugin",
+      "Intercambie o actualice módulos sin tiempo de inactividad"
+    ]
   },
   "deployment": {
     "title": "Implementación y resultados ultrarrápidos",
-    "description": "Comience a funcionar en minutos, no en semanas. Nuestra plataforma está diseñada para una integración perfecta y un valor inmediato.",
+    "description": "Comience en minutos, no semanas. Nuestra plataforma está diseñada para una integración perfecta y valor inmediato.",
     "steps": {
       "step1": {
         "title": "Configuración",
         "features": [
-          "Instalación rápida mediante NPM o CDN",
-          "Autenticación simple con clave API",
+          "Integración sin problemas",
+          "Autenticación simple con API key",
           "Documentación completa"
         ]
       },
@@ -69,59 +83,76 @@
         "title": "API",
         "features": [
           "APIs RESTful y WebSocket",
-          "Procesamiento en streaming y por lotes",
-          "SDKs disponibles para múltiples plataformas"
+          "Procesamiento por streaming y por lotes",
+          "SDKs multiplataforma disponibles"
         ]
       },
       "step3": {
         "title": "Integración",
         "features": [
-          "Integraciones predefinidas con plataformas populares",
-          "Soporte de webhook personalizado",
-          "Plugins y extensiones de código abierto"
+          "Integraciones preconfiguradas con plataformas populares",
+          "Soporte para webhooks personalizados",
+          "Plantillas de plugins de código abierto"
         ]
       }
     }
   },
   "bestResults": {
     "title": "Los mejores resultados ocurren cuando la IA y el juicio humano se unen",
-    "description": "Nuestra plataforma mejora las capacidades humanas en lugar de reemplazarlas, creando una poderosa sinergia que ofrece resultados superiores."
+    "description": "Nuestra plataforma elimina a los humanos del ciclo, permitiendo que sus equipos se enfoquen en lo que más importa."
   },
   "automateWork": {
-    "title": "Automatizar el Trabajo"
+    "title": "Automatice el Trabajo, Eleve el Compromiso"
   },
   "countdown": {
     "days": "Días",
     "hours": "Horas",
     "minutes": "Minutos",
     "seconds": "Segundos",
-    "untilLaunch": "Hasta el lanzamiento - 25 de marzo de 2025 a las 12 PM CT"
+    "untilLaunch": "Hasta el Lanzamiento – 2 de abril de 2025 a las 9AM CT"
   },
   "audioPlayer": {
-    "title": "",
-    "play": "",
-    "pause": "",
-    "volume": "",
-    "loading": "",
-    "live": "",
-    "streaming": ""
+    "title": "Experimente nuestra tecnología de voz",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "volume": "Vol",
+    "loading": "Cargando audio...",
+    "live": "EN VIVO",
+    "streaming": "BBC World Service En Vivo"
   },
   "footer": {
     "brandName": "echoAI",
     "allRightsReserved": "Todos los derechos reservados."
   },
   "processingSteps": {
-    "title": "Pipeline de Procesamiento de Echo Core",
-    "inputStream": "Flujo de Entrada",
-    "audioStream": "Flujo de Audio",
-    "videoStream": "Flujo de Video",
+    "title": "Pipeline de Procesamiento Echo Core",
+    "inputStream": "Stream de Entrada",
+    "audioStream": "Stream de Audio",
+    "videoStream": "Stream de Video",
     "providerA": "Proveedor A",
     "providerB": "Proveedor B",
     "providerC": "Proveedor C",
     "transcriptEnrichment": "Enriquecimiento de Transcripción",
     "translation": "Traducción",
     "captionProcessing": "Procesamiento de Subtítulos",
-    "frameAnalysis": "Análisis de Fotogramas",
+    "frameAnalysis": "Análisis de Frames",
     "productionOutput": "Salida de Producción"
+  },
+  "multiModal": {
+    "title": "Integración Multimodal",
+    "beyondBasic": {
+      "title": "Más Allá del Audio Básico",
+      "points": [
+        "Combine sin esfuerzo análisis de video en tiempo real, recuperación de entidades y procesamiento de subtítulos",
+        "Agregue superposiciones, disparadores o flujos de trabajo personalizados con una simple llamada a la API"
+      ]
+    },
+    "pluginEcosystem": {
+      "title": "Ecosistema de Plugins",
+      "points": [
+        "Extienda la funcionalidad central con una biblioteca creciente de plugins",
+        "Intégrese perfectamente en flujos de trabajo de audio/video profesionales - sin necesidad de reinicios"
+      ]
+    }
   }
 }

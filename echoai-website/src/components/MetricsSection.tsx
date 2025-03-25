@@ -16,10 +16,6 @@ const MetricsSection = () => {
     {
       value: t('metrics.metric3.value'),
       label: t('metrics.metric3.label')
-    },
-    {
-      value: t('metrics.metric4.value'),
-      label: t('metrics.metric4.label')
     }
   ];
 
@@ -35,7 +31,7 @@ const MetricsSection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-14">
           {metrics.map((metric, index) => (
             <div key={index} className="text-center">
               <div className="text-3xl md:text-5xl font-bold text-white mb-2">{metric.value}</div>

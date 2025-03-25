@@ -1,23 +1,34 @@
 {
   "common": {
     "getStarted": "Loslegen",
-    "siteTitle": "echoAI - Vertrauenswürdige KI-Unterstützungsplattform"
+    "siteTitle": "echoAI – Vertrauenswürdige KI-Support-Plattform"
   },
   "navigation": {
     "home": "Startseite"
   },
   "heroSection": {
-    "title": "Die komplette Plattform für vertrauenswürdige KI-Unterstützung",
-    "description": "Präzise Echtzeit-Transkription von Live-Audio mit niedriger Latenz, die unbegrenzte Anwendungen zur Einbindung von Verbrauchern mit multimodalen Interaktionen freischaltet."
+    "title": "Die Komplette Plattform für KI-gesteuerte Echtzeit-Transkription",
+    "description": "Nahtlose, ultraschnelle Untertitelung und Übersetzung für Live Audio und Video, die neue Dimensionen der Zugänglichkeit, Fan-Engagement und datengesteuerte Erkenntnisse erschließt."
   },
   "features": {
-    "feature1": {
-      "title": "Echtzeit-Transkription",
-      "description": "Branchenführende Latenzzeit von unter 750 ms von Sprache zu Text"
+    "title": "Echtzeit-Transkription",
+    "fasterThanAnyone": {
+      "title": "Schneller als Alle Anderen",
+      "points": [
+        "Erreichen Sie End-to-End-Transkription in unter 750ms, bis zu 20-mal schneller als herkömmliche Lösungen",
+        "Stellen Sie sicher, dass Fans keine kritischen Momente verpassen und halten Sie das Publikum voll engagiert"
+      ]
+    },
+    "industryLeading": {
+      "title": "Branchenführende Genauigkeit",
+      "points": [
+        "Kontextbewusstes NLP erkennt automatisch domänenspezifische Terminologie",
+        "Behalten Sie hohe Präzision über verschiedene Bereiche hinweg – Sport, Events, Medien, Unternehmen und mehr"
+      ]
     },
     "feature2": {
       "title": "Multimodale Integration",
-      "description": "Nahtlose Verbindung von Audio mit interaktiven Erlebnissen"
+      "description": "Verbinden Sie Audio nahtlos mit interaktiven Erlebnissen"
     },
     "feature3": {
       "title": "Plugin-Ökosystem",
@@ -26,41 +37,44 @@
   },
   "codeExample": {
     "title": "Außergewöhnlich schneller Support auf allen Kanälen",
-    "description": "Erleben Sie blitzschnelle Transkription mit unserer hochmodernen Plattform, die Audio in Echtzeit verarbeitet.",
-    "code": "// echoAI-Transkription initialisieren\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'de-DE',\n    latency: 'ultra-low',\n  }\n});\n\n// Audio-Stream abhören\necho.listen(audioStream);\n\n// Echtzeit-Transkriptionsereignisse\necho.on('transcription', (result) => {\n  console.log('Live-Transkription:', result.text);\n});"
+    "description": "Erleben Sie ultraschnelle Transkription mit unserer hochmodernen Plattform, die Audio in Echtzeit verarbeitet.",
+    "code": "// echoAI Transkription initialisieren\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'de-DE',\n    latency: 'ultra-low',\n  }\n});\n\n// Audio-Stream abhören starten\necho.listen(audioStream);\n\n// Echtzeit-Transkriptionsereignisse\necho.on('transcription', (result) => {\n  console.log('Live-Transkription:', result.text);\n});"
   },
   "metrics": {
-    "title": "Next-Gen-Qualität und Effizienz",
-    "description": "Unsere Plattform bietet unerreichte Genauigkeit, Zuverlässigkeit und Leistung mit extrem niedriger Latenz, die Echtzeit-Anwendungen verbessert.",
+    "title": "Next-Gen Qualität und Effizienz",
+    "subtitle": "Enterprise-Grade Performance",
+    "description": "Unsere Plattform bietet unübertroffene Genauigkeit, Zuverlässigkeit und Leistung mit ultraniedriger Latenz, die Echtzeit-Anwendungen verbessert.",
     "metric1": {
-      "value": "89%",
+      "value": "94%",
       "label": "Transkriptionsgenauigkeit"
     },
     "metric2": {
-      "value": "24/7",
-      "label": "Verfügbarkeit"
+      "value": "99%",
+      "label": "Zeitersparnis"
     },
     "metric3": {
-      "value": ">4.4 CSAT",
-      "label": "Kundenzufriedenheit"
-    },
-    "metric4": {
-      "value": "50%+",
-      "label": "Zeitersparnis"
+      "value": "24/7",
+      "label": "Verfügbarkeit"
     }
   },
   "workflow": {
-    "title": "Arbeitsabläufe neu denken mit der besten KI-Workflow-Leinwand",
-    "description": "Unser flexibles System ermöglicht die nahtlose Integration in Ihre bestehenden Arbeitsabläufe und erleichtert die Erstellung benutzerdefinierter Anwendungen."
+    "title": "Die KI-Workflow-Leinwand",
+    "subtitle": "Arbeit Neu Denken mit API-First-Ansatz",
+    "description": "Unsere flexible Pipeline verbindet Eingabeströme, Audio und Video mit fortgeschrittenen Modulen wie Transkription, Übersetzung und Frame-Analyse.",
+    "points": [
+      "Passen Sie jeden Schritt an – Routing von Daten durch Provider, Anreicherungsschichten und Plugin-definierte Endpunkte",
+      "Aktivieren Sie neue Fähigkeiten – wie Schlüsselworterkennung oder spezialisierte Domänenmodelle – einfach durch Installation eines Plugins",
+      "Tauschen oder aktualisieren Sie Module ohne Ausfallzeiten"
+    ]
   },
   "deployment": {
     "title": "Blitzschnelle Bereitstellung und Ergebnisse",
     "description": "Starten Sie in Minuten, nicht in Wochen. Unsere Plattform ist für nahtlose Integration und sofortigen Mehrwert konzipiert.",
     "steps": {
       "step1": {
-        "title": "Einrichtung",
+        "title": "Setup",
         "features": [
-          "Schnelle Installation über NPM oder CDN",
+          "Mühelose Integration",
           "Einfache API-Schlüssel-Authentifizierung",
           "Umfassende Dokumentation"
         ]
@@ -68,7 +82,7 @@
       "step2": {
         "title": "API",
         "features": [
-          "RESTful- und WebSocket-APIs",
+          "RESTful und WebSocket APIs",
           "Streaming- und Batch-Verarbeitung",
           "Plattformübergreifende SDKs verfügbar"
         ]
@@ -78,50 +92,67 @@
         "features": [
           "Vorgefertigte Integrationen mit beliebten Plattformen",
           "Benutzerdefinierte Webhook-Unterstützung",
-          "Open-Source-Plugins und -Erweiterungen"
+          "Open-Source Plugin-Vorlagen"
         ]
       }
     }
   },
   "bestResults": {
     "title": "Die besten Ergebnisse entstehen, wenn KI und menschliches Urteilsvermögen zusammenkommen",
-    "description": "Unsere Plattform erweitert die menschlichen Fähigkeiten, anstatt sie zu ersetzen, und schafft eine starke Synergie, die überlegene Ergebnisse liefert."
+    "description": "Unsere Plattform entfernt Menschen aus der Schleife und ermöglicht es Ihren Teams, sich auf das Wesentliche zu konzentrieren."
   },
   "automateWork": {
-    "title": "Arbeit automatisieren"
+    "title": "Arbeit Automatisieren, Engagement Steigern"
   },
   "countdown": {
     "days": "Tage",
     "hours": "Stunden",
     "minutes": "Minuten",
     "seconds": "Sekunden",
-    "untilLaunch": "Bis zum Start - 25. März 2025 um 12 Uhr CT"
+    "untilLaunch": "Bis zum Launch – 2. April 2025 um 9 Uhr CT"
   },
   "audioPlayer": {
-    "title": "",
-    "play": "",
-    "pause": "",
-    "volume": "",
-    "loading": "",
-    "live": "",
-    "streaming": ""
+    "title": "Erleben Sie unsere Sprachtechnologie",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "volume": "Vol",
+    "loading": "Audio wird geladen...",
+    "live": "LIVE",
+    "streaming": "BBC World Service Live-Stream"
   },
   "footer": {
     "brandName": "echoAI",
     "allRightsReserved": "Alle Rechte vorbehalten."
   },
   "processingSteps": {
-    "title": "Echo Core Verarbeitungspipeline",
+    "title": "Echo Core Verarbeitungs-Pipeline",
     "inputStream": "Eingabestrom",
     "audioStream": "Audiostrom",
     "videoStream": "Videostrom",
     "providerA": "Anbieter A",
     "providerB": "Anbieter B",
     "providerC": "Anbieter C",
-    "transcriptEnrichment": "Transkriptanreicherung",
+    "transcriptEnrichment": "Transkript-Anreicherung",
     "translation": "Übersetzung",
-    "captionProcessing": "Untertitelverarbeitung",
-    "frameAnalysis": "Frameanalyse",
-    "productionOutput": "Produktionsausgabe"
+    "captionProcessing": "Untertitel-Verarbeitung",
+    "frameAnalysis": "Frame-Analyse",
+    "productionOutput": "Produktions-Output"
+  },
+  "multiModal": {
+    "title": "Multimodale Integration",
+    "beyondBasic": {
+      "title": "Über Basic Audio Hinaus",
+      "points": [
+        "Verschmelzen Sie mühelos Echtzeit-Videoanalyse, Entitätsabruf und Untertitelverarbeitung",
+        "Fügen Sie Overlays, Trigger oder benutzerdefinierte Workflows mit einem einfachen API-Aufruf hinzu"
+      ]
+    },
+    "pluginEcosystem": {
+      "title": "Plugin-Ökosystem",
+      "points": [
+        "Erweitern Sie die Kernfunktionalität mit einer wachsenden Plugin-Bibliothek",
+        "Integrieren Sie sich nahtlos in professionelle Audio/Video-Workflows - kein Neustart erforderlich"
+      ]
+    }
   }
 }

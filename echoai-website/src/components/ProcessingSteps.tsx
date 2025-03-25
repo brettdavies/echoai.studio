@@ -42,24 +42,24 @@ graph ${orientation}
     TL --> C
     
     VS2 --> FA[${t('processingSteps.frameAnalysis')}]
+    FA --> C
     
     C --> PO[${t('processingSteps.productionOutput')}]
-    FA --> PO
     
     linkStyle default stroke-width:2px
-    linkStyle 1,4,8 stroke-width:2px,stroke-dasharray:10
+    linkStyle 1,3,4,8 stroke-width:2px,stroke-dasharray:10
     
-    style IS fill:#9b5de5,stroke:#333,color:white,stroke-width:2px
+    style IS fill:#4B0082,stroke:#333,color:white,stroke-width:2px
     style AS fill:#4B0082,stroke:#333,color:white,stroke-width:2px
     style VS2 fill:#4B0082,stroke:#333,color:white,stroke-width:2px
     style T1 fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style T2 fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style T3 fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style TE fill:#0057B7,stroke:#333,color:white,stroke-width:2px
-    style TL fill:#4B0082,stroke:#333,color:white,stroke-width:2px
+    style TL fill:#0057B7,stroke:#333,color:white,stroke-width:2px
     style C fill:#2b9348,stroke:#333,color:white,stroke-width:2px
-    style FA fill:#2b9348,stroke:#333,color:white,stroke-width:2px
-    style PO fill:#d00000,stroke:#333,color:white,stroke-width:2px
+    style FA fill:#0057B7,stroke:#333,color:white,stroke-width:2px
+    style PO fill:#dc2626,stroke:#333,color:white,stroke-width:2px
   `;
     
     setMermaidChart(diagram);
