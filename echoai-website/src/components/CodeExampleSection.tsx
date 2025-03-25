@@ -1,15 +1,18 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const CodeExampleSection = () => {
+  const { t } = useTranslation();
+  
   return (
     <section className="py-16 bg-black">
       <div className="container mx-auto px-4 text-center">
         <div className="mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Exceptionally rapid support on all channels
+            {t('codeExample.title')}
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Experience lightning-fast transcription with our state-of-the-art platform that processes audio in real-time.
+            {t('codeExample.description')}
           </p>
         </div>
 
@@ -22,22 +25,7 @@ const CodeExampleSection = () => {
             </div>
             <pre className="text-white overflow-x-auto font-mono text-sm">
               <code>
-{`// Initialize echoAI transcription
-const echo = new EchoAI.Transcription({
-  apiKey: process.env.ECHO_API_KEY,
-  options: {
-    language: 'en-US',
-    latency: 'ultra-low',
-  }
-});
-
-// Start listening to audio stream
-echo.listen(audioStream);
-
-// Real-time transcription events
-echo.on('transcription', (result) => {
-  console.log('Live transcription:', result.text);
-});`}
+                {t('codeExample.code')}
               </code>
             </pre>
           </div>

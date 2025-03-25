@@ -1,0 +1,158 @@
+{
+  "common": {
+    "getStarted": "Get Started",
+    "siteTitle": "echoAI – Trusted AI Support Platform"
+  },
+  "navigation": {
+    "home": "Home"
+  },
+  "heroSection": {
+    "title": "The Complete Platform for Real-Time AI-Driven Transcription",
+    "description": "Seamless, ultra-low-latency captioning and translation for live audio and video that unlocks new dimensions of accessibility, fan engagement, and data-driven insights."
+  },
+  "features": {
+    "title": "Real-Time Transcription",
+    "fasterThanAnyone": {
+      "title": "Faster Than Anyone Else",
+      "points": [
+        "Achieve end-to-end transcription in under 750ms, up to 20x faster than traditional solutions",
+        "Ensure fans never miss critical moments and keep audiences fully engaged"
+      ]
+    },
+    "industryLeading": {
+      "title": "Industry-Leading Accuracy",
+      "points": [
+        "Context-aware NLP automatically detects domain-specific terminology",
+        "Maintain high precision across diverse verticals – sports, events, media, enterprise, and beyond"
+      ]
+    },
+    "feature2": {
+      "title": "Multi-modal Integration",
+      "description": "Seamlessly connect audio to interactive experiences"
+    },
+    "feature3": {
+      "title": "Plugin Ecosystem",
+      "description": "Extend functionality with our growing library of plugins"
+    }
+  },
+  "codeExample": {
+    "title": "Exceptionally rapid support on all channels",
+    "description": "Experience lightning-fast transcription with our state-of-the-art platform that processes audio in real-time.",
+    "code": "// Initialize echoAI transcription\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'en-US',\n    latency: 'ultra-low',\n  }\n});\n\n// Start listening to audio stream\necho.listen(audioStream);\n\n// Real-time transcription events\necho.on('transcription', (result) => {\n  console.log('Live transcription:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "Next-Gen Quality and Efficiency",
+    "subtitle": "Enterprise-Grade Performance",
+    "description": "Our platform delivers unmatched accuracy, reliability, and performance with ultra-low latency that enhances real-time applications.",
+    "metric1": {
+      "value": "94%",
+      "label": "Transcription Accuracy"
+    },
+    "metric2": {
+      "value": "99%",
+      "label": "Time Saved"
+    },
+    "metric3": {
+      "value": "24/7",
+      "label": "Availability"
+    }
+  },
+  "workflow": {
+    "title": "The AI Workflow Canvas",
+    "subtitle": "Rethink Work with an API-First Approach",
+    "description": "Our flexible pipeline connects input streams, audio and video, to advanced modules such as transcription, translation, and frame analysis.",
+    "points": [
+      "Customize each step – routing data through providers, enrichment layers, and plugin-defined endpoints",
+      "Spin up new capabilities – like keyword detection or specialized domain models – by simply installing a plugin",
+      "Swap or upgrade modules with zero downtime"
+    ]
+  },
+  "deployment": {
+    "title": "Lightning fast deployment and results",
+    "description": "Get up and running in minutes, not weeks. Our platform is designed for seamless integration and immediate value.",
+    "steps": {
+      "step1": {
+        "title": "Setup",
+        "features": [
+          "Painless integration",
+          "Simple API key authentication",
+          "Comprehensive documentation"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "RESTful and WebSocket APIs",
+          "Streaming and batch processing",
+          "Cross-platform SDKs available"
+        ]
+      },
+      "step3": {
+        "title": "Integration",
+        "features": [
+          "Pre-built integrations with popular platforms",
+          "Custom webhook support",
+          "Open-source plugin templates"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "The best results happen when AI + human judgment come together",
+    "description": "Our platform removes humans from the loop, allowing your teams to focus on what matters most."
+  },
+  "automateWork": {
+    "title": "Automate Work, Elevate Engagement"
+  },
+  "countdown": {
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "untilLaunch": "Until Launch – April 2nd, 2025 at 9AM CT"
+  },
+  "audioPlayer": {
+    "title": "Experience our voice technology",
+    "play": "Play",
+    "pause": "Pause",
+    "volume": "Vol",
+    "loading": "Loading audio...",
+    "live": "LIVE",
+    "streaming": "BBC World Service Live Stream"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "All rights reserved."
+  },
+  "processingSteps": {
+    "title": "Echo Core Processing Pipeline",
+    "inputStream": "Input Stream",
+    "audioStream": "Audio Stream",
+    "videoStream": "Video Stream",
+    "providerA": "Provider A",
+    "providerB": "Provider B",
+    "providerC": "Provider C",
+    "transcriptEnrichment": "Transcript Enrichment",
+    "translation": "Translation",
+    "captionProcessing": "Caption Processing",
+    "frameAnalysis": "Frame Analysis",
+    "productionOutput": "Production Output"
+  },
+  "multiModal": {
+    "title": "Multi-Modal Integration",
+    "beyondBasic": {
+      "title": "Beyond Basic Audio",
+      "points": [
+        "Effortlessly merge real-time video analysis, entity retrieval, and caption processing",
+        "Add overlays, triggers, or custom workflows with a simple API call"
+      ]
+    },
+    "pluginEcosystem": {
+      "title": "Plugin Ecosystem",
+      "points": [
+        "Extend core functionality with a growing library of plugins",
+        "Integrate seamlessly into pro audio/video workflows - no restarts needed"
+      ]
+    }
+  }
+}

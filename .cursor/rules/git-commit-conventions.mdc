@@ -1,0 +1,150 @@
+---
+description: Strict Git commit message guidelines with explicit step-by-step instructions for computer agents
+globs: **/*.*
+alwaysApply: true
+---
+---
+description: Strict Git commit message guidelines with explicit step-by-step instructions for computer agents
+globs: ["**/*.*"]
+alwaysApply: true
+source: https://github.com/EugenEistrach/tanstack-boilerplate/blob/main/.cursor/rules/commit-conventions.mdc
+version: 2.0.0
+last_updated: 2025-02-24
+---
+
+# Commit Message Conventions
+
+This document defines the mandatory process for generating commit messages. Computer agents MUST follow ALL steps in EXACT order without deviation or omission.
+
+## **MANDATORY PROCESS SEQUENCE**
+
+### 1. **CAPTURE CHANGES [REQUIRED]**
+   1.1. Execute the following command from repository root:
+   ```bash
+   bash .cursor/rules/git-capture-diffs.sh
+   ```
+   1.2. Verify command execution completed with exit code 0.
+   1.3. If exit code is non-zero, HALT and report failure.
+
+### 2. **PROCESS DIFF FILE [REQUIRED]**
+   2.1. Read the entire file at path `/.idea/_gitdiff.tmp`.
+      - It may be long. Read the entire file before moving to the next step.
+   2.2. Verify file exists and is not empty.
+   2.3. If file does not exist or is empty, HALT and report failure.
+   2.4. Parse file to identify:
+      - Modified files (lines starting with "modified:")
+      - Added files (lines starting with "new file:")
+      - Deleted files (lines starting with "deleted:")
+      - Changed lines (lines starting with "+" or "-" after diff headers)
+   2.5. Create an internal list of all changed files.
+   2.6. Categorize changes by file type and modification pattern.
+
+### 3. **GENERATE COMMIT MESSAGE [REQUIRED]**
+   3.1. Determine primary change type from this list (select EXACTLY ONE):
+      - `feat`: New features or functionality
+      - `fix`: Bug fixes
+      - `docs`: Documentation changes only
+      - `style`: Formatting changes that don't affect code functionality
+      - `refactor`: Code changes that neither fix bugs nor add features
+      - `test`: Adding or modifying tests
+      - `chore`: Maintenance tasks, dependency updates, etc.
+   3.2. Identify affected scope(s) from changed files.
+   3.3. Create subject line following format: `<type>(<scope>): <imperative description>`.
+   3.4. Verify subject line:
+      - Starts with lowercase type
+      - Contains scope in parentheses
+      - Uses imperative mood verb
+      - Is under 75 characters
+      - Does not end with period
+   3.5. Group changes into logical themes (maximum 5 themes).
+   3.6. For each theme:
+      - Create a theme heading
+      - List 1-5 bullet points describing specific changes
+      - Ensure each bullet uses imperative mood
+      - Ensure each bullet is a single sentence
+      - End each bullet with a period
+
+### 4. **VALIDATION [REQUIRED]**
+   4.1. Verify commit message follows this exact structure:
+   ```
+   <type>(<scope>): <subject>
+
+   <Theme1>
+   - <Theme1Bullet1>
+   - <Theme1Bullet2>
+
+   <Theme2>
+   - <Theme2Bullet1>
+   - <Theme2Bullet2>
+   ```
+   4.2. Confirm all bullets are derived directly from changes in diff file.
+   4.3. Verify no extraneous content is included.
+   4.4. Check for breaking changes - if present, add `!` after type/scope and include `BREAKING CHANGE:` paragraph.
+
+### 5. **OUTPUT GENERATION [REQUIRED]**
+   5.1. Output ONLY the commit message.
+   5.2. Do NOT include:
+      - Diff file contents
+      - Explanatory text
+      - Command instructions
+      - Git commands
+      - References to this process
+   5.3. Format output as a code block containing ONLY the commit message.
+
+## **COMMIT TYPES [REFERENCE]**
+
+| Type | Description | Example |
+|------|-------------|---------|
+| feat | New features | `feat(auth): Add SSO support` |
+| fix | Bug fixes | `fix(api): Handle timeout errors` |
+| docs | Documentation | `docs: Update API endpoints` |
+| style | Formatting only | `style: Format with prettier` |
+| refactor | Code restructuring | `refactor(db): Extract config` |
+| test | Test-related changes | `test: Add auth unit tests` |
+| chore | Maintenance tasks | `chore(deps): Bump package versions` |
+
+## **BREAKING CHANGES [REFERENCE]**
+
+For breaking changes, add `!` after type/scope and include explanation:
+
+```
+feat(api)!: Revise authentication flow
+
+BREAKING CHANGE: Clients must use the new authentication mechanism.
+```
+
+## **ERROR HANDLING [REQUIRED]**
+
+If any step fails:
+1. Halt processing immediately
+2. Report the specific step that failed
+3. Do not proceed to subsequent steps
+4. Do not generate partial commit messages
+
+## **VERIFICATION CHECKLIST [REQUIRED]**
+
+Before finalizing output, verify:
+- [x] Diff script was executed
+- [x] Diff file was read completely
+- [x] All changed files were considered
+- [x] Commit type is appropriate for changes
+- [x] Subject line follows format requirements
+- [x] Bullet points use imperative mood
+- [x] No more than 5 bullets per theme
+- [x] Output contains ONLY the commit message
+
+IMPORTANT: Failure to complete ANY step in this process results in an invalid commit message. ALL steps are MANDATORY.
+```
+
+This rewritten version:
+
+1. Uses explicit numbering for all steps and substeps
+2. Marks required steps clearly
+3. Includes specific validation criteria
+4. Adds error handling instructions
+5. Provides a verification checklist
+6. Uses tables for reference information
+7. Includes explicit HALT conditions
+8. Specifies exact input/output requirements
+
+The format ensures computer agents have no ambiguity about the required process and must follow every step in sequence.

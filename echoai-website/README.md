@@ -70,6 +70,58 @@ The website includes responsive components that adapt to different screen sizes:
 - The diagram in the Workflow Canvas section changes orientation based on screen width
 - Mobile-friendly navigation and layout
 
+## WebSocket Audio Streaming
+
+The website includes a WebSocket-based audio streaming feature that captures audio data from the browser and sends it to a dedicated server for processing.
+
+### Message Schemas
+
+#### Audio Data Message
+
+The audio streaming feature requires a specific message format to be compatible with the server. Any deviation from this schema will cause server-side rejection.
+
+```json
+{
+  "type": "audio",
+  "value": "KIz4vrJaIz8GmGy/EQtEP1uoXT1P0fC+...",
+  "sampleRate": 16000
+}
+```
+
+- `type`: Must be exactly "audio"
+- `value`: Base64 encoded audio data
+- `sampleRate`: Sample rate in Hz (typically 16000)
+
+**Important**: Do not add additional fields to this schema. The server strictly validates the exact structure above.
+
+#### Configuration Message
+
+When the connection is established, a configuration message is sent to the server:
+
+```json
+{
+  "type": "config",
+  "config": {
+    "sampleRate": 16000,
+    "channels": 1,
+    "format": "int16",
+    "messageFormat": "json",
+    "encoding": "base64"
+  }
+}
+```
+
+### Implementation Details
+
+The WebSocket integration is contained in the `src/services/websocket` directory:
+
+- `WebSocketService.ts` - Core WebSocket connection management
+- `StreamingAudioProcessor.ts` - Processing audio data for streaming
+- `WebSocketSchemas.ts` - Message schemas and validation for all WebSocket communication
+- `audio/AudioStreamingBridge.ts` - Bridge between audio and WebSocket
+
+For testing and debugging, visit `/websockettest` in the development environment.
+
 ## Contributing
 
 Before submitting changes, please:
@@ -77,4 +129,4 @@ Before submitting changes, please:
 1. Run `npm run build` to ensure there are no TypeScript or build errors
 2. Run `npm run lint` to check for code quality issues
 3. Test the site on multiple screen sizes
-4. Verify that all interactive elements work correctly 
+4. Verify that all interactive elements work correctly

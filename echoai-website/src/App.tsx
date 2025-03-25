@@ -1,33 +1,38 @@
+import { lazy, Suspense } from 'react'
 import NavBar from './components/NavBar'
 import HeroSection from './components/HeroSection'
-import FeaturesSection from './components/FeaturesSection'
-import CodeExampleSection from './components/CodeExampleSection'
-import MetricsSection from './components/MetricsSection'
-import WorkflowCanvasSection from './components/WorkflowCanvasSection'
-import MetricsToolsSection from './components/MetricsToolsSection'
-import EnterpriseSecuritySection from './components/EnterpriseSecuritySection'
-import DeploymentSection from './components/DeploymentSection'
-import BestResultsSection from './components/BestResultsSection'
-import AutomateWorkSection from './components/AutomateWorkSection'
-import Footer from './components/Footer'
+import DocumentTitle from './components/DocumentTitle'
+import LoggingControl from './components/debug/LoggingControl'
+import { isDevelopmentMode } from './utils/environment'
+
+// Lazy load non-critical sections
+const FeaturesSection = lazy(() => import('./components/FeaturesSection'))
+const MetricsSection = lazy(() => import('./components/MetricsSection')) 
+const WorkflowCanvasSection = lazy(() => import('./components/WorkflowCanvasSection'))
+const DeploymentSection = lazy(() => import('./components/DeploymentSection'))
+const BestResultsSection = lazy(() => import('./components/BestResultsSection'))
+const AutomateWorkSection = lazy(() => import('./components/AutomateWorkSection'))
+const Footer = lazy(() => import('./components/Footer'))
 
 function App() {
   return (
     <div className="min-h-screen bg-black">
+      <DocumentTitle />
       <NavBar />
       <main>
         <HeroSection />
-        <FeaturesSection />
-        <CodeExampleSection />
-        <MetricsSection />
-        <WorkflowCanvasSection />
-        <MetricsToolsSection />
-        <EnterpriseSecuritySection />
-        <DeploymentSection />
-        <BestResultsSection />
-        <AutomateWorkSection />
+        <Suspense fallback={<div className="h-screen"></div>}>
+          <FeaturesSection />
+          <MetricsSection />
+          <WorkflowCanvasSection />
+          <DeploymentSection />
+          <BestResultsSection />
+          <AutomateWorkSection />
+          <Footer />
+        </Suspense>
       </main>
-      <Footer />
+      {/* Only include LoggingControl in development mode */}
+      {isDevelopmentMode() && <LoggingControl />}
     </div>
   )
 }

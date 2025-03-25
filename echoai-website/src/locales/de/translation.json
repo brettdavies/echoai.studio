@@ -1,0 +1,158 @@
+{
+  "common": {
+    "getStarted": "Loslegen",
+    "siteTitle": "echoAI – Vertrauenswürdige KI-Support-Plattform"
+  },
+  "navigation": {
+    "home": "Startseite"
+  },
+  "heroSection": {
+    "title": "Die Komplette Plattform für KI-gesteuerte Echtzeit-Transkription",
+    "description": "Nahtlose, ultraschnelle Untertitelung und Übersetzung für Live Audio und Video, die neue Dimensionen der Zugänglichkeit, Fan-Engagement und datengesteuerte Erkenntnisse erschließt."
+  },
+  "features": {
+    "title": "Echtzeit-Transkription",
+    "fasterThanAnyone": {
+      "title": "Schneller als Alle Anderen",
+      "points": [
+        "Erreichen Sie End-to-End-Transkription in unter 750ms, bis zu 20-mal schneller als herkömmliche Lösungen",
+        "Stellen Sie sicher, dass Fans keine kritischen Momente verpassen und halten Sie das Publikum voll engagiert"
+      ]
+    },
+    "industryLeading": {
+      "title": "Branchenführende Genauigkeit",
+      "points": [
+        "Kontextbewusstes NLP erkennt automatisch domänenspezifische Terminologie",
+        "Behalten Sie hohe Präzision über verschiedene Bereiche hinweg – Sport, Events, Medien, Unternehmen und mehr"
+      ]
+    },
+    "feature2": {
+      "title": "Multimodale Integration",
+      "description": "Verbinden Sie Audio nahtlos mit interaktiven Erlebnissen"
+    },
+    "feature3": {
+      "title": "Plugin-Ökosystem",
+      "description": "Erweitern Sie die Funktionalität mit unserer wachsenden Plugin-Bibliothek"
+    }
+  },
+  "codeExample": {
+    "title": "Außergewöhnlich schneller Support auf allen Kanälen",
+    "description": "Erleben Sie ultraschnelle Transkription mit unserer hochmodernen Plattform, die Audio in Echtzeit verarbeitet.",
+    "code": "// echoAI Transkription initialisieren\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'de-DE',\n    latency: 'ultra-low',\n  }\n});\n\n// Audio-Stream abhören starten\necho.listen(audioStream);\n\n// Echtzeit-Transkriptionsereignisse\necho.on('transcription', (result) => {\n  console.log('Live-Transkription:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "Next-Gen Qualität und Effizienz",
+    "subtitle": "Enterprise-Grade Performance",
+    "description": "Unsere Plattform bietet unübertroffene Genauigkeit, Zuverlässigkeit und Leistung mit ultraniedriger Latenz, die Echtzeit-Anwendungen verbessert.",
+    "metric1": {
+      "value": "94%",
+      "label": "Transkriptionsgenauigkeit"
+    },
+    "metric2": {
+      "value": "99%",
+      "label": "Zeitersparnis"
+    },
+    "metric3": {
+      "value": "24/7",
+      "label": "Verfügbarkeit"
+    }
+  },
+  "workflow": {
+    "title": "Die KI-Workflow-Leinwand",
+    "subtitle": "Arbeit Neu Denken mit API-First-Ansatz",
+    "description": "Unsere flexible Pipeline verbindet Eingabeströme, Audio und Video mit fortgeschrittenen Modulen wie Transkription, Übersetzung und Frame-Analyse.",
+    "points": [
+      "Passen Sie jeden Schritt an – Routing von Daten durch Provider, Anreicherungsschichten und Plugin-definierte Endpunkte",
+      "Aktivieren Sie neue Fähigkeiten – wie Schlüsselworterkennung oder spezialisierte Domänenmodelle – einfach durch Installation eines Plugins",
+      "Tauschen oder aktualisieren Sie Module ohne Ausfallzeiten"
+    ]
+  },
+  "deployment": {
+    "title": "Blitzschnelle Bereitstellung und Ergebnisse",
+    "description": "Starten Sie in Minuten, nicht in Wochen. Unsere Plattform ist für nahtlose Integration und sofortigen Mehrwert konzipiert.",
+    "steps": {
+      "step1": {
+        "title": "Setup",
+        "features": [
+          "Mühelose Integration",
+          "Einfache API-Schlüssel-Authentifizierung",
+          "Umfassende Dokumentation"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "RESTful und WebSocket APIs",
+          "Streaming- und Batch-Verarbeitung",
+          "Plattformübergreifende SDKs verfügbar"
+        ]
+      },
+      "step3": {
+        "title": "Integration",
+        "features": [
+          "Vorgefertigte Integrationen mit beliebten Plattformen",
+          "Benutzerdefinierte Webhook-Unterstützung",
+          "Open-Source Plugin-Vorlagen"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "Die besten Ergebnisse entstehen, wenn KI und menschliches Urteilsvermögen zusammenkommen",
+    "description": "Unsere Plattform entfernt Menschen aus der Schleife und ermöglicht es Ihren Teams, sich auf das Wesentliche zu konzentrieren."
+  },
+  "automateWork": {
+    "title": "Arbeit Automatisieren, Engagement Steigern"
+  },
+  "countdown": {
+    "days": "Tage",
+    "hours": "Stunden",
+    "minutes": "Minuten",
+    "seconds": "Sekunden",
+    "untilLaunch": "Bis zum Launch – 2. April 2025 um 9 Uhr CT"
+  },
+  "audioPlayer": {
+    "title": "Erleben Sie unsere Sprachtechnologie",
+    "play": "Abspielen",
+    "pause": "Pause",
+    "volume": "Vol",
+    "loading": "Audio wird geladen...",
+    "live": "LIVE",
+    "streaming": "BBC World Service Live-Stream"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "Alle Rechte vorbehalten."
+  },
+  "processingSteps": {
+    "title": "Echo Core Verarbeitungs-Pipeline",
+    "inputStream": "Eingabestrom",
+    "audioStream": "Audiostrom",
+    "videoStream": "Videostrom",
+    "providerA": "Anbieter A",
+    "providerB": "Anbieter B",
+    "providerC": "Anbieter C",
+    "transcriptEnrichment": "Transkript-Anreicherung",
+    "translation": "Übersetzung",
+    "captionProcessing": "Untertitel-Verarbeitung",
+    "frameAnalysis": "Frame-Analyse",
+    "productionOutput": "Produktions-Output"
+  },
+  "multiModal": {
+    "title": "Multimodale Integration",
+    "beyondBasic": {
+      "title": "Über Basic Audio Hinaus",
+      "points": [
+        "Verschmelzen Sie mühelos Echtzeit-Videoanalyse, Entitätsabruf und Untertitelverarbeitung",
+        "Fügen Sie Overlays, Trigger oder benutzerdefinierte Workflows mit einem einfachen API-Aufruf hinzu"
+      ]
+    },
+    "pluginEcosystem": {
+      "title": "Plugin-Ökosystem",
+      "points": [
+        "Erweitern Sie die Kernfunktionalität mit einer wachsenden Plugin-Bibliothek",
+        "Integrieren Sie sich nahtlos in professionelle Audio/Video-Workflows - kein Neustart erforderlich"
+      ]
+    }
+  }
+}

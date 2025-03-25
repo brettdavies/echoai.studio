@@ -1,16 +1,19 @@
 import React from 'react';
 import ResponsiveDiagram from './ResponsiveDiagram';
+import { useTranslation } from 'react-i18next';
 
 const WorkflowCanvasSection = () => {
+  const { t } = useTranslation();
+  
   return (
     <section className="py-24 bg-black relative overflow-hidden">
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Rethink work with the<br />best AI workflow canvas
+            {t('workflow.title')}
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Our flexible system enables seamless integration with your existing workflows, making it easy to build custom applications.
+            {t('workflow.description')}
           </p>
         </div>
         

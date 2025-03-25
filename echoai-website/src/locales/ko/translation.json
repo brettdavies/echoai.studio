@@ -1,0 +1,158 @@
+{
+  "common": {
+    "getStarted": "시작하기",
+    "siteTitle": "echoAI – 신뢰할 수 있는 AI 지원 플랫폼"
+  },
+  "navigation": {
+    "home": "홈"
+  },
+  "heroSection": {
+    "title": "실시간 AI 기반 음성 변환을 위한 완벽한 플랫폼",
+    "description": "라이브 오디오와 비디오를 위한 원활한 초저지연 자막 및 번역으로 접근성, 팬 참여도, 데이터 기반 인사이트의 새로운 차원을 열어갑니다."
+  },
+  "features": {
+    "title": "실시간 음성 변환",
+    "fasterThanAnyone": {
+      "title": "누구보다 빠른 속도",
+      "points": [
+        "기존 솔루션보다 최대 20배 빠른 750ms 미만의 엔드투엔드 음성 변환 실현",
+        "팬들이 중요한 순간을 놓치지 않고 청중을 완벽하게 몰입시킵니다"
+      ]
+    },
+    "industryLeading": {
+      "title": "업계 최고의 정확도",
+      "points": [
+        "문맥 인식 NLP가 도메인별 전문 용어를 자동으로 감지",
+        "스포츠, 이벤트, 미디어, 기업 등 다양한 분야에서 높은 정확도 유지"
+      ]
+    },
+    "feature2": {
+      "title": "멀티모달 통합",
+      "description": "오디오를 인터랙티브 경험과 원활하게 연결"
+    },
+    "feature3": {
+      "title": "플러그인 생태계",
+      "description": "성장하는 플러그인 라이브러리로 기능 확장"
+    }
+  },
+  "codeExample": {
+    "title": "모든 채널에서 예외적으로 빠른 지원",
+    "description": "실시간으로 오디오를 처리하는 최첨단 플랫폼으로 초고속 음성 변환을 경험하세요.",
+    "code": "// echoAI 음성 변환 초기화\nconst echo = new EchoAI.Transcription({\n  apiKey: process.env.ECHO_API_KEY,\n  options: {\n    language: 'ko-KR',\n    latency: 'ultra-low',\n  }\n});\n\n// 오디오 스트림 청취 시작\necho.listen(audioStream);\n\n// 실시간 음성 변환 이벤트\necho.on('transcription', (result) => {\n  console.log('실시간 음성 변환:', result.text);\n});"
+  },
+  "metrics": {
+    "title": "차세대 품질과 효율성",
+    "subtitle": "엔터프라이즈급 성능",
+    "description": "우리 플랫폼은 실시간 애플리케이션을 향상시키는 초저지연으로 비교할 수 없는 정확도, 신뢰성, 성능을 제공합니다.",
+    "metric1": {
+      "value": "94%",
+      "label": "음성 변환 정확도"
+    },
+    "metric2": {
+      "value": "99%",
+      "label": "시간 절약"
+    },
+    "metric3": {
+      "value": "24/7",
+      "label": "가용성"
+    }
+  },
+  "workflow": {
+    "title": "AI 워크플로우 캔버스",
+    "subtitle": "API 우선 접근 방식으로 업무 재구상",
+    "description": "우리의 유연한 파이프라인은 입력 스트림, 오디오, 비디오를 음성 변환, 번역, 프레임 분석과 같은 고급 모듈에 연결합니다.",
+    "points": [
+      "각 단계 맞춤화 – 공급자, 보강 레이어, 플러그인 정의 엔드포인트를 통한 데이터 라우팅",
+      "새로운 기능 활성화 – 키워드 감지나 특수 도메인 모델과 같은 기능을 플러그인 설치만으로 추가",
+      "다운타임 없이 모듈 교체 또는 업그레이드"
+    ]
+  },
+  "deployment": {
+    "title": "번개처럼 빠른 배포와 결과",
+    "description": "몇 주가 아닌 몇 분 안에 시작하세요. 우리 플랫폼은 원활한 통합과 즉각적인 가치를 위해 설계되었습니다.",
+    "steps": {
+      "step1": {
+        "title": "설정",
+        "features": [
+          "수월한 통합",
+          "간단한 API 키 인증",
+          "포괄적인 문서"
+        ]
+      },
+      "step2": {
+        "title": "API",
+        "features": [
+          "RESTful 및 WebSocket API",
+          "스트리밍 및 배치 처리",
+          "크로스 플랫폼 SDK 사용 가능"
+        ]
+      },
+      "step3": {
+        "title": "통합",
+        "features": [
+          "인기 플랫폼과의 사전 구축된 통합",
+          "맞춤형 웹훅 지원",
+          "오픈소스 플러그인 템플릿"
+        ]
+      }
+    }
+  },
+  "bestResults": {
+    "title": "AI와 인간의 판단이 만날 때 최고의 결과가 나옵니다",
+    "description": "우리 플랫폼은 인간을 루프에서 제거하여 팀이 가장 중요한 일에 집중할 수 있게 합니다."
+  },
+  "automateWork": {
+    "title": "업무 자동화, 참여도 향상"
+  },
+  "countdown": {
+    "days": "일",
+    "hours": "시간",
+    "minutes": "분",
+    "seconds": "초",
+    "untilLaunch": "출시까지 – 2025년 4월 2일 오전 9시 (CT)"
+  },
+  "audioPlayer": {
+    "title": "우리의 음성 기술을 경험하세요",
+    "play": "재생",
+    "pause": "일시정지",
+    "volume": "볼륨",
+    "loading": "오디오 로딩 중...",
+    "live": "라이브",
+    "streaming": "BBC 월드 서비스 라이브 스트림"
+  },
+  "footer": {
+    "brandName": "echoAI",
+    "allRightsReserved": "모든 권리 보유."
+  },
+  "processingSteps": {
+    "title": "Echo Core 처리 파이프라인",
+    "inputStream": "입력 스트림",
+    "audioStream": "오디오 스트림",
+    "videoStream": "비디오 스트림",
+    "providerA": "공급자 A",
+    "providerB": "공급자 B",
+    "providerC": "공급자 C",
+    "transcriptEnrichment": "음성 변환 보강",
+    "translation": "번역",
+    "captionProcessing": "자막 처리",
+    "frameAnalysis": "프레임 분석",
+    "productionOutput": "제작 출력"
+  },
+  "multiModal": {
+    "title": "멀티모달 통합",
+    "beyondBasic": {
+      "title": "기본 오디오를 넘어서",
+      "points": [
+        "실시간 비디오 분석, 엔티티 검색, 자막 처리를 손쉽게 통합",
+        "간단한 API 호출로 오버레이, 트리거 또는 맞춤형 워크플로우 추가"
+      ]
+    },
+    "pluginEcosystem": {
+      "title": "플러그인 생태계",
+      "points": [
+        "성장하는 플러그인 라이브러리로 핵심 기능 확장",
+        "전문 오디오/비디오 워크플로우에 원활하게 통합 - 재시작 필요 없음"
+      ]
+    }
+  }
+}

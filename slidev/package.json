@@ -1,0 +1,20 @@
+{
+  "name": "slidev",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "slidev build",
+    "dev": "slidev --open",
+    "export": "slidev export",
+    "dev:dd": "slidev presentations/001-demo-day/slides.md --port 3001",
+    "dev:seed": "slidev presentations/002-seed-funding/slides.md --port 3002",
+    "build:dd": "slidev build presentations/001-demo-day/slides.md",
+    "build:seed": "slidev build presentations/002-seed-funding/slides.md"
+  },
+  "dependencies": {
+    "@slidev/cli": "^51.4.0",
+    "@slidev/theme-default": "latest",
+    "@slidev/theme-seriph": "latest",
+    "vue": "^3.5.13"
+  }
+}

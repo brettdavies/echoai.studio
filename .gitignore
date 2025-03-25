@@ -2,6 +2,9 @@
 # .idea
 # docs
 
+# PDF files are tracked by Git LFS
+!**/*.pdf
+
 # Environment files
 **/.env
 **/.env.*
@@ -25,12 +28,6 @@
 # Logs
 logs
 *.log
-
-# Node modules
-node_modules
-
-# Dist
-dist
 
 # Editor directories and files
 .vscode/*
