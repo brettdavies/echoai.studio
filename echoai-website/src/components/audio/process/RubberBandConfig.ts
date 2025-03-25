@@ -1,5 +1,5 @@
-import { ProcessingOptions } from './types';
-import { audioLoggers } from '../../utils/LoggerFactory';
+import { ProcessingOptions } from 'types';
+import { audioLoggers } from '../../../utils/LoggerFactory';
 
 /**
  * Configuration for the RubberBand processor

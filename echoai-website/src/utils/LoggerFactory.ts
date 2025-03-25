@@ -48,6 +48,8 @@ export const audioLoggers = {
   resampler: createDomainLogger(LogCategory.RESAMPLER, LogComponent.RESAMPLER),
   media: createDomainLogger(LogCategory.AUDIO, LogComponent.MISC),
   dashPlayer: createDomainLogger(LogCategory.AUDIO, LogComponent.DASH_PLAYER),
+  audioCapture: createDomainLogger(LogCategory.AUDIO, LogComponent.AUDIO_PROCESSOR),
+  orchestrator: createDomainLogger(LogCategory.AUDIO, LogComponent.ORCHESTRATOR),
 };
 
 // Pre-created loggers for networking components

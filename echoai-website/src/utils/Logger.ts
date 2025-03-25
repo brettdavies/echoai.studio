@@ -49,6 +49,9 @@ export enum LogCategory {
 
 // Application components for fine-grained logging control
 export enum LogComponent {
+  // Orchestrator components
+  ORCHESTRATOR = 'orchestrator',
+  
   // Audio components
   RESAMPLER = 'resampler',
   AUDIO_WORKLET = 'audio_worklet',
