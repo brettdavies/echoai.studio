@@ -31,11 +31,11 @@ const NavBar = () => {
         {/* Language selector and mobile menu button */}
         <div className="flex items-center space-x-4">
           {/* Get Started button - to the left of language selector */}
-          <div className="hidden md:block">
+          {/* <div className="hidden md:block">
             <Button size="sm" className="rounded-full">
               {t('common.getStarted')}
             </Button>
-          </div>
+          </div> */}
           
           {/* Language selector - hidden on smaller screens */}
           <div className="hidden md:block">
@@ -82,11 +82,11 @@ const NavBar = () => {
           )}
           
           {/* Get Started button for mobile */}
-          <div className="py-2">
+          {/* <div className="py-2">
             <Button size="sm" className="rounded-full w-full">
               {t('common.getStarted')}
             </Button>
-          </div>
+          </div> */}
           
           {/* Language selector for mobile */}
           <div className="py-2">

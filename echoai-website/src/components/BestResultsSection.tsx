@@ -14,9 +14,9 @@ const BestResultsSection = () => {
         <p className="text-gray-400 max-w-2xl mx-auto mb-8">
           {t('bestResults.description')}
         </p>
-        <Button size="lg" className="rounded-full">
+        {/* <Button size="lg" className="rounded-full">
           {t('common.getStarted')}
-        </Button>
+        </Button> */}
       </div>
     </section>
   );
