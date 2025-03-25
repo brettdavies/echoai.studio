@@ -393,10 +393,10 @@ Clear path to <strong>$100 million ARR</strong> in 18 months
 <div class="absolute bottom-5 right-5">
   <a href="https://echoai.studio" class="text-xl font-bold">echoai.studio</a>
   <div class="mt-2 relative">
-    <div class="absolute -left-71 top-8 text-right">
+    <!-- <div class="absolute -left-71 top-8 text-right">
       <p class="text-sm">Live demo streaming on our website</p>
     </div>
-    <span class="text-xl absolute -left-9 top-12">→</span>
+    <span class="text-xl absolute -left-9 top-12">→</span> -->
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://echoai.studio" alt="echoAI Contact" class="w-34 h-34"/>
   </div>
 </div>
