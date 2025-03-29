@@ -27,7 +27,7 @@ This document defines the mandatory process for generating commit messages. Comp
    1.3. If exit code is non-zero, HALT and report failure.
 
 ### 2. **PROCESS DIFF FILE [REQUIRED]**
-   2.1. Read the entire file at path `/.idea/_gitdiff.tmp`.
+   2.1. Read the entire file at path `/.idea/diffs.json`.
       - It may be long. Read the entire file before moving to the next step.
    2.2. Verify file exists and is not empty.
    2.3. If file does not exist or is empty, HALT and report failure.

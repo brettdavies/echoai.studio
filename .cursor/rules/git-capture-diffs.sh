@@ -108,7 +108,7 @@ is_binary() {
 }
 
 # Create output file
-OUTPUT_FILE=".idea/_gitdiff.json"
+OUTPUT_FILE=".idea/diffs.json"
 TEMP_DIR=$(mktemp -d)
 STATUS_FILE="$TEMP_DIR/status.txt"
 DIFF_FILE="$TEMP_DIR/diff.txt"
