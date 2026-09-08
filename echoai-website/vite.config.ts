@@ -9,14 +9,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Chunk CSS and JS files to reduce initial page load size
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
+        manualChunks(id) {
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) {
+            return 'vendor'
+          }
         },
       },
     },
     // Optimize CSS by splitting it into smaller files
     cssCodeSplit: true,
-    // Use esbuild for minification (default and faster)
-    minify: 'esbuild',
   }
 })
