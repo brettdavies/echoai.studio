@@ -13,15 +13,15 @@ export interface LoggingContext {
   videoElement: HTMLVideoElement;
   audioContext?: AudioContext;
   analyser?: AnalyserNode;
-  dataArray?: Uint8Array;
+  dataArray?: Uint8Array<ArrayBuffer>;
   isPlaying: boolean;
 }
 
 export class DashAudioPlayerLogger {
   private intervalId: number | null = null;
-  private logInterval: number = 2000; // Log every 2 seconds by default
+  private logInterval = 2000; // Log every 2 seconds by default
   private segmentIdentifiers: Set<string> = new Set(); // Store unique segment identifiers
-  private lastPlayingState: boolean = false;
+  private lastPlayingState = false;
   private lastSegmentNumber: string | null = null;
   private logLevel: LogLevel = LogLevel.INFO;
 
@@ -316,7 +316,7 @@ export class DashAudioPlayerLogger {
         const channelCount = mediaInfo.channelsCount || 0;
         
         let complexity = 'Medium';
-        let bottlenecks = [];
+        const bottlenecks: string[] = [];
         
         if (originalSampleRate > 0 && originalSampleRate !== 16000) {
           bottlenecks.push('Sample rate conversion');
@@ -620,27 +620,27 @@ export class DashAudioPlayerLogger {
       // Note: Different versions of dash.js have different APIs, so we'll try multiple approaches
       
       // Method 1: Try to use httpRequests method (newer versions)
-      let httpRequests: any[] = [];
+      let httpRequests: dashjs.HttpTraceRequest[] = [];
       let httpRequestsFound = false;
-      
+
       // Try different methods to access HTTP requests in dash.js
-      if (typeof (dashMetrics as any).getHttpRequests === 'function') {
-        httpRequests = (dashMetrics as any).getHttpRequests() || [];
+      if (typeof dashMetrics.getHttpRequests === 'function') {
+        httpRequests = dashMetrics.getHttpRequests() || [];
         this.log(LogLevel.DEBUG, 'HTTP Requests found (getHttpRequests method)', { count: httpRequests.length });
         httpRequestsFound = httpRequests.length > 0;
-      } 
+      }
       // Method 2: Try httpList (older versions)
-      else if ((dashMetrics as any).httpList) {
-        httpRequests = (dashMetrics as any).httpList || [];
+      else if (dashMetrics.httpList) {
+        httpRequests = dashMetrics.httpList || [];
         this.log(LogLevel.DEBUG, 'HTTP Requests found (httpList property)', { count: httpRequests.length });
         httpRequestsFound = httpRequests.length > 0;
       }
-      
+
       // Method 3: Access metrics directly from the player
       if (!httpRequestsFound) {
         try {
           // Try to access internal player metrics (undocumented)
-          const internalPlayer = (dashMetrics as any).player || (dashMetrics as any).context?.player;
+          const internalPlayer = dashMetrics.player || dashMetrics.context?.player;
           
           if (internalPlayer) {
             if (internalPlayer.debug && internalPlayer.debug.metrics && internalPlayer.debug.metrics.http) {
@@ -662,8 +662,8 @@ export class DashAudioPlayerLogger {
       if (!httpRequestsFound) {
         try {
           // Try to access the fragment model which contains requests
-          const streamProcessor = (dashMetrics as any).streamProcessor || 
-                                (dashMetrics as any).context?.streamProcessor;
+          const streamProcessor = dashMetrics.streamProcessor ||
+                                dashMetrics.context?.streamProcessor;
                                 
           if (streamProcessor && streamProcessor.fragmentModel) {
             const fragmentModel = streamProcessor.fragmentModel;
@@ -681,8 +681,8 @@ export class DashAudioPlayerLogger {
       if (!httpRequestsFound) {
         try {
           // In dash.js v3.x, metrics are accessed differently
-          if (typeof (dashMetrics as any).getRequestsQueue === 'function') {
-            httpRequests = (dashMetrics as any).getRequestsQueue() || [];
+          if (typeof dashMetrics.getRequestsQueue === 'function') {
+            httpRequests = dashMetrics.getRequestsQueue() || [];
             this.log(LogLevel.DEBUG, 'Requests found in request queue', { count: httpRequests.length });
             httpRequestsFound = httpRequests.length > 0;
           }
@@ -823,7 +823,9 @@ export class DashAudioPlayerLogger {
             httpStatus: latestRequest._status || latestRequest.status,
             requestTime: latestRequest._trequest,
             responseTime: latestRequest._tresponse,
-            totalRequestDuration: (latestRequest._tfinish - latestRequest._trequest) * 1000
+            totalRequestDuration: latestRequest._tfinish !== undefined && latestRequest._trequest !== undefined
+              ? (latestRequest._tfinish - latestRequest._trequest) * 1000
+              : undefined
           });
         } else {
           this.log(LogLevel.DEBUG, 'No segment requests found in the HTTP requests');
@@ -839,7 +841,7 @@ export class DashAudioPlayerLogger {
   /**
    * Parse and log HTTP response headers from the segment response
    */
-  private logResponseHeaders(headers: string | Record<string, string>): void {
+  private logResponseHeaders(headers: string | Record<string, string> | undefined): void {
     this.log(LogLevel.DEBUG, 'Response Headers Analysis');
     
     // Headers might be in different formats depending on the dash.js version
@@ -1068,7 +1070,7 @@ export class DashAudioPlayerLogger {
   /**
    * Internal logging method that uses the shared logger
    */
-  private log(level: LogLevel, message: string, data?: any): void {
+  private log(level: LogLevel, message: string, data?: unknown): void {
     // Only log if the level is appropriate
     if (level > this.logLevel) return;
     

@@ -134,13 +134,15 @@ export type IncomingWebSocketMessage =
  * @param message The message to validate
  * @returns Whether the message is valid
  */
-export function validateOutgoingAudioSchema(message: any): boolean {
+export function validateOutgoingAudioSchema(message: unknown): message is OutgoingAudioMessageSchema {
+  if (typeof message !== 'object' || message === null) {
+    return false;
+  }
+  const candidate = message as Record<string, unknown>;
   return (
-    typeof message === 'object' &&
-    message !== null &&
-    message.type === 'audio' &&
-    typeof message.value === 'string' &&
-    typeof message.sample_rate === 'number'
+    candidate.type === 'audio' &&
+    typeof candidate.value === 'string' &&
+    typeof candidate.sample_rate === 'number'
   );
 }
 
@@ -149,13 +151,15 @@ export function validateOutgoingAudioSchema(message: any): boolean {
  * @param message The message to validate
  * @returns Whether the message is valid
  */
-export function validateOutgoingTargetLanguageSchema(message: any): boolean {
+export function validateOutgoingTargetLanguageSchema(message: unknown): message is OutgoingTargetLanguageMessageSchema {
+  if (typeof message !== 'object' || message === null) {
+    return false;
+  }
+  const candidate = message as Record<string, unknown>;
   return (
-    typeof message === 'object' &&
-    message !== null &&
-    message.type === 'target_language' &&
-    typeof message.language === 'string' &&
-    message.language.length === 2
+    candidate.type === 'target_language' &&
+    typeof candidate.language === 'string' &&
+    candidate.language.length === 2
   );
 }
 
@@ -190,21 +194,27 @@ export function createTargetLanguageMessage(languageCode: string): OutgoingTarge
  * @param data The raw message data (string or object)
  * @returns The parsed message or null if invalid
  */
-export function parseIncomingMessage(data: string | object): any {
+export function parseIncomingMessage(data: string | object): IncomingWebSocketMessage | null {
   try {
-    const message = typeof data === 'string' ? JSON.parse(data) : data;
-    
-    if (typeof message !== 'object' || message === null || !message.type) {
+    const parsed: unknown = typeof data === 'string' ? JSON.parse(data) : data;
+
+    if (typeof parsed !== 'object' || parsed === null) {
+      console.error('Invalid message format: missing type property', parsed);
+      return null;
+    }
+
+    const message = parsed as Record<string, unknown>;
+
+    if (!message.type) {
       // Special case for translation messages which don't have a type field
-      if (typeof message === 'object' && message !== null && 
-          message.text && message.source_language && message.target_language) {
-        return message as IncomingTranslationMessageSchema;
+      if (message.text && message.source_language && message.target_language) {
+        return message as unknown as IncomingTranslationMessageSchema;
       }
-      
+
       console.error('Invalid message format: missing type property', message);
       return null;
     }
-    
+
     // Validate based on message type
     switch (message.type) {
       case 'heartbeat_response':
@@ -213,12 +223,12 @@ export function parseIncomingMessage(data: string | object): any {
           return null;
         }
         break;
-        
+
       default:
         console.warn('Unknown message type:', message.type);
     }
-    
-    return message;
+
+    return message as unknown as IncomingWebSocketMessage;
   } catch (error) {
     console.error('Error parsing message:', error);
     return null;

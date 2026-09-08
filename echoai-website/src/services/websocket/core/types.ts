@@ -89,4 +89,4 @@ export type WebSocketEventType =
 /**
  * Event handler function type
  */
-export type WebSocketEventHandler = (event: Event | MessageEvent | CloseEvent, ...args: any[]) => void; 
+export type WebSocketEventHandler = (event: Event | MessageEvent | CloseEvent, ...args: unknown[]) => void;

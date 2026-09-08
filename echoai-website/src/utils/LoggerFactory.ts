@@ -20,19 +20,19 @@ import {
  */
 export function createDomainLogger(category: LogCategory, component: LogComponent) {
   return {
-    trace: (message: string, data?: any) => 
+    trace: (message: string, data?: unknown) =>
       logger.trace(category, message, data, component),
     
-    debug: (message: string, data?: any) => 
+    debug: (message: string, data?: unknown) =>
       logger.debug(category, message, data, component),
     
-    info: (message: string, data?: any) => 
+    info: (message: string, data?: unknown) =>
       logger.info(category, message, data, component),
     
-    warn: (message: string, data?: any) => 
+    warn: (message: string, data?: unknown) =>
       logger.warn(category, message, data, component),
     
-    error: (message: string, data?: any) => 
+    error: (message: string, data?: unknown) =>
       logger.error(category, message, data, component),
     
     isEnabled: () => 

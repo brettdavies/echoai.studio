@@ -1,4 +1,5 @@
-import { ProcessingOptions } from 'types';
+import { ProcessingOptions } from './types';
+import type { RubberBandNode } from 'rubberband-web';
 import { audioLoggers } from '../../../utils/LoggerFactory';
 
 /**
@@ -9,6 +10,29 @@ export interface RubberBandConfig {
   numberOfChannels: number;
   threadPoolSize: number;
   transientMode: number;
+}
+
+/**
+ * Options forwarded to the RubberBand worklet processor
+ */
+export interface RubberBandProcessorOptions {
+  sampleRate: number;
+  numChannels: number;
+  options: {
+    formantPreserved: boolean;
+    transientMode: number;
+    phaseIndependent: boolean;
+    threadPoolSize: number;
+  };
+}
+
+/**
+ * Node construction options for a RubberBand AudioWorkletNode
+ */
+export interface RubberBandNodeOptions {
+  numberOfInputs: number;
+  numberOfOutputs: number;
+  processorOptions: RubberBandProcessorOptions;
 }
 
 /**
@@ -32,11 +56,7 @@ export const createRubberBandOptions = (
   sampleRate: number,
   config: RubberBandConfig,
   options: ProcessingOptions
-): {
-  numberOfInputs: number;
-  numberOfOutputs: number;
-  processorOptions: any;
-} => {
+): RubberBandNodeOptions => {
   const processorOptions = {
     sampleRate,
     numChannels: config.numberOfChannels,
@@ -62,7 +82,7 @@ export const createRubberBandOptions = (
  * @param node The RubberBand node to configure
  * @param options Processing options
  */
-export const configureRubberBandNode = (node: any, options: ProcessingOptions): void => {
+export const configureRubberBandNode = (node: RubberBandNode, options: ProcessingOptions): void => {
   // Set pitch and tempo configuration in a consistent order
   
   // First, always set high quality

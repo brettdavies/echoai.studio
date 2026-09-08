@@ -18,11 +18,11 @@ interface UseAudioOrchestratorResult {
 
 // Helper methods to check orchestrator state
 const isActive = (orchestrator: AudioOrchestrator) => {
-  return (orchestrator as any).state === OrchestratorState.RUNNING;
+  return orchestrator.getState() === OrchestratorState.RUNNING;
 };
 
 const isPaused = (orchestrator: AudioOrchestrator) => {
-  return (orchestrator as any).state === OrchestratorState.PAUSED;
+  return orchestrator.getState() === OrchestratorState.PAUSED;
 };
 
 export function useAudioOrchestrator({

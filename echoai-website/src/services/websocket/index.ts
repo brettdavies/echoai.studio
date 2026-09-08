@@ -5,9 +5,7 @@
 // Import shared logger
 import {
   LogLevel,
-  LogCategory,
-  LogMessage,
-  AudioLogger
+  LogCategory
 } from '../../utils/Logger';
 
 // Import the logger and audioLogger from WebSocketLogger
@@ -20,10 +18,13 @@ export { WebSocketManager } from './WebSocketManager';
 export { AudioStreamingBridge } from './audio/AudioStreamingBridge';
 
 // Export types
-export { 
-  ConnectionState, 
+export {
+  ConnectionState,
   DEFAULT_OPTIONS
 } from './core/types';
+
+import type { WebSocketOptions } from './core/types';
+import type { AudioStreamingOptions } from './audio/types';
 
 export type { 
   WebSocketOptions, 
@@ -56,7 +57,7 @@ export {
 } from './audio';
 
 // Types from the audio module
-import { ProcessingOptions } from '../../components/audio/types';
+import type { ProcessingOptions } from '../../components/audio/process/types';
 
 // Import classes for the factory function
 import { WebSocketService } from './WebSocketService';
@@ -75,10 +76,10 @@ export interface AudioStreamingConfig {
   serverUrl: string;
   
   // WebSocket options
-  webSocketOptions?: Record<string, any>;
-  
+  webSocketOptions?: Partial<WebSocketOptions>;
+
   // Streaming options
-  streamingOptions?: Record<string, any>;
+  streamingOptions?: AudioStreamingOptions;
   
   // Audio processing options
   processingOptions?: ProcessingOptions;

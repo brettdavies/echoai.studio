@@ -18,5 +18,7 @@ export default defineConfig({
     },
     // Optimize CSS by splitting it into smaller files
     cssCodeSplit: true,
+    // mermaid's lazily loaded diagram definitions (flowchart-elk ~1.4MB) are monolithic upstream bundles
+    chunkSizeWarningLimit: 1600,
   }
 })

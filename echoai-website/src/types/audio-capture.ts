@@ -29,6 +29,7 @@ export enum AudioCaptureState {
   INACTIVE = 'inactive',
   CAPTURING = 'capturing',
   PAUSED = 'paused',
+  EXPORTING = 'exporting',
   ERROR = 'error'
 }
 
@@ -41,7 +42,23 @@ export enum AudioCaptureEventType {
   CAPTURE_RESUME = 'capture_resume',
   CAPTURE_STOP = 'capture_stop',
   PROCESSOR_ERROR = 'processor_error',
-  CHUNK_RECEIVED = 'chunk_received'
+  CHUNK_RECEIVED = 'chunk_received',
+  EXPORT_START = 'export_start',
+  EXPORT_COMPLETE = 'export_complete',
+  EXPORT_ERROR = 'export_error'
+}
+
+/**
+ * Details attached to audio capture events
+ */
+export interface AudioCaptureEventDetails {
+  sampleRate?: number;
+  chunkSize?: number;
+  chunksCount?: number;
+  totalSamples?: number;
+  duration?: number;
+  url?: string;
+  error?: string;
 }
 
 /**
@@ -50,7 +67,7 @@ export enum AudioCaptureEventType {
 export interface AudioCaptureEvent {
   type: AudioCaptureEventType;
   timestamp: number;
-  details?: any;
+  details?: AudioCaptureEventDetails;
 }
 
 /**
@@ -63,12 +80,21 @@ export enum AudioProcessorMessageType {
 }
 
 /**
+ * Payload carried by audio worklet processor messages
+ */
+export interface AudioProcessorMessagePayload {
+  sampleRate?: number;
+  audioData?: Float32Array;
+  message?: string;
+}
+
+/**
  * Message from audio worklet processor
  */
 export interface AudioProcessorMessage {
   type: AudioProcessorMessageType;
   timestamp: number;
-  payload?: any;
+  payload?: AudioProcessorMessagePayload;
 }
 
 /**

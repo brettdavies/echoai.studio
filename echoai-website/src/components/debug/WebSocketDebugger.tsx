@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  ConnectionState,
+import {
   LogLevel,
   LogCategory,
   logger
 } from '../../services/websocket';
 import { networkLoggers } from '../../utils/LoggerFactory';
-import { 
-  debugWebSocketFailure, 
-  testWebSocketConnection,
-  testExactServerMessage 
+import {
+  debugWebSocketFailure,
+  testExactServerMessage
 } from '../../utils/testWebSocket';
-import { useWebSocket } from '../../contexts/WebSocketContext';
-import { generateAudioTestMessage, generateAudioTestMessageString } from '../../utils/AudioTestUtils';
-import { 
-  validateOutgoingAudioSchema, 
-  createAudioMessage,
-  OutgoingAudioMessageSchema
+import { useWebSocket } from '../../contexts/useWebSocket';
+import { generateAudioTestMessage } from '../../utils/AudioTestUtils';
+import {
+  validateOutgoingAudioSchema,
+  createAudioMessage
 } from '../../services/websocket/WebSocketSchemas';
 import { DEFAULT_WS_URL } from '../../config';
 
@@ -27,7 +24,7 @@ interface LogEntry {
   isError: boolean;
   isMessage?: boolean;
   direction?: 'sent' | 'received';
-  data?: any;
+  data?: unknown;
 }
 
 interface WebSocketDebuggerProps {
@@ -39,7 +36,6 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({
 }) => {
   const [url, setUrl] = useState<string>(initialUrl);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const originalLogLevel = useRef<LogLevel>(LogLevel.INFO);
   const directSocketRef = useRef<WebSocket | null>(null);
   
   // Create a test message using the helper function to ensure correct schema
@@ -67,7 +63,7 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({
   }, [webSocketService]);
 
   // Add a log entry
-  const addLog = (message: string, isError: boolean = false, options?: { isMessage?: boolean; direction?: 'sent' | 'received'; data?: any }) => {
+  const addLog = (message: string, isError = false, options?: { isMessage?: boolean; direction?: 'sent' | 'received'; data?: unknown }) => {
     const timestamp = new Date().toLocaleTimeString();
     setLogs(prevLogs => [
       { 
@@ -85,7 +81,7 @@ export const WebSocketDebugger: React.FC<WebSocketDebuggerProps> = ({
   // Set up log capture on mount
   useEffect(() => {
     // Define our custom log handler
-    const logHandler = (level: LogLevel, category: LogCategory, message: string, data?: any) => {
+    const logHandler = (level: LogLevel, category: LogCategory, message: string, data?: unknown) => {
       // Only capture websocket related logs
       if (category === LogCategory.WS || category === LogCategory.ERROR) {
         const timestamp = new Date().toLocaleTimeString();

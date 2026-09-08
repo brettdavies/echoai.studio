@@ -12,7 +12,7 @@ const languageOptions = [
 ];
 
 const LanguageSelector: React.FC = () => {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   // Close dropdown when clicking outside

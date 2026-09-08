@@ -29,10 +29,10 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
    * 
    * @param {Array<Float32Array[]>} inputs Array of inputs, each containing arrays of channels
    * @param {Array<Float32Array[]>} outputs Array of outputs, each containing arrays of channels
-   * @param {Object} parameters AudioParam automation values
+   * @param {Object} _parameters AudioParam automation values
    * @returns {boolean} Whether to keep the processor alive
    */
-  process(inputs, outputs, parameters) {
+  process(inputs, outputs, _parameters) {
     // Get the first input's first channel
     const input = inputs[0];
     

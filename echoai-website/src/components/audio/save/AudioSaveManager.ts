@@ -1,5 +1,11 @@
 import { audioLoggers } from '../../../utils/LoggerFactory';
-import { AudioExportFormat, AudioExportOptions, AudioExportEventType } from '../../../types/audio-export';
+import {
+  AudioExportFormat,
+  AudioExportOptions,
+  AudioExportEventType,
+  AudioExportEventData,
+  AudioSaveEvent
+} from '../../../types/audio-export';
 import { AudioFileExporter } from './AudioFileExporter';
 
 /**
@@ -7,7 +13,7 @@ import { AudioFileExporter } from './AudioFileExporter';
  */
 export class AudioSaveManager {
   // Event listeners
-  private static eventListeners: Map<AudioExportEventType, ((event: any) => void)[]> = new Map();
+  private static eventListeners: Map<AudioExportEventType, ((event: AudioSaveEvent) => void)[]> = new Map();
   
   /**
    * Save audio data to file
@@ -71,12 +77,10 @@ export class AudioSaveManager {
    * @param eventType Event type to listen for
    * @param listener Listener callback
    */
-  static addEventListener(eventType: AudioExportEventType, listener: (event: any) => void): void {
-    if (!AudioSaveManager.eventListeners.has(eventType)) {
-      AudioSaveManager.eventListeners.set(eventType, []);
-    }
-    
-    AudioSaveManager.eventListeners.get(eventType)!.push(listener);
+  static addEventListener(eventType: AudioExportEventType, listener: (event: AudioSaveEvent) => void): void {
+    const listeners = AudioSaveManager.eventListeners.get(eventType) ?? [];
+    listeners.push(listener);
+    AudioSaveManager.eventListeners.set(eventType, listeners);
     audioLoggers.audioCapture.debug(`AudioSaveManager: Added event listener for ${eventType}`);
   }
   
@@ -86,12 +90,12 @@ export class AudioSaveManager {
    * @param eventType Event type to remove listener from
    * @param listener Listener to remove
    */
-  static removeEventListener(eventType: AudioExportEventType, listener: (event: any) => void): void {
-    if (!AudioSaveManager.eventListeners.has(eventType)) {
+  static removeEventListener(eventType: AudioExportEventType, listener: (event: AudioSaveEvent) => void): void {
+    const listeners = AudioSaveManager.eventListeners.get(eventType);
+    if (!listeners) {
       return;
     }
-    
-    const listeners = AudioSaveManager.eventListeners.get(eventType)!;
+
     const index = listeners.indexOf(listener);
     
     if (index !== -1) {
@@ -107,20 +111,21 @@ export class AudioSaveManager {
    * @param data Event data
    * @private
    */
-  private static _emitEvent(eventType: AudioExportEventType, data: any): void {
-    if (!AudioSaveManager.eventListeners.has(eventType)) {
+  private static _emitEvent(eventType: AudioExportEventType, data: AudioExportEventData): void {
+    const listeners = AudioSaveManager.eventListeners.get(eventType);
+    if (!listeners) {
       return;
     }
-    
-    const event = {
+
+    const event: AudioSaveEvent = {
       type: eventType,
       timestamp: Date.now(),
       ...data
     };
-    
+
     audioLoggers.audioCapture.debug(`AudioSaveManager: Emitting event ${eventType}`, event);
-    
-    for (const listener of AudioSaveManager.eventListeners.get(eventType)!) {
+
+    for (const listener of listeners) {
       try {
         listener(event);
       } catch (error) {

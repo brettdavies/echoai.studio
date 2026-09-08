@@ -7,14 +7,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { 
-  logger, 
-  LogLevel, 
-  LogCategory, 
-  LogComponent, 
-  DEFAULT_LOGGING_CONFIG 
+import {
+  logger,
+  LogLevel,
+  LogComponent
 } from '../../utils/Logger';
-import { audioLoggers, uiLoggers } from '../../utils/LoggerFactory';
+import { uiLoggers } from '../../utils/LoggerFactory';
 import { isProductionMode } from '../../utils/environment';
 
 // Component styles

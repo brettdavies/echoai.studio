@@ -6,22 +6,18 @@
  */
 
 import { WebSocketService } from '../WebSocketService';
-import type { 
-  AudioStreamingOptions, 
-  AudioMessageType,
-  AudioMetadata,
+import type {
+  AudioStreamingOptions,
   StatusChangeCallback,
-  AudioConfig,
   WebSocketStateChangeEvent
 } from './types';
 import { DEFAULT_AUDIO_OPTIONS } from './types';
-import { combineAudioChunks, convertToInt16, arrayBufferToBase64 } from './AudioUtils';
-import { 
-  createJsonMessage, 
+import { combineAudioChunks, convertToInt16 } from './AudioUtils';
+import {
+  createJsonMessage,
   processAudioData
 } from './MessageFormatter';
 import { logger, LogCategory } from '../WebSocketLogger';
-import { generateAudioTestMessageString } from '../../../utils/AudioTestUtils';
 
 /**
  * Manages streaming of processed audio data over WebSocket
@@ -31,12 +27,12 @@ export class AudioStreamingBridge {
   private webSocketService: WebSocketService;
   private options: AudioStreamingOptions;
   private audioBuffer: Float32Array[] = [];
-  private accumulatedBytes: number = 0;
-  private sequenceNumber: number = 0;
+  private accumulatedBytes = 0;
+  private sequenceNumber = 0;
   private bufferTimer: number | null = null;
-  private enabled: boolean = false;
-  private currentSampleRate: number = 16000;
-  private sampleRate: number = 16000;
+  private enabled = false;
+  private currentSampleRate = 16000;
+  private sampleRate = 16000;
   private statusChangeCallbacks: StatusChangeCallback[] = [];
   private serviceId: string;
   

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AudioSaveManager } from '../components/audio/save/AudioSaveManager';
-import { AudioExportEventType, AudioExportFormat, AudioExportOptions } from '../types/audio-export';
+import { AudioExportEventType, AudioExportOptions, AudioSaveEvent } from '../types/audio-export';
 import { audioLoggers } from '../utils/LoggerFactory';
 
 /**
@@ -54,14 +54,14 @@ export const useAudioSave = (defaultOptions?: Partial<AudioExportOptions>) => {
       setError(null);
     };
     
-    const handleExportComplete = (event: any) => {
+    const handleExportComplete = (event: AudioSaveEvent) => {
       setIsSaving(false);
-      setLastSavedUrl(event.url);
+      setLastSavedUrl(event.url ?? null);
     };
-    
-    const handleExportError = (event: any) => {
+
+    const handleExportError = (event: AudioSaveEvent) => {
       setIsSaving(false);
-      setError(event.error instanceof Error ? event.error : new Error(event.error?.toString() || 'Unknown error'));
+      setError(event.error instanceof Error ? event.error : new Error(event.error ? String(event.error) : 'Unknown error'));
     };
     
     // Register event listeners

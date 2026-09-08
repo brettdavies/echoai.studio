@@ -7,6 +7,40 @@ declare namespace dashjs {
     create(): MediaPlayerInstance;
   }
 
+  interface MediaPlayerSettings {
+    debug?: {
+      logLevel?: number;
+      dispatchEvent?: boolean;
+    };
+    streaming?: {
+      buffer?: {
+        fastSwitchEnabled?: boolean;
+        [key: string]: unknown;
+      };
+      liveCatchup?: {
+        enabled?: boolean;
+        maxDrift?: number;
+        [key: string]: unknown;
+      };
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  }
+
+  interface MediaPlayerEvent {
+    type?: string;
+  }
+
+  interface MediaPlayerErrorEvent extends MediaPlayerEvent {
+    error?: string | { code?: number; message?: string; data?: unknown };
+    event?: { id?: string; message?: string; url?: string };
+  }
+
+  interface PlaybackErrorEvent extends MediaPlayerEvent {
+    error?: unknown;
+    message?: string;
+  }
+
   interface MediaPlayerInstance {
     initialize(view?: HTMLElement, source?: string, autoPlay?: boolean): void;
     attachView(element: HTMLElement): void;
@@ -26,13 +60,13 @@ declare namespace dashjs {
     setMute(value: boolean): void;
     isMuted(): boolean;
     setAutoPlay(value: boolean): void;
-    updateSettings(settings: any): void;
-    on(type: string, listener: Function, scope?: any): void;
-    off(type: string, listener: Function, scope?: any): void;
-    
+    updateSettings(settings: MediaPlayerSettings): void;
+    on(type: string, listener: (event: MediaPlayerEvent) => void, scope?: object): void;
+    off(type: string, listener: (event: MediaPlayerEvent) => void, scope?: object): void;
+
     // Stream information methods
     getCurrentTrackFor(type: string): MediaTrack;
-    getBitrateInfoListFor(type: string): BitrateInfo[];
+    getBitrateInfoListFor?(type: string): BitrateInfo[];
     getBufferLength(type: string): number;
     getDashMetrics(): DashMetrics;
     getCurrentLiveLatency?(): number;
@@ -47,7 +81,7 @@ declare namespace dashjs {
     viewpoint?: string;
     roles?: string[];
     mediaInfo: MediaInfo;
-    adaptation?: any;
+    adaptation?: unknown;
   }
 
   interface MediaInfo {
@@ -57,7 +91,7 @@ declare namespace dashjs {
     sampleRate?: number;
     channelsCount?: number;
     bitrateList?: BitrateInfo[];
-    adaptation?: any;
+    adaptation?: unknown;
   }
 
   interface BitrateInfo {
@@ -70,32 +104,91 @@ declare namespace dashjs {
     bandwidth?: number;
   }
 
+  interface FragmentResponse {
+    url?: string;
+    responseHeaders?: string | Record<string, string>;
+    headers?: string | Record<string, string>;
+    [key: string]: unknown;
+  }
+
+  interface FragmentRequest {
+    index: number;
+    startTime: number;
+    duration: number;
+    url?: string;
+    mediaType?: string;
+    type?: string;
+    response?: FragmentResponse;
+    [key: string]: unknown;
+  }
+
+  interface HttpTraceRequest {
+    url?: string;
+    type?: string;
+    status?: number;
+    _status?: number;
+    _trequest?: number;
+    _tresponse?: number;
+    _tfinish?: number;
+    treceived?: number;
+    requestEndDate?: Date;
+    requestHeaders?: string | Record<string, string>;
+    responseHeaders?: string | Record<string, string>;
+    headers?: {
+      request?: string | Record<string, string>;
+      response?: string | Record<string, string>;
+    };
+    request?: {
+      headers?: string | Record<string, string>;
+    };
+    response?: FragmentResponse;
+    getAllResponseHeaders?(): string;
+    [key: string]: unknown;
+  }
+
+  interface MetricsHttpList {
+    list?: HttpTraceRequest[];
+  }
+
+  interface InternalPlayerMetrics {
+    debug?: {
+      metrics?: {
+        http?: MetricsHttpList;
+      };
+    };
+    metrics?: {
+      http?: MetricsHttpList;
+    };
+  }
+
+  interface InternalStreamProcessor {
+    fragmentModel?: {
+      getRequests(): HttpTraceRequest[] | null;
+    };
+  }
+
+  interface ManifestInfo {
+    availableStreams?: unknown[];
+    duration?: number;
+    loadedTime?: Date;
+    [key: string]: unknown;
+  }
+
   interface DashMetrics {
-    getCurrentAdaptationFor(type: string): any;
+    getCurrentAdaptationFor(type: string): unknown;
     getCurrentIndex?(type: string): number;
-    getCurrentRequest?(type: string): {x
-      index: number;
-      startTime: number;
-      duration: number;
-      url?: string;
-      mediaType?: string;
-      type?: string;
-      [key: string]: any;
+    getCurrentRequest?(type: string): FragmentRequest | null;
+    getLatestFragmentRequestForQuality?(streamId: string, quality: number): FragmentRequest | null;
+    getManifestInfo?(): ManifestInfo;
+    getHttpRequests?(): HttpTraceRequest[] | null;
+    httpList?: HttpTraceRequest[];
+    getRequestsQueue?(): HttpTraceRequest[] | null;
+    player?: InternalPlayerMetrics;
+    context?: {
+      player?: InternalPlayerMetrics;
+      streamProcessor?: InternalStreamProcessor;
     };
-    getLatestFragmentRequestForQuality?(streamId: string, quality: number): {
-      index: number;
-      startTime: number;
-      duration: number;
-      url?: string;
-      mediaType?: string;
-      [key: string]: any;
-    };
-    getManifestInfo?(): {
-      availableStreams?: any[];
-      duration?: number;
-      loadedTime?: Date;
-      [key: string]: any;
-    };
+    streamProcessor?: InternalStreamProcessor;
   }
 
   interface Debug {
@@ -140,4 +233,4 @@ interface Window {
     Debug: dashjs.Debug;
     Version?: string;
   };
-} 
+}

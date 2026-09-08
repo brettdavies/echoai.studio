@@ -59,10 +59,10 @@ export function generateAudioTestMessage(sampleSize = 32): OutgoingAudioMessageS
 
 /**
  * Generate a test message as a JSON string
- * @param sequenceNumber Optional sequence number (ignored in the output)
+ * @param _sequenceNumber Optional sequence number (ignored in the output)
  * @returns Stringified JSON audio message
  */
-export function generateAudioTestMessageString(sequenceNumber = 0): string {
+export function generateAudioTestMessageString(_sequenceNumber = 0): string {
   const message = generateAudioTestMessage();
   return JSON.stringify(message);
 } 

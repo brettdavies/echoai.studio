@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { 
-  AudioCaptureEventType, 
-  AudioCaptureState, 
-  AudioExportFormat,
-  AudioExportOptions,
+import {
+  AudioCaptureEventType,
+  AudioCaptureState,
   AudioProcessingOptions
 } from '../../../types/audio-capture';
+import { AudioExportFormat, AudioExportOptions } from '../../../types/audio-export';
 import { AudioCaptureManager } from './AudioCaptureManager';
 import { audioLoggers } from '../../../utils/LoggerFactory';
 
@@ -120,12 +119,18 @@ interface UseAudioCaptureOptions {
 export function useAudioCapture(options: UseAudioCaptureOptions = {}): AudioCaptureHookResult {
   // Manager ref to avoid recreating on each render
   const managerRef = useRef<AudioCaptureManager | null>(null);
-  
+
+  // Latest options, readable from the mount-only effect without re-running it
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  });
+
   // State for UI updates
   const [state, setState] = useState<AudioCaptureState>(AudioCaptureState.INACTIVE);
   const [duration, setDuration] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Initialize manager on mount
   useEffect(() => {
     // Check if Audio Worklet API is supported
@@ -139,7 +144,7 @@ export function useAudioCapture(options: UseAudioCaptureOptions = {}): AudioCapt
     audioLoggers.audioCapture.info('useAudioCapture: Initializing audio capture hook');
     
     // Create manager
-    const manager = new AudioCaptureManager(options.processingOptions);
+    const manager = new AudioCaptureManager(optionsRef.current.processingOptions);
     managerRef.current = manager;
     
     // Set up event listeners
@@ -169,9 +174,9 @@ export function useAudioCapture(options: UseAudioCaptureOptions = {}): AudioCapt
       }
       
       // Auto-export if enabled
-      if (options.autoExportOnStop && managerRef.current) {
+      if (optionsRef.current.autoExportOnStop && managerRef.current) {
         audioLoggers.audioCapture.info('useAudioCapture: Auto-exporting after stop');
-        const exportOptions = options.autoExportOptions || {
+        const exportOptions = optionsRef.current.autoExportOptions || {
           format: AudioExportFormat.WAV,
           autoDownload: true,
           normalize: true
@@ -218,9 +223,10 @@ export function useAudioCapture(options: UseAudioCaptureOptions = {}): AudioCapt
     manager.initialize()
       .then(() => {
         // Connect to source if provided
-        if (options.sourceNode) {
+        const { sourceNode, destinationNode } = optionsRef.current;
+        if (sourceNode) {
           audioLoggers.audioCapture.debug('useAudioCapture: Connecting to provided source node');
-          manager.connect(options.sourceNode, options.destinationNode || undefined);
+          manager.connect(sourceNode, destinationNode || undefined);
         }
       })
       .catch(err => {

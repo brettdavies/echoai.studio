@@ -33,14 +33,14 @@ export class WebSocketLogger extends Logger {
   /**
    * Log a WebSocket connection-related message
    */
-  public logConnection(level: LogLevel, message: string, data?: any): void {
+  public logConnection(level: LogLevel, message: string, data?: unknown): void {
     this.log(level, LogCategory.WS, message, data);
   }
   
   /**
    * Log a WebSocket message-related event
    */
-  public logMessage(level: LogLevel, message: string, data?: any): void {
+  public logMessage(level: LogLevel, message: string, data?: unknown): void {
     this.log(level, LogCategory.WS, message, data);
   }
 }
