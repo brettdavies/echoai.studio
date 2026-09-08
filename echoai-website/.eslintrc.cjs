@@ -22,4 +22,21 @@ module.exports = {
     // Allow props spreading
     'react/jsx-props-no-spreading': 'off',
   },
+  overrides: [
+    {
+      files: ['*.js', 'scripts/**/*.js'],
+      env: { node: true },
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+    {
+      // AudioWorkletGlobalScope provides these as globals
+      files: ['src/**/*-processor.js'],
+      globals: {
+        sampleRate: 'readonly',
+        currentTime: 'readonly',
+      },
+    },
+  ],
 } 
