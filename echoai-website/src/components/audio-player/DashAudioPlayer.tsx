@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { DashAudioPlayerProps } from '../../types/dash-player';
 import { useDashPlayer } from '../../hooks/useDashPlayer';
 import { useAudioVisualization } from '../../hooks/useAudioVisualization';
@@ -27,13 +26,12 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
   audioLoggers.dashPlayer.info(`DashAudioPlayer: Component initialized with streamingEnabled=${streamingEnabled}, streamingUrl=${streamingUrl}, enableCapture=${enableCapture}`);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const audioProcessorRef = useRef<any>(null);
+  const audioProcessorRef = useRef<{ setStreaming: (enabled: boolean) => void } | null>(null);
   const setupAttemptedRef = useRef(false);
   
   // Use custom hook for dash player management
   const {
     videoRef,
-    playerRef,
     isPlaying,
     volume,
     isMuted,
@@ -55,7 +53,6 @@ const DashAudioPlayer: React.FC<DashAudioPlayerProps> = ({
     audioContext,
     analyser,
     sourceNode,
-    dataArray,
     setupAudioVisualization,
     cleanupAudioNodes
   } = useAudioVisualization({

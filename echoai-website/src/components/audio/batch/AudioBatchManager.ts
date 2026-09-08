@@ -1,10 +1,33 @@
 import { audioLoggers } from '../../../utils/LoggerFactory';
-import { 
-  AudioBatchOptions, 
-  AudioBatchState, 
-  AudioBatchEventType, 
-  BatchStrategy 
+import {
+  AudioBatchOptions,
+  AudioBatchState,
+  AudioBatchEventType,
+  BatchStrategy
 } from '../../../types/audio-batch';
+
+/**
+ * Data attached to audio batch events
+ */
+export interface AudioBatchEventData {
+  dataLength?: number;
+  sampleRate?: number;
+  options?: AudioBatchOptions;
+  batchCount?: number;
+  totalSamples?: number;
+  currentBatch?: number;
+  totalBatches?: number;
+  progress?: number;
+  error?: unknown;
+}
+
+/**
+ * Event emitted by the audio batch manager
+ */
+export interface AudioBatchEvent extends AudioBatchEventData {
+  type: AudioBatchEventType;
+  timestamp: number;
+}
 
 /**
  * Manages audio batching operations
@@ -15,14 +38,14 @@ export class AudioBatchManager {
   
   // State
   private state: AudioBatchState = AudioBatchState.INACTIVE;
-  private sampleRate: number = 44100; // Default sample rate
+  private sampleRate = 44100; // Default sample rate
   
   // Data storage
   private inputData: Float32Array | null = null;
   private batches: Float32Array[] = [];
   
   // Event listeners
-  private eventListeners: Map<AudioBatchEventType, ((event: any) => void)[]> = new Map();
+  private eventListeners: Map<AudioBatchEventType, ((event: AudioBatchEvent) => void)[]> = new Map();
   
   /**
    * Create a new AudioBatchManager
@@ -293,12 +316,10 @@ export class AudioBatchManager {
    * @param eventType Event type to listen for
    * @param listener Listener callback
    */
-  addEventListener(eventType: AudioBatchEventType, listener: (event: any) => void): void {
-    if (!this.eventListeners.has(eventType)) {
-      this.eventListeners.set(eventType, []);
-    }
-    
-    this.eventListeners.get(eventType)!.push(listener);
+  addEventListener(eventType: AudioBatchEventType, listener: (event: AudioBatchEvent) => void): void {
+    const listeners = this.eventListeners.get(eventType) ?? [];
+    listeners.push(listener);
+    this.eventListeners.set(eventType, listeners);
     audioLoggers.audioCapture.debug(`AudioBatchManager: Added event listener for ${eventType}`);
   }
   
@@ -308,12 +329,12 @@ export class AudioBatchManager {
    * @param eventType Event type to remove listener from
    * @param listener Listener to remove
    */
-  removeEventListener(eventType: AudioBatchEventType, listener: (event: any) => void): void {
-    if (!this.eventListeners.has(eventType)) {
+  removeEventListener(eventType: AudioBatchEventType, listener: (event: AudioBatchEvent) => void): void {
+    const listeners = this.eventListeners.get(eventType);
+    if (!listeners) {
       return;
     }
-    
-    const listeners = this.eventListeners.get(eventType)!;
+
     const index = listeners.indexOf(listener);
     
     if (index !== -1) {
@@ -329,20 +350,21 @@ export class AudioBatchManager {
    * @param data Event data
    * @private
    */
-  private _emitEvent(eventType: AudioBatchEventType, data: any): void {
-    if (!this.eventListeners.has(eventType)) {
+  private _emitEvent(eventType: AudioBatchEventType, data: AudioBatchEventData): void {
+    const listeners = this.eventListeners.get(eventType);
+    if (!listeners) {
       return;
     }
-    
-    const event = {
+
+    const event: AudioBatchEvent = {
       type: eventType,
       timestamp: Date.now(),
       ...data
     };
-    
+
     audioLoggers.audioCapture.debug(`AudioBatchManager: Emitting event ${eventType}`, event);
-    
-    for (const listener of this.eventListeners.get(eventType)!) {
+
+    for (const listener of listeners) {
       try {
         listener(event);
       } catch (error) {

@@ -1,9 +1,8 @@
 import { AudioProcessorModule, ProcessedAudio, ProcessingOptions } from './types';
-import { combineAudioChunks } from './utils';
-import { 
-  createRubberBandNode, 
-  loadRubberBandModule, 
-  getRubberBandModule 
+import { combineAudioChunks } from '../../../services/websocket/audio/AudioUtils';
+import {
+  createRubberBandNode,
+  loadRubberBandModule
 } from './RubberBandLoader';
 import { 
   RubberBandConfig, 
@@ -11,7 +10,7 @@ import {
   createRubberBandOptions,
   configureRubberBandNode
 } from './RubberBandConfig';
-import { audioLoggers } from '../../utils/LoggerFactory';
+import { audioLoggers } from '../../../utils/LoggerFactory';
 
 /**
  * Creates a RubberBand processor module
@@ -66,7 +65,11 @@ export const createRubberBandModule = (
         await loadRubberBandModule();
         
         // Create temporary context for main initialization
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext ||
+          (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) {
+          throw new Error('Web Audio API is not supported in this browser');
+        }
         tempContext = new AudioContextClass();
         
         // Mark as initialized
@@ -147,7 +150,7 @@ export const createRubberBandModule = (
       if (hasSilentInput) {
         audioLoggers.resampler.warn(`Batch #${batchCount} contains all zeros, processing empty audio instead of skipping`);
         // Create an appropriately sized silent buffer that matches the expected output size
-        const targetRate = options.resample ? options.targetSampleRate! : sampleRate;
+        const targetRate = options.resample ? (options.targetSampleRate ?? sampleRate) : sampleRate;
         const expectedOutputLength = Math.ceil(
           totalLength * 
           (options.timeStretch || 1.0) * 
@@ -158,7 +161,7 @@ export const createRubberBandModule = (
       }
       
       // Create an offline context sized for this batch
-      const targetRate = options.resample ? options.targetSampleRate! : sampleRate;
+      const targetRate = options.resample ? (options.targetSampleRate ?? sampleRate) : sampleRate;
       // Calculate the correct output length accounting for both timeStretch and sample rate change
       const outputLength = Math.ceil(
         totalLength * 
@@ -198,7 +201,6 @@ export const createRubberBandModule = (
       nodeCreationCount++;
       const processorNode = await createRubberBandNode(
         context as BaseAudioContext,
-        sampleRate,
         fullConfig.processorPath,
         nodeOptions
       );
@@ -227,7 +229,7 @@ export const createRubberBandModule = (
       if (hasSilentOutput) {
         audioLoggers.resampler.warn(`Batch #${batchCount} produced silent output, using basic resampling as fallback`);
         // Use basic resampling as fallback
-        const targetRate = options.resample ? options.targetSampleRate! : sampleRate;
+        const targetRate = options.resample ? (options.targetSampleRate ?? sampleRate) : sampleRate;
         
         // Apply time stretching first if needed
         let stretchedInput = combinedInput;
@@ -269,7 +271,7 @@ export const createRubberBandModule = (
       
       // Use basic resampling as fallback
       const totalInputLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-      const targetRate = options.resample ? options.targetSampleRate! : sampleRate;
+      const targetRate = options.resample ? (options.targetSampleRate ?? sampleRate) : sampleRate;
       
       // Combine original chunks
       const combinedInput = new Float32Array(totalInputLength);
@@ -426,7 +428,7 @@ export const createRubberBandModule = (
         }
         
         // Log processing statistics
-        const finalSampleRate = options.resample ? options.targetSampleRate! : inputSampleRate;
+        const finalSampleRate = options.resample ? (options.targetSampleRate ?? inputSampleRate) : inputSampleRate;
         audioLoggers.resampler.info(`Processing complete: ${combinedData.length} samples at ${finalSampleRate}Hz (${isSilent ? 'SILENT' : 'with audio'})`);
         audioLoggers.resampler.info(`Performance metrics:
 - Total chunks received: ${totalChunkCount}

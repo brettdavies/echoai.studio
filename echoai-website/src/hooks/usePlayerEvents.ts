@@ -29,7 +29,7 @@ export function usePlayerEvents({
     
     try {
       // Error event
-      player.on('error', (error: any) => {
+      player.on('error', (error: dashjs.MediaPlayerErrorEvent) => {
         audioLoggers.dashPlayer.error('Dash player error:', error);
         onError(`Dash.js error: ${error?.event?.message || 'Unknown error'}`);
       });
@@ -87,7 +87,7 @@ export function usePlayerEvents({
       });
       
       // Playback error
-      player.on('playbackError', (error: any) => {
+      player.on('playbackError', (error: dashjs.PlaybackErrorEvent) => {
         audioLoggers.dashPlayer.error('Playback error:', error);
         onError(`Playback error: ${error?.message || 'Unknown playback error'}`);
       });

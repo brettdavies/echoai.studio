@@ -23,7 +23,7 @@ const Waveform: React.FC = () => {
   };
 
   // Format SVG path from points
-  const createPath = (points: { x: number, y: number }[], width: number, offset: number = 0) => {
+  const createPath = (points: { x: number, y: number }[], offset = 0) => {
     let path = `M ${offset} ${points[0].y} `;
     
     for (let i = 1; i < points.length; i++) {
@@ -41,27 +41,27 @@ const Waveform: React.FC = () => {
       const numPoints = 120; // Increased number of points
       
       // Generate multiple paths for a more complex waveform
-      const path1 = createPath(generateWaveformPoints(width, height, numPoints), width, 0);
-      const path2 = createPath(generateWaveformPoints(width, height, numPoints), width, width);
+      const path1 = createPath(generateWaveformPoints(width, height, numPoints), 0);
+      const path2 = createPath(generateWaveformPoints(width, height, numPoints), width);
       
       setPaths([path1, path2]);
     }
   }, []);
 
   // Animate waveform with horizontal movement
-  const animate = (time: number) => {
-    if (previousTimeRef.current !== undefined) {
-      setOffset(prevOffset => {
-        const newOffset = prevOffset - 1;
-        return newOffset <= -1000 ? 0 : newOffset;
-      });
-    }
-    
-    previousTimeRef.current = time;
-    requestRef.current = requestAnimationFrame(animate);
-  };
-
   useEffect(() => {
+    const animate = (time: number) => {
+      if (previousTimeRef.current !== undefined) {
+        setOffset(prevOffset => {
+          const newOffset = prevOffset - 1;
+          return newOffset <= -1000 ? 0 : newOffset;
+        });
+      }
+
+      previousTimeRef.current = time;
+      requestRef.current = requestAnimationFrame(animate);
+    };
+
     requestRef.current = requestAnimationFrame(animate);
     return () => {
       if (requestRef.current) {

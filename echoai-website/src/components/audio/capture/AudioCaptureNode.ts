@@ -12,9 +12,9 @@ export class AudioCaptureNode {
   private workletNode: AudioWorkletNode | null = null;
   private sourceNode: AudioNode | null = null;
   private destinationNode: AudioNode | null = null;
-  private isCapturing: boolean = false;
-  private isLoaded: boolean = false;
-  private processorSampleRate: number = 0;
+  private isCapturing = false;
+  private isLoaded = false;
+  private processorSampleRate = 0;
   
   // Callbacks
   private onChunkCallback: ((chunk: Float32Array) => void) | null = null;
@@ -252,29 +252,35 @@ export class AudioCaptureNode {
     const { type, payload } = event.data;
     
     switch (type) {
-      case AudioProcessorMessageType.PROCESSOR_READY:
-        this.processorSampleRate = payload.sampleRate;
-        audioLoggers.audioCapture.info(`AudioCaptureNode: Processor ready with sample rate ${payload.sampleRate}Hz`);
+      case AudioProcessorMessageType.PROCESSOR_READY: {
+        if (typeof payload?.sampleRate === 'number') {
+          this.processorSampleRate = payload.sampleRate;
+        }
+        audioLoggers.audioCapture.info(`AudioCaptureNode: Processor ready with sample rate ${this.processorSampleRate}Hz`);
         if (this.onReadyCallback) {
           this.onReadyCallback(this.processorSampleRate);
         }
         break;
-        
-      case AudioProcessorMessageType.CHUNK_PROCESSED:
-        if (this.onChunkCallback && payload.audioData) {
-          audioLoggers.audioCapture.debug(`AudioCaptureNode: Received audio chunk with ${payload.audioData.length} samples`);
-          this.onChunkCallback(payload.audioData);
+      }
+
+      case AudioProcessorMessageType.CHUNK_PROCESSED: {
+        const audioData = payload?.audioData;
+        if (this.onChunkCallback && audioData) {
+          audioLoggers.audioCapture.debug(`AudioCaptureNode: Received audio chunk with ${audioData.length} samples`);
+          this.onChunkCallback(audioData);
         }
         break;
-        
-      case AudioProcessorMessageType.ERROR:
-        const errorMsg = payload.message || 'Unknown processor error';
+      }
+
+      case AudioProcessorMessageType.ERROR: {
+        const errorMsg = payload?.message || 'Unknown processor error';
         audioLoggers.audioCapture.error(`AudioCaptureNode: Processor error: ${errorMsg}`);
         if (this.onErrorCallback) {
           this.onErrorCallback(new Error(errorMsg));
         }
         break;
-        
+      }
+
       default:
         audioLoggers.audioCapture.warn(`AudioCaptureNode: Unknown message type: ${type}`);
     }

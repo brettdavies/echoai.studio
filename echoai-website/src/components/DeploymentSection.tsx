@@ -7,15 +7,15 @@ const DeploymentSection = () => {
   const deploymentSteps = [
     {
       title: t('deployment.steps.step1.title'),
-      features: t('deployment.steps.step1.features', { returnObjects: true })
+      features: t('deployment.steps.step1.features', { returnObjects: true }) as string[]
     },
     {
       title: t('deployment.steps.step2.title'),
-      features: t('deployment.steps.step2.features', { returnObjects: true })
+      features: t('deployment.steps.step2.features', { returnObjects: true }) as string[]
     },
     {
       title: t('deployment.steps.step3.title'),
-      features: t('deployment.steps.step3.features', { returnObjects: true })
+      features: t('deployment.steps.step3.features', { returnObjects: true }) as string[]
     }
   ];
 

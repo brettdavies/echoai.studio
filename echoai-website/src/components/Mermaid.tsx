@@ -28,57 +28,56 @@ const Mermaid: React.FC<MermaidProps> = ({ chart }) => {
   
   // Set up intersection observer to detect when diagram is visible
   useEffect(() => {
-    if (!mermaidRef.current) return;
-    
+    const node = mermaidRef.current;
+    if (!node) return;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
       },
       { threshold: 0.1 } // Trigger when 10% of the element is visible
     );
-    
-    observer.observe(mermaidRef.current);
-    
+
+    observer.observe(node);
+
     return () => {
-      if (mermaidRef.current) {
-        observer.unobserve(mermaidRef.current);
-      }
+      observer.unobserve(node);
     };
   }, []);
-  
+
   // Render chart when it becomes visible
   useEffect(() => {
     if (!chart || !isVisible || hasRendered) return;
-    
+
+    const renderChart = async () => {
+      if (mermaidRef.current) {
+        try {
+          // Create a unique ID for this rendering
+          const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+          // Adding a small delay to ensure i18n translations are fully loaded
+          const { svg } = await mermaid.render(id, chart);
+          mermaidRef.current.innerHTML = svg;
+        } catch (error) {
+          uiLoggers.general.error('Error rendering mermaid chart:', error);
+          // Only show error in development, not in production
+          if (process.env.NODE_ENV === 'development') {
+            mermaidRef.current.innerHTML = `<div class="text-red-500">Error rendering diagram</div>`;
+          } else {
+            // In production, fail silently and try again on next render cycle
+            mermaidRef.current.innerHTML = '';
+          }
+        }
+      }
+    };
+
     // Wait for the DOM to settle before rendering
     const timer = setTimeout(() => {
       renderChart();
       setHasRendered(true);
     }, 50);
-    
+
     return () => clearTimeout(timer);
   }, [chart, isVisible, hasRendered]);
-  
-  const renderChart = async () => {
-    if (mermaidRef.current) {
-      try {
-        // Create a unique ID for this rendering
-        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-        // Adding a small delay to ensure i18n translations are fully loaded
-        const { svg } = await mermaid.render(id, chart);
-        mermaidRef.current.innerHTML = svg;
-      } catch (error) {
-        uiLoggers.general.error('Error rendering mermaid chart:', error);
-        // Only show error in development, not in production
-        if (process.env.NODE_ENV === 'development') {
-          mermaidRef.current.innerHTML = `<div class="text-red-500">Error rendering diagram</div>`;
-        } else {
-          // In production, fail silently and try again on next render cycle
-          mermaidRef.current.innerHTML = '';
-        }
-      }
-    }
-  };
 
   return <div className="mermaid-diagram w-full h-full" ref={mermaidRef}></div>;
 };

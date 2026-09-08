@@ -101,7 +101,7 @@ export class WebSocketManager {
    * @param code Close code
    * @param reason Close reason
    */
-  public disconnect(code: number = 1000, reason: string = 'Normal closure'): void {
+  public disconnect(code = 1000, reason = 'Normal closure'): void {
     if (this.webSocketService) {
       this.webSocketService.disconnect(code, reason);
     }
@@ -114,7 +114,7 @@ export class WebSocketManager {
    * @param retry Whether to retry sending on failure
    * @returns Promise that resolves when sent or queued
    */
-  public send(data: string | ArrayBuffer | Blob, priority: number = 10, retry: boolean = true): Promise<void> {
+  public send(data: string | ArrayBuffer | Blob, priority = 10, retry = true): Promise<void> {
     const service = this.getActiveService();
     return service.send(data, priority, retry);
   }
@@ -180,7 +180,7 @@ export class WebSocketManager {
    * @param timeout Connection timeout in milliseconds
    * @returns Promise resolving to test result
    */
-  public static async testConnection(url: string, timeout: number = 5000) {
+  public static async testConnection(url: string, timeout = 5000) {
     return WebSocketService.testConnection(url, timeout);
   }
 }

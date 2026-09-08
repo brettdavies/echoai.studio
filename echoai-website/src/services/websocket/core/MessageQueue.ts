@@ -7,13 +7,13 @@ import { logger, LogCategory } from '../WebSocketLogger';
  */
 export class MessageQueue {
   private messageQueue: QueuedMessage[] = [];
-  private maxQueueSize: number = 1000;
+  private maxQueueSize = 1000;
   
   /**
    * Creates a new MessageQueue
    * @param maxQueueSize Maximum number of messages to keep in the queue
    */
-  constructor(maxQueueSize: number = 1000) {
+  constructor(maxQueueSize = 1000) {
     this.maxQueueSize = maxQueueSize;
     logger.debug(LogCategory.WS, 'MessageQueue created', { maxQueueSize });
   }
@@ -60,7 +60,7 @@ export class MessageQueue {
    * @param batchSize Maximum number of messages to process at once
    * @returns Array of queued messages
    */
-  dequeue(batchSize: number = 50): QueuedMessage[] {
+  dequeue(batchSize = 50): QueuedMessage[] {
     const messages = this.messageQueue.splice(0, batchSize);
     logger.debug(LogCategory.WS, 'Messages dequeued', { 
       count: messages.length, 

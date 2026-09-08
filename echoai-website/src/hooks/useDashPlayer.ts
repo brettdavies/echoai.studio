@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { audioLoggers } from '../utils/LoggerFactory';
 import DashAudioPlayerLogger from '../utils/DashAudioPlayerLogger';
 import { PlayerState } from '../types/dash-player';
 import { useDashScriptLoader } from './useDashScriptLoader';

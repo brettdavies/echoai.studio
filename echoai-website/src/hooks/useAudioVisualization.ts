@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { audioLoggers } from '../utils/LoggerFactory';
-import { AudioNodes, VisualizationData } from '../types/dash-player';
+import { AudioNodes } from '../types/dash-player';
 
 interface UseAudioVisualizationProps {
   videoRef: React.RefObject<HTMLVideoElement>;
@@ -111,7 +111,12 @@ export function useAudioVisualization({
       
       // Create AudioContext
       audioLoggers.dashPlayer.info('Creating new AudioContext');
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioContextClass) {
+        throw new Error('Web Audio API is not supported in this browser');
+      }
+      const ctx = new AudioContextClass();
       audioContextRef.current = ctx;
       
       audioLoggers.dashPlayer.info(`AudioContext created, state: ${ctx.state}`);
@@ -279,7 +284,7 @@ export function useAudioVisualization({
         animationRef.current = null;
       }
     };
-  }, [showCanvas, isPlaying, renderVisualization]);
+  }, [showCanvas, isPlaying, renderVisualization, canvasRef]);
   
   // Clean up on unmount
   useEffect(() => {

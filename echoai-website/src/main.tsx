@@ -16,7 +16,12 @@ if (isDevelopmentMode()) {
     .catch(error => appLogger.error('Failed to initialize debug utilities:', error));
 }
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  throw new Error('Root element #root not found in document');
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <WebSocketProvider>
       <BrowserRouter>

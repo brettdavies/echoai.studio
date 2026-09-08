@@ -44,7 +44,7 @@ export interface OrchestratorOptions {
    */
   processOptions?: {
     effects?: string[];
-    [key: string]: any;
+    [key: string]: unknown;
   };
   
   /**
@@ -58,7 +58,7 @@ export interface OrchestratorOptions {
   streamOptions?: {
     url?: string;
     protocol?: 'websocket' | 'http' | 'custom';
-    [key: string]: any;
+    [key: string]: unknown;
   };
   
   /**
@@ -104,7 +104,7 @@ export enum OrchestratorEventType {
 export interface OrchestratorEvent {
   type: OrchestratorEventType;
   timestamp: number;
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 /**
@@ -124,7 +124,7 @@ export interface PipelineStep {
   /**
    * Step options
    */
-  options?: any;
+  options?: unknown;
   
   /**
    * Whether the step is optional

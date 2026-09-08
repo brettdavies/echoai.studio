@@ -94,13 +94,13 @@ export interface LogMessage {
   category: LogCategory;
   level: LogLevel;
   message: string;
-  data?: any;
+  data?: unknown;
   timestamp: number;
   component?: LogComponent;
 }
 
 // Define the LogHandler type
-export type LogHandler = (level: LogLevel, category: LogCategory, message: string, data?: any, component?: LogComponent) => void;
+export type LogHandler = (level: LogLevel, category: LogCategory, message: string, data?: unknown, component?: LogComponent) => void;
 
 /**
  * Base Logger class
@@ -109,8 +109,8 @@ export class Logger {
   private static instance: Logger;
   private static logLevel: LogLevel; // No initial default value
   private logs: LogMessage[] = [];
-  private maxLogSize: number = 1000;
-  private serviceId: string = '';
+  private maxLogSize = 1000;
+  private serviceId = '';
   
   // Add category filters to control which categories are logged
   private categoryFilters: Set<LogCategory> = new Set(Object.values(LogCategory));
@@ -355,7 +355,7 @@ export class Logger {
    * @param data Additional data
    * @param component Optional component identifier
    */
-  public trace(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+  public trace(category: LogCategory, message: string, data?: unknown, component?: LogComponent): void {
     this.log(LogLevel.TRACE, category, message, data, component);
   }
   
@@ -366,7 +366,7 @@ export class Logger {
    * @param data Additional data
    * @param component Optional component identifier
    */
-  public debug(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+  public debug(category: LogCategory, message: string, data?: unknown, component?: LogComponent): void {
     this.log(LogLevel.DEBUG, category, message, data, component);
   }
   
@@ -377,7 +377,7 @@ export class Logger {
    * @param data Additional data
    * @param component Optional component identifier
    */
-  public info(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+  public info(category: LogCategory, message: string, data?: unknown, component?: LogComponent): void {
     this.log(LogLevel.INFO, category, message, data, component);
   }
   
@@ -388,7 +388,7 @@ export class Logger {
    * @param data Additional data
    * @param component Optional component identifier
    */
-  public warn(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+  public warn(category: LogCategory, message: string, data?: unknown, component?: LogComponent): void {
     this.log(LogLevel.WARN, category, message, data, component);
   }
   
@@ -399,7 +399,7 @@ export class Logger {
    * @param data Additional data
    * @param component Optional component identifier
    */
-  public error(category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+  public error(category: LogCategory, message: string, data?: unknown, component?: LogComponent): void {
     this.log(LogLevel.ERROR, category, message, data, component);
   }
   
@@ -460,7 +460,7 @@ export class Logger {
    * @param data Additional data
    * @param component Optional component identifier
    */
-  protected log(level: LogLevel, category: LogCategory, message: string, data?: any, component?: LogComponent): void {
+  protected log(level: LogLevel, category: LogCategory, message: string, data?: unknown, component?: LogComponent): void {
     // Skip logging if level is too verbose for current settings
     if (level > Logger.logLevel) {
       return;
@@ -541,7 +541,7 @@ export class ComponentLogger {
    * @param message The message
    * @param data Additional data
    */
-  public trace(category: LogCategory, message: string, data?: any): void {
+  public trace(category: LogCategory, message: string, data?: unknown): void {
     this.logger.trace(category, message, data, this.component);
   }
   
@@ -551,7 +551,7 @@ export class ComponentLogger {
    * @param message The message
    * @param data Additional data
    */
-  public debug(category: LogCategory, message: string, data?: any): void {
+  public debug(category: LogCategory, message: string, data?: unknown): void {
     this.logger.debug(category, message, data, this.component);
   }
   
@@ -561,7 +561,7 @@ export class ComponentLogger {
    * @param message The message
    * @param data Additional data
    */
-  public info(category: LogCategory, message: string, data?: any): void {
+  public info(category: LogCategory, message: string, data?: unknown): void {
     this.logger.info(category, message, data, this.component);
   }
   
@@ -571,7 +571,7 @@ export class ComponentLogger {
    * @param message The message
    * @param data Additional data
    */
-  public warn(category: LogCategory, message: string, data?: any): void {
+  public warn(category: LogCategory, message: string, data?: unknown): void {
     this.logger.warn(category, message, data, this.component);
   }
   
@@ -581,7 +581,7 @@ export class ComponentLogger {
    * @param message The message
    * @param data Additional data
    */
-  public error(category: LogCategory, message: string, data?: any): void {
+  public error(category: LogCategory, message: string, data?: unknown): void {
     this.logger.error(category, message, data, this.component);
   }
 }
@@ -616,7 +616,7 @@ export class AudioLogger extends Logger {
    * @param message The message to log
    * @param data Additional data
    */
-  public logWasm(level: LogLevel, message: string, data?: any): void {
+  public logWasm(level: LogLevel, message: string, data?: unknown): void {
     switch (level) {
       case LogLevel.ERROR:
         this.error(LogCategory.WASM, message, data);
@@ -645,7 +645,7 @@ export class AudioLogger extends Logger {
    * @param message The message to log
    * @param data Additional data
    */
-  public logResampler(level: LogLevel, message: string, data?: any): void {
+  public logResampler(level: LogLevel, message: string, data?: unknown): void {
     switch (level) {
       case LogLevel.ERROR:
         this.error(LogCategory.RESAMPLER, message, data, LogComponent.RESAMPLER);
@@ -674,7 +674,7 @@ export class AudioLogger extends Logger {
    * @param message The message to log
    * @param data Additional data
    */
-  public logWorklet(level: LogLevel, message: string, data?: any): void {
+  public logWorklet(level: LogLevel, message: string, data?: unknown): void {
     switch (level) {
       case LogLevel.ERROR:
         this.error(LogCategory.WORKLET, message, data, LogComponent.AUDIO_WORKLET);
@@ -703,7 +703,7 @@ export class AudioLogger extends Logger {
    * @param message The message to log
    * @param data Additional data
    */
-  public logProcessor(level: LogLevel, message: string, data?: any): void {
+  public logProcessor(level: LogLevel, message: string, data?: unknown): void {
     switch (level) {
       case LogLevel.ERROR:
         this.error(LogCategory.PROCESSOR, message, data, LogComponent.AUDIO_PROCESSOR);

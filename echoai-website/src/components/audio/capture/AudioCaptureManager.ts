@@ -1,10 +1,13 @@
-import { 
-  AudioCaptureEvent, 
-  AudioCaptureEventType, 
+import {
+  AudioCaptureEvent,
+  AudioCaptureEventDetails,
+  AudioCaptureEventType,
   AudioCaptureState,
   AudioProcessingOptions
 } from '../../../types/audio-capture';
+import { AudioExportOptions } from '../../../types/audio-export';
 import { AudioCaptureNode } from './AudioCaptureNode';
+import { AudioSaveManager } from '../save/AudioSaveManager';
 import { audioLoggers } from '../../../utils/LoggerFactory';
 
 /**
@@ -17,7 +20,7 @@ export class AudioCaptureManager {
   private audioContext: AudioContext | null = null;
   private captureNode: AudioCaptureNode | null = null;
   private state: AudioCaptureState = AudioCaptureState.INACTIVE;
-  private originalSampleRate: number = 0;
+  private originalSampleRate = 0;
   private audioChunks: Float32Array[] = [];
   private processingOptions: AudioProcessingOptions = {
     resample: false,
@@ -55,7 +58,12 @@ export class AudioCaptureManager {
       // Create audio context if it doesn't exist
       if (!this.audioContext) {
         audioLoggers.audioCapture.debug('AudioCaptureManager: Creating new AudioContext');
-        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const AudioContextClass = window.AudioContext ||
+          (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) {
+          throw new Error('Web Audio API is not supported in this browser');
+        }
+        this.audioContext = new AudioContextClass();
       }
       
       // Create capture node
@@ -229,8 +237,46 @@ export class AudioCaptureManager {
   }
   
   /**
+   * Export the captured audio through the save manager
+   *
+   * @param options Export options
+   * @returns Promise resolving to the URL of the exported file
+   */
+  async exportAudio(options: Partial<AudioExportOptions> = {}): Promise<string> {
+    const { data, sampleRate } = this.getCapturedAudio();
+
+    if (data.length === 0) {
+      const errorMsg = 'No captured audio to export';
+      audioLoggers.audioCapture.warn(`AudioCaptureManager: ${errorMsg}`);
+      this._emitEvent(AudioCaptureEventType.EXPORT_ERROR, { error: errorMsg });
+      throw new Error(errorMsg);
+    }
+
+    audioLoggers.audioCapture.info('AudioCaptureManager: Exporting captured audio', {
+      totalSamples: data.length,
+      sampleRate
+    });
+
+    this._emitEvent(AudioCaptureEventType.EXPORT_START, {
+      totalSamples: data.length,
+      sampleRate
+    });
+
+    try {
+      const url = await AudioSaveManager.saveAudio(data, sampleRate, options);
+      this._emitEvent(AudioCaptureEventType.EXPORT_COMPLETE, { url });
+      return url;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Export failed';
+      audioLoggers.audioCapture.error(`AudioCaptureManager: Export error: ${errorMsg}`, error);
+      this._emitEvent(AudioCaptureEventType.EXPORT_ERROR, { error: errorMsg });
+      throw error;
+    }
+  }
+
+  /**
    * Add an event listener
-   * 
+   *
    * @param eventType The event type to listen for
    * @param callback The callback to call when the event occurs
    */
@@ -370,7 +416,7 @@ export class AudioCaptureManager {
    * @param type The event type
    * @param details Optional event details
    */
-  private _emitEvent(type: AudioCaptureEventType, details?: any): void {
+  private _emitEvent(type: AudioCaptureEventType, details?: AudioCaptureEventDetails): void {
     const event: AudioCaptureEvent = {
       type,
       timestamp: Date.now(),

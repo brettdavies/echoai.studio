@@ -16,10 +16,17 @@ import { EventEmitter } from './core/EventEmitter';
 import { MessageQueue } from './core/MessageQueue';
 import { ConnectionManager } from './core/ConnectionManager';
 import { logger, LogCategory } from './WebSocketLogger';
-import { 
-  validateOutgoingAudioSchema, 
+import {
+  validateOutgoingAudioSchema,
   validateOutgoingTargetLanguageSchema
 } from './WebSocketSchemas';
+
+export type StateChangeEvent = CustomEvent<{
+  oldState: ConnectionState;
+  newState: ConnectionState;
+}>;
+
+export type StateChangeListener = (event: StateChangeEvent) => void;
 
 /**
  * WebSocketService handles all WebSocket communication with automatic
@@ -67,7 +74,7 @@ export class WebSocketService {
    * @param code Close code
    * @param reason Close reason
    */
-  disconnect(code: number = 1000, reason: string = 'Normal closure'): void {
+  disconnect(code = 1000, reason = 'Normal closure'): void {
     this.connectionManager.disconnect(code, reason);
   }
   
@@ -78,7 +85,7 @@ export class WebSocketService {
    * @param retry Whether to retry sending on failure
    * @returns Promise that resolves when sent or queued
    */
-  send(data: string | ArrayBuffer | Blob, priority: number = 10, retry: boolean = true): Promise<void> {
+  send(data: string | ArrayBuffer | Blob, priority = 10, retry = true): Promise<void> {
     // Log message details
     const messageType = typeof data === 'string' ? 'string' : (data instanceof ArrayBuffer ? 'ArrayBuffer' : 'Blob');
     const messageSize = typeof data === 'string' ? data.length : (data instanceof ArrayBuffer ? data.byteLength : data.size);
@@ -276,10 +283,10 @@ export class WebSocketService {
    * @param timeout Connection timeout in milliseconds
    * @returns Promise resolving to connection test result
    */
-  static async testConnection(url: string, timeout: number = 5000): Promise<{
+  static async testConnection(url: string, timeout = 5000): Promise<{
     success: boolean;
     error?: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   }> {
     logger.info(LogCategory.WS, `Testing direct connection to ${url}`);
     
@@ -366,13 +373,13 @@ export class WebSocketService {
    * Global state change listeners for monitoring all WebSocket connections
    * This is useful for UI components that need to track connection status
    */
-  private static globalStateChangeListeners: Set<(event: any) => void> = new Set();
+  private static globalStateChangeListeners: Set<StateChangeListener> = new Set();
 
   /**
    * Add a global state change listener
    * @param listener The listener function
    */
-  static addGlobalStateChangeListener(listener: (event: any) => void): void {
+  static addGlobalStateChangeListener(listener: StateChangeListener): void {
     WebSocketService.globalStateChangeListeners.add(listener);
   }
 
@@ -380,7 +387,7 @@ export class WebSocketService {
    * Remove a global state change listener
    * @param listener The listener function to remove
    */
-  static removeGlobalStateChangeListener(listener: (event: any) => void): void {
+  static removeGlobalStateChangeListener(listener: StateChangeListener): void {
     WebSocketService.globalStateChangeListeners.delete(listener);
   }
 
@@ -388,7 +395,7 @@ export class WebSocketService {
    * Notify global listeners of a state change
    * @param event The state change event
    */
-  static notifyGlobalStateChange(event: any): void {
+  static notifyGlobalStateChange(event: StateChangeEvent): void {
     WebSocketService.globalStateChangeListeners.forEach(listener => {
       try {
         listener(event);

@@ -1,5 +1,5 @@
 import { AudioCaptureManager } from '../capture/AudioCaptureManager';
-import { AudioCaptureEventType } from '../../../types/audio-capture';
+import { AudioCaptureEvent, AudioCaptureEventType } from '../../../types/audio-capture';
 import { AudioSaveManager } from '../save/AudioSaveManager';
 import { AudioBatchManager } from '../batch/AudioBatchManager';
 import { BatchStrategy } from '../../../types/audio-batch';
@@ -363,7 +363,7 @@ export class AudioOrchestrator {
    * 
    * @param event The capture stop event
    */
-  private async handleCaptureStop(_event: any): Promise<void> {
+  private async handleCaptureStop(_event: AudioCaptureEvent): Promise<void> {
     audioLoggers.audioCapture.info('AudioOrchestrator: Capture stopped, processing pipeline');
     
     try {
@@ -408,8 +408,8 @@ export class AudioOrchestrator {
     const remainingSteps = this.pipeline.steps.slice(captureStepIndex + 1);
     
     // Process the remaining steps
-    let processedData = data;
-    let processedSampleRate = sampleRate;
+    const processedData = data;
+    const processedSampleRate = sampleRate;
     let batches: Float32Array[] = [];
     let hasBatchedData = false;
     
@@ -587,7 +587,7 @@ export class AudioOrchestrator {
    * @param type The event type
    * @param details Optional event details
    */
-  private _emitEvent(type: OrchestratorEventType, details?: any): void {
+  private _emitEvent(type: OrchestratorEventType, details?: Record<string, unknown>): void {
     const event: OrchestratorEvent = {
       type,
       timestamp: Date.now(),

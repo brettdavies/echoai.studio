@@ -10,7 +10,7 @@ import { isDevelopmentMode } from './environment';
 // Initialize browser testing utilities in development
 if (isDevelopmentMode()) {
   // Import and initialize test utilities
-  import('./testWebSocket').then(module => {
+  import('./testWebSocket').then(() => {
     appLogger.info('WebSocket test utilities loaded in development mode');
   }).catch(error => {
     appLogger.error('Failed to load WebSocket test utilities:', error);

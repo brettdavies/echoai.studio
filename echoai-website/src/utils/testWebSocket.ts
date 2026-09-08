@@ -13,7 +13,6 @@ import {
   ConnectionState,
   createAudioMessage
 } from '../services/websocket';
-import { LogComponent } from './Logger';
 import { networkLoggers } from './LoggerFactory';
 
 /**
@@ -53,7 +52,7 @@ export async function testWebSocketConnection(options: WebSocketTestOptions): Pr
   let connectionSuccess = false;
   
   // Log all state changes
-  ws.on('state_change', (event) => {
+  ws.on('state_change', (event: Event) => {
     const customEvent = event as CustomEvent;
     if (customEvent.detail?.newState === ConnectionState.CONNECTED) {
       connectionSuccess = true;
@@ -165,7 +164,7 @@ export function debugWebSocketFailure(url: string): void {
 export async function testExactServerMessage(url: string): Promise<{
   success: boolean;
   message: string;
-  details?: any;
+  details?: unknown;
 }> {
   return new Promise((resolve) => {
     try {
@@ -254,14 +253,30 @@ export async function testExactServerMessage(url: string): Promise<{
   });
 }
 
+// Window shape exposed for console debugging
+type WebSocketTestWindow = Window & {
+  testWebSocketConnection?: typeof testWebSocketConnection;
+  testWebSocketSend?: typeof testWebSocketSend;
+  debugWebSocketFailure?: typeof debugWebSocketFailure;
+  webSocketLogger?: typeof logger;
+  LogLevel?: typeof LogLevel;
+  LogCategory?: typeof LogCategory;
+  testWebSocket?: {
+    testConnection: typeof testWebSocketConnection;
+    directTest: typeof debugWebSocketFailure;
+    testExactMessage: typeof testExactServerMessage;
+  };
+};
+
 // Add test utilities to window object for console debugging
 export function initializeGlobalTestUtilities(): void {
-  (window as any).testWebSocketConnection = testWebSocketConnection;
-  (window as any).testWebSocketSend = testWebSocketSend;
-  (window as any).debugWebSocketFailure = debugWebSocketFailure;
-  (window as any).webSocketLogger = logger;
-  (window as any).LogLevel = LogLevel;
-  (window as any).LogCategory = LogCategory;
+  const testWindow = window as WebSocketTestWindow;
+  testWindow.testWebSocketConnection = testWebSocketConnection;
+  testWindow.testWebSocketSend = testWebSocketSend;
+  testWindow.debugWebSocketFailure = debugWebSocketFailure;
+  testWindow.webSocketLogger = logger;
+  testWindow.LogLevel = LogLevel;
+  testWindow.LogCategory = LogCategory;
   
   // Example usage instructions logged using proper logger
   networkLoggers.websocket.info('WebSocket Test Utilities available in window:');
@@ -279,7 +294,7 @@ export function initializeGlobalTestUtilities(): void {
 if (typeof window !== 'undefined') {
   initializeGlobalTestUtilities();
   
-  (window as any).testWebSocket = {
+  (window as WebSocketTestWindow).testWebSocket = {
     testConnection: testWebSocketConnection,
     directTest: debugWebSocketFailure,
     testExactMessage: testExactServerMessage

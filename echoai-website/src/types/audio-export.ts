@@ -56,10 +56,30 @@ export enum AudioExportEventType {
 }
 
 /**
+ * Data attached to audio export events
+ */
+export interface AudioExportEventData {
+  url?: string;
+  format?: AudioExportFormat;
+  filename?: string;
+  sampleCount?: number;
+  sampleRate?: number;
+  error?: unknown;
+}
+
+/**
  * Audio export event
  */
 export interface AudioExportEvent {
   type: AudioExportEventType;
   timestamp: number;
-  details?: any;
+  details?: AudioExportEventData;
+}
+
+/**
+ * Event emitted by the audio save manager
+ */
+export interface AudioSaveEvent extends AudioExportEventData {
+  type: AudioExportEventType;
+  timestamp: number;
 } 

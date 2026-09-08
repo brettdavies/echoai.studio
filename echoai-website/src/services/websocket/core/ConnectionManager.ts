@@ -11,11 +11,11 @@ import { OutgoingHeartbeatMessageSchema, IncomingHeartbeatResponseSchema } from 
 export class ConnectionManager {
   private socket: WebSocket | null = null;
   private state: ConnectionState = ConnectionState.DISCONNECTED;
-  private reconnectAttempts: number = 0;
+  private reconnectAttempts = 0;
   private reconnectTimeout: number | null = null;
   private connectionTimeout: number | null = null;
   private heartbeatInterval: number | null = null;
-  private circuitOpen: boolean = false;
+  private circuitOpen = false;
   private circuitResetTimeout: number | null = null;
   
   /**
@@ -195,7 +195,7 @@ export class ConnectionManager {
    * @param code Close code
    * @param reason Close reason
    */
-  disconnect(code: number = 1000, reason: string = 'Normal closure'): void {
+  disconnect(code = 1000, reason = 'Normal closure'): void {
     if (!this.socket || this.state === ConnectionState.DISCONNECTED || 
                         this.state === ConnectionState.CLOSING) {
       logger.debug(LogCategory.WS, 'Disconnect called but no active connection');
@@ -282,8 +282,9 @@ export class ConnectionManager {
       return 'circuit breaker open';
     }
     
-    if (this.options.maxReconnectAttempts !== 0 && 
-        this.reconnectAttempts >= this.options.maxReconnectAttempts!) {
+    const maxReconnectAttempts = this.options.maxReconnectAttempts;
+    if (maxReconnectAttempts !== undefined && maxReconnectAttempts !== 0 &&
+        this.reconnectAttempts >= maxReconnectAttempts) {
       return 'max reconnect attempts reached';
     }
     
@@ -413,8 +414,9 @@ export class ConnectionManager {
     }
     
     // Don't reconnect if we've exceeded max attempts
-    if (this.options.maxReconnectAttempts !== 0 && 
-        this.reconnectAttempts >= this.options.maxReconnectAttempts!) {
+    const maxReconnectAttempts = this.options.maxReconnectAttempts;
+    if (maxReconnectAttempts !== undefined && maxReconnectAttempts !== 0 &&
+        this.reconnectAttempts >= maxReconnectAttempts) {
       this.eventEmitter.emit('reconnect_failed', new CustomEvent('reconnect_failed'));
       return false;
     }
@@ -436,9 +438,10 @@ export class ConnectionManager {
     }
     
     // Calculate backoff delay using exponential backoff
+    const { reconnectDelay = 1000, maxReconnectDelay = 30000 } = this.options;
     const delay = Math.min(
-      this.options.reconnectDelay! * Math.pow(1.5, this.reconnectAttempts),
-      this.options.maxReconnectDelay!
+      reconnectDelay * Math.pow(1.5, this.reconnectAttempts),
+      maxReconnectDelay
     );
     
     logger.info(LogCategory.WS, `Reconnecting in ${delay}ms`, {

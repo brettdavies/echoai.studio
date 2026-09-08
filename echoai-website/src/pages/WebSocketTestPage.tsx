@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import DashAudioPlayer from '../components/DashAudioPlayer';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { WebSocketDebugger } from '../components/debug/WebSocketDebugger';
 import { Link } from 'react-router-dom';
-import { useWebSocket } from '../contexts/WebSocketContext';
+import { useWebSocket } from '../contexts/useWebSocket';
 import { networkLoggers } from '../utils/LoggerFactory';
 import { DEFAULT_WS_URL } from '../config';
+
+const DashAudioPlayer = lazy(() => import('../components/DashAudioPlayer'));
 
 const WebSocketTestPage: React.FC = () => {
   const [wsUrl, setWsUrl] = useState<string>(DEFAULT_WS_URL);
@@ -90,15 +91,16 @@ const WebSocketTestPage: React.FC = () => {
             {/* DashAudioPlayer */}
             <section className="bg-gray-800 p-4 rounded-lg shadow-lg">
               <h2 className="text-lg font-semibold text-white mb-4">Audio Player</h2>
-              {networkLoggers.websocket.info('WebSocketTestPage: Rendering DashAudioPlayer with streamingEnabled=true')}
-              <DashAudioPlayer 
-                url="https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/cfsgc/bbc_world_service_news_internet.mpd"
-                streamingEnabled={true}
-                streamingUrl={wsUrl} 
-                onStreamingStatusChange={(status, message) => {
-                  networkLoggers.websocket.info(`Streaming status: ${status}`, message);
-                }}
-              />
+              <Suspense fallback={null}>
+                <DashAudioPlayer
+                  url="https://a.files.bbci.co.uk/ms6/live/3441A116-B12E-4D2F-ACA8-C1984642FA4B/audio/simulcast/dash/nonuk/pc_hd_abr_v2/cfsgc/bbc_world_service_news_internet.mpd"
+                  streamingEnabled={true}
+                  streamingUrl={wsUrl}
+                  onStreamingStatusChange={(status, message) => {
+                    networkLoggers.websocket.info(`Streaming status: ${status}`, message);
+                  }}
+                />
+              </Suspense>
               <p className="text-xs text-white mt-2">
                 Connection status: <span className={connectionState === 'connected' ? 'text-green-400' : 'text-red-400'}>{connectionState}</span>
               </p>

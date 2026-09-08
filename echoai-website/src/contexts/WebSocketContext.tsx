@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { WebSocketService, ConnectionState, LogCategory } from '../services/websocket';
+import React, { createContext, useEffect, useState } from 'react';
+import { WebSocketService, ConnectionState } from '../services/websocket';
 import WebSocketManager from '../services/websocket/WebSocketManager';
 import { networkLoggers } from '../utils/LoggerFactory';
 import { DEFAULT_WS_URL } from '../config';
@@ -20,14 +20,17 @@ const WebSocketContext = createContext<WebSocketContextType>({
   webSocketService: null,
   connectionState: ConnectionState.DISCONNECTED,
   url: null,
-  connect: async () => {},
-  disconnect: () => {},
+  connect: async () => {
+    networkLoggers.websocket.warn('WebSocketContext: connect() called without a WebSocketProvider mounted');
+  },
+  disconnect: () => {
+    networkLoggers.websocket.warn('WebSocketContext: disconnect() called without a WebSocketProvider mounted');
+  },
   isConnected: () => false,
-  reconnect: async () => {}
+  reconnect: async () => {
+    networkLoggers.websocket.warn('WebSocketContext: reconnect() called without a WebSocketProvider mounted');
+  }
 });
-
-// Custom hook for easy context consumption
-export const useWebSocket = () => useContext(WebSocketContext);
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
@@ -58,7 +61,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       });
       
       // Set up state change listener
-      service.on('state_change', (event: any) => {
+      service.on('state_change', (event: Event) => {
         const customEvent = event as CustomEvent;
         if (customEvent.detail?.newState) {
           const newState = customEvent.detail.newState as ConnectionState;
@@ -74,7 +77,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       // Sync the connection state
       setConnectionState(service.getState());
     }
-  }, [initialUrl]);
+  }, [initialUrl, manager]);
   
   // Method to connect to a specific URL
   const connect = async (serverUrl: string): Promise<void> => {
@@ -90,7 +93,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       
       // Set up state change listener if it's a new service
       if (service !== webSocketService) {
-        service.on('state_change', (event: any) => {
+        service.on('state_change', (event: Event) => {
           const customEvent = event as CustomEvent;
           if (customEvent.detail?.newState) {
             const newState = customEvent.detail.newState as ConnectionState;
